@@ -1,0 +1,91 @@
+.global-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+.global-modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.global-modal-title {
+    margin: 0 0 15px 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.global-modal-message {
+    margin: 0 0 25px 0;
+    font-size: 1rem;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+.global-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.global-modal-btn {
+    padding: 10px 30px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.global-modal-btn.yes {
+    background-color: #ef4444;
+    color: white;
+}
+
+.global-modal-btn.yes:hover {
+    background-color: #dc2626;
+}
+
+.global-modal-btn.no {
+    background-color: #e5e7eb;
+    color: #1f2937;
+}
+
+.global-modal-btn.no:hover {
+    background-color: #d1d5db;
+}
+
+.global-modal-btn.ok {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.global-modal-btn.ok:hover {
+    background-color: #2563eb;
+}

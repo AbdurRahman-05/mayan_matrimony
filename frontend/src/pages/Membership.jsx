@@ -2,7 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Crown, Shield, Award, Gem, Check, X, MessageCircle, Eye, Heart, Star, Search, UserCheck, BadgeCheck, Zap } from 'lucide-react';
+import { Check, X, Shield, Star, Crown, Diamond } from 'lucide-react';
+import { showAlert } from '../components/GlobalModal';
 import './Membership.css';
 
 const plans = [
@@ -100,7 +101,7 @@ const Membership = () => {
     const navigate = useNavigate();
 
     const handlePay = (plan) => {
-        alert(`Payment for ${plan.name} plan (${plan.price}) — Payment gateway integration coming soon!`);
+        showAlert(`Payment for ${plan.name} plan (${plan.price}) — Payment gateway integration coming soon!`, 'Information');
     };
 
     const renderCompareCell = (value) => {

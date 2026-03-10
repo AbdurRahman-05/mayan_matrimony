@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Search as SearchIcon, User, Heart, Bookmark, Loader2, MapPin, Briefcase, GraduationCap, Sparkles, Star, X, MessageCircle, Languages } from 'lucide-react';
+import { Search as SearchIcon, User, Heart, Bookmark, Loader2, MapPin, Briefcase, GraduationCap, Sparkles, Star, X, MessageCircle, Languages, Clock, MoreVertical } from 'lucide-react';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
+import { showAlert, showConfirm } from '../components/GlobalModal';
 import { countryStateCityMap } from '../data/locationData';
-import { searchProfiles, searchProfileById, sendInterest, shortlistProfile, ignoreProfile } from '../services/api';
+import { getSearchOptions, searchProfiles, sendInterest, shortlistProfile, ignoreProfile } from '../services/api';
 import './Search.css';
 import './Matches.css';
 
@@ -229,9 +230,9 @@ const Search = () => {
         e.stopPropagation();
         try {
             await sendInterest(uniqueId, "I'm interested in your profile.");
-            alert('Interest sent successfully.');
+            showAlert('Interest sent successfully.', 'Success');
         } catch (err) {
-            alert(err.message || 'Failed to send interest');
+            showAlert(err.message || 'Failed to send interest', 'Error');
         }
     };
 
@@ -239,20 +240,21 @@ const Search = () => {
         e.stopPropagation();
         try {
             await shortlistProfile(uniqueId);
-            alert('You have shortlisted this profile successfully.');
+            showAlert('You have shortlisted this profile successfully.', 'Success');
         } catch (err) {
-            alert(err.message || 'Failed to shortlist');
+            showAlert(err.message || 'Failed to shortlist', 'Error');
         }
     };
 
     const handleIgnoreAction = async (e, uniqueId) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to ignore this profile? It will be hidden from your matches.')) {
+        const confirmed = await showConfirm('Are you sure you want to ignore this profile? It will be hidden from your matches.', 'Confirm Action');
+        if (confirmed) {
             try {
                 await ignoreProfile(uniqueId);
-                alert('You have ignored this profile.');
+                showAlert('You have ignored this profile.', 'Success');
             } catch (err) {
-                alert(err.message || 'Failed to ignore profile');
+                showAlert(err.message || 'Failed to ignore profile', 'Error');
             }
         }
     };

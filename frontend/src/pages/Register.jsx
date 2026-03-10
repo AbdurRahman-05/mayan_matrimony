@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { UserPlus, ArrowRight, ArrowLeft, Check, Camera, Upload, X, RefreshCw, Smartphone, Mail, ShieldCheck, Send, Lock, Headphones, Users, HelpCircle, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, ArrowRight, ArrowLeft, Check, Camera, Upload, X, RefreshCw, Smartphone, Mail, ShieldCheck, Send, Lock, Headphones, Users, HelpCircle, Eye, EyeOff, MapPin, Search as SearchIcon } from 'lucide-react';
+
+import { showAlert } from '../components/GlobalModal';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Register.css';
 import SearchableSelect from '../components/SearchableSelect';
@@ -80,7 +82,7 @@ const Register = () => {
         setLoginError('');
         try {
             await apiSendOtp('login', loginForm.username);
-            alert('OTP has been resent successfully.');
+            showAlert('OTP has been resent successfully.', 'Success');
         } catch (err) {
             setLoginError(err.message || 'Error resending OTP. Please try again.');
         }
@@ -333,7 +335,7 @@ const Register = () => {
                 ...prev,
                 [type]: { ...prev[type], sent: true }
             }));
-            alert(`OTP sent to ${val} successfully.`);
+            showAlert(`OTP sent to ${val} successfully.`, 'Success');
             setErrors(prev => ({ ...prev, [type]: '' }));
         } catch (err) {
             setErrors(prev => ({ ...prev, [type]: err.message || 'Failed to send OTP' }));
@@ -443,7 +445,7 @@ const Register = () => {
             }
         } catch (err) {
             console.error("Error accessing camera:", err);
-            alert("Could not access camera. Please check permissions.");
+            showAlert("Could not access camera. Please check permissions.", "Camera Error");
             setIsCameraOpen(false);
         }
     };
@@ -629,7 +631,7 @@ const Register = () => {
             navigate('/home');
         } catch (err) {
             console.error('Registration error:', err);
-            alert(err.message || 'Registration failed. Please try again.');
+            showAlert(err.message || 'Registration failed. Please try again.', 'Error');
         }
     };
 

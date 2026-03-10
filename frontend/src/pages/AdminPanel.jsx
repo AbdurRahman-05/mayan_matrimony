@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { showAlert } from '../components/GlobalModal';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -60,7 +61,7 @@ const AdminPanel = () => {
     };
 
     const handleForgotPassword = () => {
-        alert("Please contact the system administrator to reset your password.");
+        showAlert("Please contact the system administrator to reset your password.", "Contact Admin");
     };
 
     const fetchStats = async () => {
@@ -114,11 +115,11 @@ const AdminPanel = () => {
                 setUserToDelete(null);
                 setFullProfile(null);
             } else {
-                alert('Failed to delete user');
+                showAlert('Failed to delete user', 'Error');
             }
         } catch (error) {
             console.error('Error deleting user:', error);
-            alert('An error occurred during deletion');
+            showAlert('An error occurred during deletion', 'Error');
         }
     };
 
@@ -130,11 +131,11 @@ const AdminPanel = () => {
                 const data = await response.json();
                 setFullProfile(data);
             } else {
-                alert('Failed to fetch user profile');
+                showAlert('Failed to fetch user profile', 'Error');
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
-            alert('An error occurred while fetching the profile');
+            showAlert('An error occurred while fetching the profile', 'Error');
         } finally {
             setLoadingProfile(false);
         }

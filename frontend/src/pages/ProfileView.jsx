@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import { User, MapPin, Briefcase, Globe2, Heart, Calendar, Ruler, Languages, Clock, ArrowLeft, Images, Loader2 } from 'lucide-react';
-import { getProfile, getProfileById, getPreferences, getFavourites } from '../services/api';
+import { ArrowLeft, User, Heart, Lock, Bookmark, Image as ImageIcon, MapPin, Briefcase, GraduationCap, Clock, MessageCircle, MoreVertical, ShieldCheck, Phone, Mail, X, Check, Eye } from 'lucide-react';
+import { showAlert } from '../components/GlobalModal';
+import { searchProfileById, getProfile, sendInterest, shortlistProfile, getViewedYou } from '../services/api';
 import './ProfileView.css';
 
 const ProfileView = () => {
@@ -48,7 +48,7 @@ const ProfileView = () => {
             } catch (err) {
                 console.error('Failed to load profile view', err);
                 if (err.message === 'Profile not found') {
-                    alert('Profile not found');
+                    showAlert('Profile not found', 'Error');
                     navigate('/home');
                 }
             } finally {

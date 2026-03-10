@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { showAlert, showConfirm } from '../components/GlobalModal';
 import {
     Users, Star, Eye, UserPlus, ChevronRight, Contact, UserSearch, Search,
     Image, Sparkles, Loader2, Heart, GraduationCap, Briefcase,
@@ -75,9 +76,9 @@ const Matches = () => {
         e.stopPropagation();
         try {
             await sendInterest(uniqueId);
-            alert('Interest sent successfully.');
+            showAlert('Interest sent successfully.', 'Success');
         } catch (err) {
-            alert(err.message || 'Failed to send interest');
+            showAlert(err.message || 'Failed to send interest', 'Error');
         }
     };
 
@@ -85,7 +86,7 @@ const Matches = () => {
         e.stopPropagation();
         try {
             await shortlistProfile(uniqueId);
-            alert('You have shortlisted this profile successfully.');
+            showAlert('You have shortlisted this profile successfully.', 'Success');
             // Only reload if we are on a list that might have changed
             if (activeCategory === 'your-matches' || activeCategory === 'nearby-matches') {
                 // leave as is
@@ -93,20 +94,21 @@ const Matches = () => {
                 loadCategoryData();
             }
         } catch (err) {
-            alert(err.message || 'Failed to shortlist');
+            showAlert(err.message || 'Failed to shortlist', 'Error');
         }
     };
 
     const handleIgnoreAction = async (e, uniqueId) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to ignore this profile? It will be hidden from your matches.')) {
+        const confirmed = await showConfirm('Are you sure you want to ignore this profile? It will be hidden from your matches.', 'Confirm Action');
+        if (confirmed) {
             // Optimistic update
             setProfiles(prev => prev.filter(p => p.uniqueId !== uniqueId));
             try {
                 await ignoreProfile(uniqueId);
-                alert('You have ignored this profile.');
+                showAlert('You have ignored this profile.', 'Success');
             } catch (err) {
-                alert(err.message || 'Failed to ignore profile');
+                showAlert(err.message || 'Failed to ignore profile', 'Error');
                 loadCategoryData(); // revert
             }
         }

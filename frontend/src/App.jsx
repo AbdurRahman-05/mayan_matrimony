@@ -12,12 +12,14 @@ import ComingSoon from './pages/ComingSoon';
 import AdminPanel from './pages/AdminPanel';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
+import GlobalModal from './components/GlobalModal';
 import './index.css';
 
 function App() {
   return (
     <Router>
       <div className="App">
+        <GlobalModal />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Register />} />

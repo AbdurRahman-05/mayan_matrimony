@@ -10,7 +10,8 @@ import PartnerFamilyEditor from '../components/PartnerFamilyEditor';
 import PartnerLifestyleEditor from '../components/PartnerLifestyleEditor';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { getProfile, getFullProfile, updateProfile, getPreferences, updatePreferences, getFavourites, updateFavourites, uploadPhoto, deletePhoto as apiDeletePhoto, setMainPhoto, logout as apiLogout, syncPhotos } from '../services/api';
+import { showAlert } from '../components/GlobalModal';
+import { getProfile, updateProfile, getFullProfile, updatePreferences, updateFavourites, syncPhotos, uploadPhoto, deletePhoto as apiDeletePhoto, setMainPhoto, logout as apiLogout } from '../services/api';
 import './Profile.css';
 import { getCountries, getStates, getCities, getCastes, getSects } from '../data/locationData';
 import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions, getMarriedCounts } from '../data/sharedOptions';
@@ -116,7 +117,7 @@ const Profile = () => {
             await updateFavourites(updated);
             setActiveFavModal(null);
         } catch (err) {
-            alert('Failed to update favourites');
+            showAlert('Failed to update favourites', 'Error');
         }
     };
     const [incomeSearchTerm, setIncomeSearchTerm] = useState('');
@@ -311,10 +312,10 @@ const Profile = () => {
                 uniqueId: profileData.uniqueId
             };
             await updateProfile(payload);
-            alert('Profile updated successfully!');
+            showAlert('Profile updated successfully!', 'Success');
         } catch (error) {
             console.error('Error updating profile:', error);
-            alert(error.message || 'Failed to update profile.');
+            showAlert(error.message || 'Failed to update profile.', 'Error');
         }
     };
 
@@ -342,7 +343,7 @@ const Profile = () => {
 
         const MAX_PHOTOS = 3;
         if (draftPhotos.length >= MAX_PHOTOS) {
-            alert('You can upload a maximum of 3 images only.');
+            showAlert('You can upload a maximum of 3 images only.', 'Warning');
             e.target.value = '';
             return;
         }
@@ -351,7 +352,7 @@ const Profile = () => {
         const filesToProcess = files.slice(0, remainingSlots);
 
         if (files.length > remainingSlots) {
-            alert(`You can only upload ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'}. Only the first ${remainingSlots} will be added.`);
+            showAlert(`You can only upload ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'}. Only the first ${remainingSlots} will be added.`, 'Warning');
         }
 
         setLoading(true);
@@ -365,7 +366,7 @@ const Profile = () => {
             setDraftPhotos(newDrafts);
         } catch (error) {
             console.error("Error converting photo", error);
-            alert('Failed to process photo');
+            showAlert('Failed to process photo', 'Error');
         } finally {
             setLoading(false);
         }
@@ -398,10 +399,10 @@ const Profile = () => {
             const updatedProfile = await getProfile();
             setProfileData(updatedProfile);
             setShowPhotoManager(false);
-            alert('Photos saved successfully!');
+            showAlert('Photos saved successfully!', 'Success');
         } catch (error) {
             console.error(error);
-            alert('Failed to save photos.');
+            showAlert('Failed to save photos.', 'Error');
         } finally {
             setLoading(false);
         }
@@ -471,9 +472,9 @@ const Profile = () => {
             await updateProfile(editForm);
             setProfileData(editForm);
             setEditingSection(null);
-            alert('Details updated successfully!');
+            showAlert('Details updated successfully!', 'Success');
         } catch (err) {
-            alert(err.message || 'Failed to update profile');
+            showAlert(err.message || 'Failed to update profile', 'Error');
         } finally {
             setLoading(false);
         }
@@ -504,7 +505,7 @@ const Profile = () => {
             setPreferenceData(prefForm);
             setActivePrefEditor(null);
         } catch (err) {
-            alert(err.message || 'Failed to update preferences');
+            showAlert(err.message || 'Failed to update preferences', 'Error');
         } finally {
             setLoading(false);
         }

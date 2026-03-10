@@ -7,6 +7,7 @@ import {
     Heart, Languages, Sparkles, Star, MessageCircle
 } from 'lucide-react';
 import { getReceivedInterests, getSentInterests, respondToInterest, shortlistProfile, ignoreProfile } from '../services/api';
+import { showAlert, showConfirm } from '../components/GlobalModal';
 import './Interests.css';
 
 const Interests = () => {
@@ -51,7 +52,7 @@ const Interests = () => {
             await respondToInterest(id, status);
         } catch (err) {
             console.error(err);
-            alert('Failed to respond to interest. Please try again.');
+            showAlert('Failed to respond to interest. Please try again.', 'Error');
             loadInterests(); // revert on failure
         }
     };
@@ -60,22 +61,23 @@ const Interests = () => {
         e.stopPropagation();
         try {
             await shortlistProfile(uniqueId);
-            alert('You have shortlisted this profile successfully.');
+            showAlert('You have shortlisted this profile successfully.', 'Success');
         } catch (err) {
-            alert(err.message || 'Failed to shortlist');
+            showAlert(err.message || 'Failed to shortlist', 'Error');
         }
     };
 
     const handleIgnoreAction = async (e, uniqueId) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to ignore this profile? It will be hidden from your matches.')) {
+        const confirmed = await showConfirm('Are you sure you want to ignore this profile? It will be hidden from your matches.', 'Confirm Action');
+        if (confirmed) {
             try {
                 await ignoreProfile(uniqueId);
-                alert('You have ignored this profile.');
+                showAlert('You have ignored this profile.', 'Success');
                 // After ignore, we should refresh the interest list
                 loadInterests();
             } catch (err) {
-                alert(err.message || 'Failed to ignore profile');
+                showAlert(err.message || 'Failed to ignore profile', 'Error');
             }
         }
     };
