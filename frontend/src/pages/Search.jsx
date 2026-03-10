@@ -257,10 +257,7 @@ const Search = () => {
         }
     };
 
-    const handleChatAction = (e, uniqueId) => {
-        e.stopPropagation();
-        alert('Chat feature coming soon!');
-    };
+
 
     const ageOptions = [];
     for (let i = 18; i <= 70; i++) ageOptions.push(i);
@@ -496,10 +493,6 @@ const Search = () => {
                                                         <X size={18} />
                                                         Ignore
                                                     </button>
-                                                    <button className="card-action-btn" onClick={(e) => handleChatAction(e, p.uniqueId)}>
-                                                        <MessageCircle size={18} />
-                                                        Chat
-                                                    </button>
                                                 </div>
                                             </div>
                                         ))}
@@ -579,10 +572,6 @@ const Search = () => {
                                                 <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, foundProfile.uniqueId)}>
                                                     <X size={18} />
                                                     Ignore
-                                                </button>
-                                                <button className="card-action-btn" onClick={(e) => handleChatAction(e, foundProfile.uniqueId)}>
-                                                    <MessageCircle size={18} />
-                                                    Chat
                                                 </button>
                                             </div>
                                         </div>

@@ -112,10 +112,7 @@ const Matches = () => {
         }
     };
 
-    const handleChatAction = (e, uniqueId) => {
-        e.stopPropagation();
-        alert('Chat feature coming soon!');
-    };
+
 
     // Grouping the sidebar items as shown in the user's images
     const matchGroups = [
@@ -296,10 +293,7 @@ const Matches = () => {
                                 <X size={18} />
                                 Ignore
                             </button>
-                            <button className="card-action-btn" onClick={(e) => handleChatAction(e, p.uniqueId)}>
-                                <MessageCircle size={18} />
-                                Chat
-                            </button>
+
                         </div>
                     </div>
                 ))}

@@ -274,21 +274,9 @@ const Interests = () => {
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <button className="card-action-btn" onClick={(e) => { e.stopPropagation(); alert('Interest already processed'); }}>
-                                                                <Sparkles size={18} />
-                                                                Interest
-                                                            </button>
-                                                            <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, profile.uniqueId)}>
-                                                                <Star size={18} />
-                                                                Shortlist
-                                                            </button>
                                                             <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, profile.uniqueId)}>
                                                                 <X size={18} />
                                                                 Ignore
-                                                            </button>
-                                                            <button className="card-action-btn" onClick={(e) => handleChatAction(e, profile.uniqueId)}>
-                                                                <MessageCircle size={18} />
-                                                                Chat
                                                             </button>
                                                         </>
                                                     )}
