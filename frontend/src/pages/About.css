@@ -14,6 +14,7 @@
     text-align: center;
     position: relative;
     color: white;
+    padding-top: var(--header-height);
 }
 
 .about-hero::before {
@@ -207,7 +208,7 @@
     .about-hero {
         height: auto;
         min-height: 400px;
-        padding: 6rem 1rem 4rem;
+        padding: calc(var(--header-height) + 2rem) 1rem 4rem;
     }
 
     .about-hero h1 {

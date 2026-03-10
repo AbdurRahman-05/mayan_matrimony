@@ -66,9 +66,9 @@ export const residentialStatusOptions = ['Citizen', 'Permanent Resident', 'Work 
 
 export const dietOptions = ['Veg', 'Non-Veg', 'Eggetarian', 'Jain', 'Vegan'];
 
-export const smokingOptions = ['No', 'Occasionally', 'Yes'];
+export const smokingOptions = ['No', 'Occasionally', 'Yes', 'Regularly'];
 
-export const drinkingOptions = ['No', 'Drinks Socially', 'Yes'];
+export const drinkingOptions = ['No', 'Occasionally', 'Yes', 'Regularly'];
 
 export const familyTypeOptions = ['Joint Family', 'Nuclear Family', 'Others'];
 
@@ -80,10 +80,19 @@ export const fatherOccupationOptions = ['Business', 'Government Service', 'Priva
 
 export const motherOccupationOptions = ['Homemaker', 'Business', 'Government Service', 'Private Service', 'Professional', 'Retired', 'Not Employed', 'Passed Away'];
 
-export const siblingCounts = ['None', '1', '2', '3', '3+'];
+export const siblingCounts = ['0', '1', '2', '3', '3+'];
 
 export const familyIncomes = ["Below INR 1 Lakh", "INR 1 Lakh to 2 Lakh", "INR 2 Lakh to 4 Lakh", "INR 4 Lakh to 7 Lakh", "INR 7 Lakh to 10 Lakh", "INR 10 Lakh to 15 Lakh", "INR 15 Lakh to 20 Lakh", "INR 20 Lakh to 30 Lakh", "INR 30 Lakh to 50 Lakh", "INR 50 Lakh to 75 Lakh", "INR 75 Lakh to 1 Crore", "INR 1 Crore & above", "Not applicable"];
 
 export const livingWithParentsOptions = ["Yes", "No", "Not Applicable"];
 
 export const settleAbroadOptions = ["Yes", "No", "Undecided"];
+
+export const getMarriedCounts = (countStr) => {
+    if (!countStr || countStr === "0") return [];
+    if (countStr === "1") return ["0", "1"];
+    if (countStr === "2") return ["0", "1", "2"];
+    if (countStr === "3") return ["0", "1", "2", "3"];
+    if (countStr === "3+") return ["0", "1", "2", "3", "3+"];
+    return [];
+};

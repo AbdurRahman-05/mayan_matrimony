@@ -1,5 +1,5 @@
 .footer-section {
-    background: #1a1c2c;
+    background: #292929;
     color: #fff;
     padding: 4rem 0 2rem;
     margin-top: 4rem;
@@ -121,5 +121,34 @@
         flex-direction: column;
         gap: 1rem;
         text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-section {
+        padding: 2.5rem 0.75rem 1.5rem;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .footer-links h3,
+    .footer-contact h3 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .footer-links a {
+        font-size: 0.88rem;
+    }
+
+    .contact-item {
+        font-size: 0.88rem;
+    }
+
+    .footer-bottom {
+        font-size: 0.8rem;
     }
 }

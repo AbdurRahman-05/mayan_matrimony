@@ -10,10 +10,10 @@ import PartnerFamilyEditor from '../components/PartnerFamilyEditor';
 import PartnerLifestyleEditor from '../components/PartnerLifestyleEditor';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { getProfile, updateProfile, getPreferences, updatePreferences, getFavourites, updateFavourites, uploadPhoto, deletePhoto as apiDeletePhoto, setMainPhoto, logout as apiLogout } from '../services/api';
+import { getProfile, getFullProfile, updateProfile, getPreferences, updatePreferences, getFavourites, updateFavourites, uploadPhoto, deletePhoto as apiDeletePhoto, setMainPhoto, logout as apiLogout, syncPhotos } from '../services/api';
 import './Profile.css';
 import { getCountries, getStates, getCities, getCastes, getSects } from '../data/locationData';
-import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions } from '../data/sharedOptions';
+import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions, getMarriedCounts } from '../data/sharedOptions';
 
 const convertFileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -42,16 +42,15 @@ const Profile = () => {
     const [activeFavModal, setActiveFavModal] = useState(null);
     const [showProfilePreview, setShowProfilePreview] = useState(false);
     const [previewTab, setPreviewTab] = useState('about');
+    const [draftPhotos, setDraftPhotos] = useState([]);
 
-    // Favourites data (multi-select categories)
-    const [favouritesData, setFavouritesData] = useState({
-        hobbies: [],
-        sports: [],
-        movies: [],
-        read: [],
-        tvShows: [],
-        destinations: [],
-    });
+    // Favourites data (multi-select categories) - initialize from cache
+    const favDefaults = { hobbies: [], sports: [], movies: [], read: [], tvShows: [], destinations: [] };
+    const cachedFavsStr = localStorage.getItem('userFavourites');
+    const cachedFavs = cachedFavsStr ? (() => { try { return JSON.parse(cachedFavsStr); } catch (e) { return {}; } })() : {};
+    const [favouritesData, setFavouritesData] = useState(
+        cachedFavsStr ? { ...favDefaults, ...cachedFavs } : favDefaults
+    );
 
     // Favourites options for each category
     const favouritesOptions = {
@@ -108,7 +107,7 @@ const Profile = () => {
         { key: 'destinations', label: 'Destinations' },
     ];
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const handleFavDone = async (key, selectedItems) => {
         try {
@@ -122,56 +121,13 @@ const Profile = () => {
     };
     const [incomeSearchTerm, setIncomeSearchTerm] = useState('');
 
-    useEffect(() => {
-        if (!showProfilePreview) return undefined;
-        const previousOverflow = document.body.style.overflow;
-        const onKeyDown = (event) => {
-            if (event.key === 'Escape') {
-                setShowProfilePreview(false);
-            }
-        };
+    // Initialize data from localStorage cache for instant display
+    const cachedProfileStr = localStorage.getItem('userProfile');
+    const cachedProfile = cachedProfileStr ? (() => { try { return JSON.parse(cachedProfileStr); } catch (e) { return {}; } })() : {};
+    const uniqueId = cachedProfile.uniqueId || 'SM-000000';
+    const userType = cachedProfile.userType || 'Normal';
 
-        document.body.style.overflow = 'hidden';
-        document.addEventListener('keydown', onKeyDown);
-        return () => {
-            document.body.style.overflow = previousOverflow;
-            document.removeEventListener('keydown', onKeyDown);
-        };
-    }, [showProfilePreview]);
-
-    useEffect(() => {
-        if (location.state?.openPreferences) {
-            setActiveTab('looking');
-        }
-        if (location.state?.openPhotos) {
-            setShowPhotoManager(true);
-        }
-        if (location.state?.openSection) {
-            // Need to wait for profile data to load first
-            const timer = setTimeout(() => {
-                const section = location.state.openSection;
-                setEditForm(prev => {
-                    const savedProfile = localStorage.getItem('userProfile');
-                    if (savedProfile) {
-                        try {
-                            return { ...JSON.parse(savedProfile) };
-                        } catch (e) { }
-                    }
-                    return prev;
-                });
-                setEditingSection(section);
-            }, 100);
-            return () => clearTimeout(timer);
-        }
-    }, [location]);
-
-    // Initialize data from localStorage with fallbacks
-    const savedUserStr = localStorage.getItem('userProfile');
-    const savedUser = savedUserStr ? JSON.parse(savedUserStr) : {};
-    const uniqueId = savedUser.uniqueId || 'SM-000000';
-    const userType = savedUser.userType || 'Normal';
-
-    const [profileData, setProfileData] = useState({
+    const profileDefaults = {
         uniqueId: uniqueId,
         fullName: 'Member Name',
         gender: '',
@@ -222,9 +178,14 @@ const Profile = () => {
         havingChildren: '',
         numberOfChildren: '',
         residentialStatus: '',
-    });
+    };
 
-    const [preferenceData, setPreferenceData] = useState({
+    // Use cached data as initial state so UI shows data instantly
+    const [profileData, setProfileData] = useState(
+        cachedProfileStr ? { ...profileDefaults, ...cachedProfile } : profileDefaults
+    );
+
+    const prefDefaults = {
         prefAgeFrom: '',
         prefAgeTo: '',
         prefHeightFrom: '',
@@ -246,7 +207,12 @@ const Profile = () => {
         prefDietary: '',
         prefSmoking: '',
         prefDrinking: '',
-    });
+    };
+    const cachedPrefsStr = localStorage.getItem('userPreferences');
+    const cachedPrefs = cachedPrefsStr ? (() => { try { return JSON.parse(cachedPrefsStr); } catch (e) { return {}; } })() : {};
+    const [preferenceData, setPreferenceData] = useState(
+        cachedPrefsStr ? { ...prefDefaults, ...cachedPrefs } : prefDefaults
+    );
 
     const [editForm, setEditForm] = useState({});
     const [prefForm, setPrefForm] = useState({});
@@ -255,17 +221,68 @@ const Profile = () => {
     // Removed inline definition for shared options
 
     useEffect(() => {
+        if (!showProfilePreview) return undefined;
+        const previousOverflow = document.body.style.overflow;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setShowProfilePreview(false);
+            }
+        };
+
+        document.body.style.overflow = 'hidden';
+        document.addEventListener('keydown', onKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener('keydown', onKeyDown);
+        };
+    }, [showProfilePreview]);
+
+    useEffect(() => {
+        if (showPhotoManager && profileData) {
+            const photos = [];
+            if (profileData.photo) photos.push({ src: profileData.photo, isMain: true });
+            if (profileData.additionalPhotos) {
+                profileData.additionalPhotos.filter(p => p).forEach(p => photos.push({ src: p, isMain: false }));
+            }
+            setDraftPhotos(photos);
+        }
+    }, [showPhotoManager, profileData]);
+
+    useEffect(() => {
+        if (location.state?.openPreferences) {
+            setActiveTab('looking');
+        }
+        if (location.state?.openPhotos) {
+            setShowPhotoManager(true);
+        }
+        if (location.state?.openSection) {
+            // Need to wait for profile data to load first
+            const timer = setTimeout(() => {
+                const section = location.state.openSection;
+                setEditForm(prev => {
+                    const savedProfile = localStorage.getItem('userProfile');
+                    if (savedProfile) {
+                        try {
+                            return { ...JSON.parse(savedProfile) };
+                        } catch (e) { }
+                    }
+                    return prev;
+                });
+                setEditingSection(section);
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [location]);
+
+    useEffect(() => {
         const loadInitialData = async () => {
             setLoading(true);
             try {
-                const [profile, prefs, favs] = await Promise.all([
-                    getProfile(),
-                    getPreferences(),
-                    getFavourites()
-                ]);
-                setProfileData(profile);
-                setPreferenceData(prefs);
-                setFavouritesData(favs);
+                // Single API call fetches profile + preferences + favourites
+                const { profile, preferences, favourites } = await getFullProfile();
+                setProfileData(prev => ({ ...prev, ...profile }));
+                setPreferenceData(prev => ({ ...prev, ...preferences }));
+                setFavouritesData(prev => ({ ...prev, ...favourites }));
             } catch (err) {
                 console.error('Failed to load profile data', err);
                 if (err.message === 'Access denied' || err.message === 'Invalid token') {
@@ -322,68 +339,79 @@ const Profile = () => {
     const handleAddPhoto = async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
+
+        const MAX_PHOTOS = 3;
+        if (draftPhotos.length >= MAX_PHOTOS) {
+            alert('You can upload a maximum of 3 images only.');
+            e.target.value = '';
+            return;
+        }
+
+        const remainingSlots = MAX_PHOTOS - draftPhotos.length;
+        const filesToProcess = files.slice(0, remainingSlots);
+
+        if (files.length > remainingSlots) {
+            alert(`You can only upload ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'}. Only the first ${remainingSlots} will be added.`);
+        }
+
         setLoading(true);
         try {
-            for (const file of files) {
+            const newDrafts = [...draftPhotos];
+            for (const file of filesToProcess) {
                 const base64 = await convertFileToBase64(file);
-                // Upload to backend
-                await uploadPhoto(base64, !profileData.photo);
+                const isFirstPhoto = newDrafts.length === 0;
+                newDrafts.push({ src: base64, isMain: isFirstPhoto });
             }
-            // Refresh profile data to get updated photos list
-            const updatedProfile = await getProfile();
-            setProfileData(updatedProfile);
+            setDraftPhotos(newDrafts);
         } catch (error) {
-            console.error("Error adding photo", error);
-            alert('Failed to upload photo');
+            console.error("Error converting photo", error);
+            alert('Failed to process photo');
         } finally {
             setLoading(false);
         }
         e.target.value = '';
     };
 
-    const handleSetAsProfile = async (photoSrc) => {
-        setLoading(true);
-        try {
-            // Find photo ID if possible or we may need photo IDs in profileData
-            // For now, if we don't have IDs, this is a limitation
-            // But my API expects photoId. I should update getAllPhotos to include IDs.
-            // Let's assume for now we refresh after upload and photos have info.
-            // If API needs ID, I should have it.
-            // In a real app, I'd fetch photo list meta.
-            alert('Setting main photo...');
-            // Reload to get IDs
-            const profile = await getProfile();
-            setProfileData(profile);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-            setPhotoMenuIndex(null);
-        }
+    const handleSetAsProfile = (index) => {
+        const newDrafts = draftPhotos.map((p, i) => ({ ...p, isMain: i === index }));
+        setDraftPhotos(newDrafts);
+        setPhotoMenuIndex(null);
     };
 
-    const handleDeletePhoto = (photoSrc, isMain) => {
-        setProfileData(prev => {
-            let updated;
-            if (isMain) {
-                // If deleting main, promote first additional to main
-                const additional = prev.additionalPhotos ? prev.additionalPhotos.filter(p => p) : [];
-                updated = { ...prev, photo: additional[0] || '', additionalPhotos: additional.slice(1) };
-            } else {
-                const additional = prev.additionalPhotos ? prev.additionalPhotos.filter(p => p && p !== photoSrc) : [];
-                updated = { ...prev, additionalPhotos: additional };
-            }
-            localStorage.setItem('userProfile', JSON.stringify(updated));
-            return updated;
-        });
+    const handleDeletePhoto = (index) => {
+        const newDrafts = [...draftPhotos];
+        const deletingMain = newDrafts[index].isMain;
+        newDrafts.splice(index, 1);
+
+        if (deletingMain && newDrafts.length > 0) {
+            newDrafts[0].isMain = true;
+        }
+
+        setDraftPhotos(newDrafts);
         setPhotoMenuIndex(null);
+    };
+
+    const handleSaveDraftPhotos = async () => {
+        setLoading(true);
+        try {
+            await syncPhotos(draftPhotos);
+            const updatedProfile = await getProfile();
+            setProfileData(updatedProfile);
+            setShowPhotoManager(false);
+            alert('Photos saved successfully!');
+        } catch (error) {
+            console.error(error);
+            alert('Failed to save photos.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const togglePhotoMenu = (index) => {
         setPhotoMenuIndex(photoMenuIndex === index ? null : index);
     };
 
-    // Get all photos for display
+    // Get all photos for display outside photo manager
     const getAllPhotos = () => {
         const photos = [];
         if (profileData.photo) photos.push({ src: profileData.photo, isMain: true });
@@ -443,6 +471,7 @@ const Profile = () => {
             await updateProfile(editForm);
             setProfileData(editForm);
             setEditingSection(null);
+            alert('Details updated successfully!');
         } catch (err) {
             alert(err.message || 'Failed to update profile');
         } finally {
@@ -1048,17 +1077,6 @@ const Profile = () => {
         if (editingSection === 'family') {
             // Use shared options
 
-            const getMarriedCounts = (countStr) => {
-                if (!countStr || countStr === "0") return [];
-                if (countStr === "1") return ["0", "1"];
-                if (countStr === "2") return ["0", "1", "2"];
-                if (countStr === "3") return ["0", "1", "2", "3"];
-                if (countStr === "3+") return ["0", "1", "2", "3", "3+"];
-                return [];
-            };
-
-            // Use shared options
-
             return (
                 <div className="bd-overlay">
                     <div className="bd-container">
@@ -1143,7 +1161,7 @@ const Profile = () => {
                             </div>
 
                             {/* Mother's Occupation */}
-                            <div className="bd-field" style={{ cursor: 'pointer' }} onClick={() => setActiveDropdown({ title: "Mother's Occupation", field: 'motherOccupation', options: familyOccupations })}>
+                            <div className="bd-field" style={{ cursor: 'pointer' }} onClick={() => setActiveDropdown({ title: "Mother's Occupation", field: 'motherOccupation', options: motherOccupationOptions })}>
                                 <span className="bd-label">Mother's Occupation</span>
                                 <div className="bd-field-row">
                                     <span className="bd-value">{editForm.motherOccupation || 'Select Occupation'}</span>
@@ -1239,14 +1257,18 @@ const Profile = () => {
                                         <span className="bd-value" style={{ flex: 1, color: editForm.familyCountry ? '#1a2a3a' : '#9ca3af' }}>{editForm.familyCountry || 'Country'}</span>
                                         <ChevronRight size={18} color="#9ca3af" />
                                     </div>
-                                    <div className="bd-field-row" onClick={() => editForm.familyCountry && setActiveDropdown({ title: 'Family State', field: 'familyState', options: getStates(editForm.familyCountry) })} style={{ padding: '14px', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: editForm.familyCountry ? 'pointer' : 'not-allowed', opacity: editForm.familyCountry ? 1 : 0.6 }}>
-                                        <span className="bd-value" style={{ flex: 1, color: editForm.familyState ? '#1a2a3a' : '#9ca3af' }}>{editForm.familyState || 'State'}</span>
-                                        <ChevronRight size={18} color="#9ca3af" />
-                                    </div>
-                                    <div className="bd-field-row" onClick={() => editForm.familyState && setActiveDropdown({ title: 'Family City', field: 'familyCity', options: getCities(editForm.familyCountry, editForm.familyState) })} style={{ padding: '14px', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: editForm.familyState ? 'pointer' : 'not-allowed', opacity: editForm.familyState ? 1 : 0.6 }}>
-                                        <span className="bd-value" style={{ flex: 1, color: editForm.familyCity ? '#1a2a3a' : '#9ca3af' }}>{editForm.familyCity || 'City'}</span>
-                                        <ChevronRight size={18} color="#9ca3af" />
-                                    </div>
+                                    {editForm.familyCountry === 'India' && (
+                                        <>
+                                            <div className="bd-field-row" onClick={() => editForm.familyCountry && setActiveDropdown({ title: 'Family State', field: 'familyState', options: getStates(editForm.familyCountry) })} style={{ padding: '14px', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: editForm.familyCountry ? 'pointer' : 'not-allowed', opacity: editForm.familyCountry ? 1 : 0.6 }}>
+                                                <span className="bd-value" style={{ flex: 1, color: editForm.familyState ? '#1a2a3a' : '#9ca3af' }}>{editForm.familyState || 'State'}</span>
+                                                <ChevronRight size={18} color="#9ca3af" />
+                                            </div>
+                                            <div className="bd-field-row" onClick={() => editForm.familyState && setActiveDropdown({ title: 'Family City', field: 'familyCity', options: getCities(editForm.familyCountry, editForm.familyState) })} style={{ padding: '14px', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: editForm.familyState ? 'pointer' : 'not-allowed', opacity: editForm.familyState ? 1 : 0.6 }}>
+                                                <span className="bd-value" style={{ flex: 1, color: editForm.familyCity ? '#1a2a3a' : '#9ca3af' }}>{editForm.familyCity || 'City'}</span>
+                                                <ChevronRight size={18} color="#9ca3af" />
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1278,19 +1300,23 @@ const Profile = () => {
                                 <span className="bd-label" style={{ fontSize: '0.95rem', color: '#64748b' }}>Email Id <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '5px' }}>(Cannot be changed)</span></span>
                                 <input type="email" className="bd-value-input" name="email" value={editForm.email || ''} readOnly style={{ padding: '8px 0', borderBottom: 'none', color: '#6b7280', pointerEvents: 'none' }} />
                             </div>
+                            <div className="bd-field" style={{ paddingTop: '10px', cursor: 'not-allowed', opacity: 0.7 }}>
+                                <span className="bd-label" style={{ fontSize: '0.95rem', color: '#64748b' }}>Registered Mobile Number <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '5px' }}>(Linked to Account - Cannot be changed)</span></span>
+                                <input type="text" className="bd-value-input" value={`+91 ${editForm.registeredMobile || ''}`} readOnly style={{ padding: '8px 0', borderBottom: 'none', color: '#6b7280', pointerEvents: 'none' }} />
+                            </div>
                             <div className="bd-field">
-                                <span className="bd-label" style={{ fontSize: '0.95rem', color: '#64748b' }}>Phone Number</span>
+                                <span className="bd-label" style={{ fontSize: '0.95rem', color: '#64748b' }}>Contact Phone Number</span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '8px 0', borderBottom: mobileError ? '1px solid #dc2626' : 'none' }}>
-                                    <input type="text" name="isdCode" value={editForm.isdCode || '+91'} onChange={(e) => { handleFormChange(e); setMobileError(''); }} style={{ width: '45px', border: 'none', outline: 'none', color: '#1a2a3a', fontWeight: '500', fontSize: '1rem', padding: 0, backgroundColor: 'transparent' }} />
+                                    <div style={{ width: '45px', color: '#1a2a3a', fontWeight: '500', fontSize: '1rem', padding: 0, display: 'flex', alignItems: 'center' }}>+91</div>
                                     <div style={{ width: '1px', height: '20px', backgroundColor: '#e2e8f0' }}></div>
-                                    <input type="tel" className="bd-value-input" name="mobile" value={editForm.mobile || ''} onChange={(e) => { handleFormChange(e); setMobileError(''); }} placeholder="Enter your mobile number" style={{ flex: 1 }} />
+                                    <input type="tel" className="bd-value-input" name="mobile" value={editForm.mobile || ''} onChange={(e) => { handleFormChange(e); setMobileError(''); }} placeholder="Enter contact mobile number" style={{ flex: 1 }} />
                                 </div>
                                 {mobileError && <span style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>{mobileError}</span>}
                             </div>
                             <div className="bd-field" style={{ borderBottom: 'none' }}>
                                 <span className="bd-label" style={{ fontSize: '0.95rem', color: '#64748b' }}>Alternate Number</span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '8px 0' }}>
-                                    <input type="text" name="altIsdCode" value={editForm.altIsdCode || '+91'} onChange={handleFormChange} style={{ width: '45px', border: 'none', outline: 'none', color: '#1a2a3a', fontWeight: '500', fontSize: '1rem', padding: 0, backgroundColor: 'transparent' }} />
+                                    <div style={{ width: '45px', color: '#1a2a3a', fontWeight: '500', fontSize: '1rem', padding: 0, display: 'flex', alignItems: 'center' }}>+91</div>
                                     <div style={{ width: '1px', height: '20px', backgroundColor: '#e2e8f0' }}></div>
                                     <input type="tel" className="bd-value-input" name="alternateMobile" value={editForm.alternateMobile || ''} onChange={handleFormChange} placeholder="Enter alternate number" style={{ flex: 1 }} />
                                 </div>
@@ -1440,6 +1466,10 @@ const Profile = () => {
                                         setEditForm(prev => ({ ...prev, country: optVal, state: '', city: '', residentialStatus: optVal === 'India' ? '' : prev.residentialStatus }));
                                     } else if (activeDropdown.field === 'state') {
                                         setEditForm(prev => ({ ...prev, state: optVal, city: '' }));
+                                    } else if (activeDropdown.field === 'familyCountry') {
+                                        setEditForm(prev => ({ ...prev, familyCountry: optVal, familyState: '', familyCity: '' }));
+                                    } else if (activeDropdown.field === 'familyState') {
+                                        setEditForm(prev => ({ ...prev, familyState: optVal, familyCity: '' }));
                                     } else if (activeDropdown.field === 'religion') {
                                         setEditForm(prev => ({ ...prev, religion: optVal, caste: '', sect: '' }));
                                     } else if (activeDropdown.field === 'havingChildren') {
@@ -1471,649 +1501,103 @@ const Profile = () => {
         <div className="profile-page">
             <Navbar />
 
-            {/* Profile Hero Header */}
-            <div className="ep-hero">
-                <div className="ep-hero-inner">
-                    <div className="ep-hero-photo">
-                        {profileData.photo ? (
-                            <img src={profileData.photo} alt={profileData.fullName} />
-                        ) : (
-                            <div className="ep-hero-photo-placeholder">
-                                <User size={80} color="#9ca3af" />
-                            </div>
-                        )}
-                    </div>
-                    <div className="ep-hero-actions">
-                        <button className="ep-add-photos-btn" onClick={() => setShowPhotoManager(true)}>
-                            <Camera size={16} />
-                            {getAllPhotos().length > 0 ? (
-                                <span className="ep-photo-count">{getAllPhotos().length}</span>
-                            ) : (
-                                ' Add Photos'
-                            )}
-                        </button>
-                        <button
-                            type="button"
-                            className="ep-eye-btn"
-                            onClick={openProfilePreview}
-                            aria-label="View profile preview"
-                        >
-                            <Eye size={18} />
-                        </button>
-                    </div>
-                    <div className="ep-hero-info">
-                        <h1 className="ep-hero-name">{profileData.fullName}</h1>
-                        <p className="ep-hero-id">ID - {profileData.uniqueId}</p>
+            {/* Full-page loading spinner */}
+            {loading && (
+                <div className="profile-loading-overlay">
+                    <div className="profile-loading-spinner-wrapper">
+                        <Loader2 size={48} className="profile-spinner-icon" />
+                        <p className="profile-loading-text">Loading your profile...</p>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* Main Content */}
-            <div className="ep-container">
-                {/* Tabs */}
-                <div className="ep-tabs">
-                    <button className={`ep-tab ${activeTab === 'about' ? 'active' : ''}`} onClick={() => setActiveTab('about')}>About Me</button>
-                    <button className={`ep-tab ${activeTab === 'looking' ? 'active' : ''}`} onClick={() => setActiveTab('looking')}>Looking For</button>
-                </div>
+            {!loading && (
+                <>
 
-                {activeTab === 'about' && (
-                    <div className="ep-about-content">
-
-                        {/* Basic Details */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Basic Details</h3>
-                                    <p className="ep-section-subtitle">Brief outline of personal information</p>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => handleEditSection('basic')}><Edit2 size={18} /></button>
-                            </div>
-                            <div className="ep-detail-list">
-                                <div className="ep-detail-item">
-                                    <Ruler size={18} className="ep-detail-icon" />
-                                    <span>{profileData.height || 'Height not specified'}</span>
-                                </div>
-                                <div className="ep-detail-item">
-                                    <Globe2 size={18} className="ep-detail-icon" />
-                                    <span>{[profileData.religion, profileData.sect, profileData.caste, profileData.horoscope].filter(Boolean).join(' • ') || 'Religion not specified'}</span>
-                                </div>
-                                <div className="ep-detail-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ep-detail-icon"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-                                    <span>Mother Tongue is {profileData.motherTongue || 'not specified'}</span>
-                                </div>
-                                <div className="ep-detail-item">
-                                    <MapPin size={18} className="ep-detail-icon" />
-                                    <span>{getLocationString()}</span>
-                                </div>
-                                <div className="ep-detail-item">
-                                    <Briefcase size={18} className="ep-detail-icon" />
-                                    <span>{profileData.income || 'No Income'}</span>
-                                </div>
-                                <div className="ep-detail-item">
-                                    <Calendar size={18} className="ep-detail-icon" />
-                                    <span>{formatDate(profileData.dob)}</span>
-                                </div>
-                                <div className="ep-detail-item">
-                                    <Heart size={18} className="ep-detail-icon" />
-                                    <span>
-                                        {profileData.maritalStatus || 'Never Married'}
-                                        {profileData.maritalStatus && profileData.maritalStatus !== 'Never Married' && profileData.havingChildren === 'Yes' && profileData.numberOfChildren && (
-                                            ` • ${profileData.numberOfChildren} Children`
-                                        )}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="ep-detail-extra">
-                                <div className="ep-detail-item">
-                                    <Users size={18} className="ep-detail-icon" />
-                                    <span>Profile managed by {profileData.profileFor || 'Self'}</span>
-                                </div>
-                            </div>
-                            {(!profileData.height || !profileData.religion || !profileData.motherTongue || !profileData.country || !profileData.income || !profileData.dob || !profileData.maritalStatus) && (
-                                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                    <button className="ep-empty-add-action" onClick={() => handleEditSection('basic')} style={{ margin: 0 }}>
-                                        <Plus size={16} /> Add Basic Details
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* About Me */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">About Me</h3>
-                                    <p className="ep-section-subtitle">Describe yourself in a few words</p>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => handleEditSection('about')}><Edit2 size={18} /></button>
-                            </div>
-                            <div>
-                                {profileData.about ? (
-                                    <p className="ep-about-text">{profileData.about}</p>
+                    {/* Profile Hero Header */}
+                    <div className="ep-hero">
+                        <div className="ep-hero-inner">
+                            <div className="ep-hero-photo">
+                                {profileData.photo ? (
+                                    <img src={profileData.photo} alt={profileData.fullName} />
                                 ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                        <p className="ep-about-text" style={{ fontStyle: 'italic', margin: 0 }}>Write something about yourself...</p>
-                                        <button className="ep-empty-add-action" onClick={() => handleEditSection('about')}>
-                                            <Plus size={16} /> Add About Me
-                                        </button>
+                                    <div className="ep-hero-photo-placeholder">
+                                        <User size={80} color="#9ca3af" />
                                     </div>
                                 )}
-                                {profileData.disability && profileData.disability !== 'None' && (
-                                    <p className="ep-about-text" style={{ marginTop: '12px' }}><strong>Disability:</strong> {profileData.disability}</p>
-                                )}
                             </div>
-                        </div>
-
-                        {/* Education */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Education</h3>
-                                    <p className="ep-section-subtitle">Showcase your educational qualification</p>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => handleEditSection('education')}><Edit2 size={18} /></button>
-                            </div>
-                            {profileData.education || profileData.ugCollege || profileData.schoolName ? (
-                                <>
-                                    {profileData.education && (
-                                        <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
-                                            <div className="ep-icon-circle"><GraduationCap size={20} /></div>
-                                            <div>
-                                                <strong>{profileData.education}</strong>
-                                                <p className="ep-sub-text">Degree</p>
-                                            </div>
-                                        </div>
+                            <div className="ep-hero-actions">
+                                <button className="ep-add-photos-btn" onClick={() => setShowPhotoManager(true)}>
+                                    <Camera size={16} />
+                                    {getAllPhotos().length > 0 ? (
+                                        <span className="ep-photo-count">{getAllPhotos().length}</span>
+                                    ) : (
+                                        ' Add Photos'
                                     )}
-                                    {profileData.ugCollege && (
-                                        <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
-                                            <div className="ep-icon-circle"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></svg></div>
-                                            <div>
-                                                <strong>{profileData.ugCollege}</strong>
-                                                <p className="ep-sub-text">College</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {profileData.schoolName && (
-                                        <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
-                                            <div className="ep-icon-circle"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /></svg></div>
-                                            <div>
-                                                <strong>{profileData.schoolName}</strong>
-                                                <p className="ep-sub-text">School</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                    <p className="ep-empty-text" style={{ margin: 0 }}>No education details added yet</p>
-                                    <button className="ep-empty-add-action" onClick={() => handleEditSection('education')}>
-                                        <Plus size={16} /> Add Education
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Career */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Career</h3>
-                                    <p className="ep-section-subtitle">Give a glimpse of your professional life</p>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => handleEditSection('career')}><Edit2 size={18} /></button>
-                            </div>
-                            {profileData.occupation ? (
-                                <>
-                                    <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
-                                        <div className="ep-icon-circle"><Briefcase size={20} /></div>
-                                        <div>
-                                            <strong>{profileData.occupation}</strong>
-                                            <p className="ep-sub-text">{profileData.employmentType || 'Employment type not specified'}</p>
-                                        </div>
-                                    </div>
-                                    {profileData.organizationName && (
-                                        <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
-                                            <div className="ep-icon-circle"><BadgeCheck size={20} /></div>
-                                            <div>
-                                                <strong>{profileData.organizationName}</strong>
-                                                <p className="ep-sub-text">Organisation</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {profileData.settlingAbroad && (
-                                        <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
-                                            <div className="ep-icon-circle"><Globe2 size={20} /></div>
-                                            <div>
-                                                <strong>Settling Abroad: {profileData.settlingAbroad}</strong>
-                                                <p className="ep-sub-text">Preference</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                    <p className="ep-empty-text" style={{ margin: 0 }}>No career details added yet</p>
-                                    <button className="ep-empty-add-action" onClick={() => handleEditSection('career')}>
-                                        <Plus size={16} /> Add Career Details
-                                    </button>
-                                </div>
-                            )}
-                            {(!profileData.organizationName || !profileData.settlingAbroad) && profileData.occupation && (
-                                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                    <p style={{ color: '#64748b', fontSize: '0.95rem', margin: '0 0 12px 0' }}>Add Organisation Name, Thoughts on settling abroad</p>
-                                    <button className="ep-empty-add-action" onClick={() => handleEditSection('career')} style={{ margin: 0 }}>
-                                        <Plus size={16} /> Add Missing Details
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Family */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Family</h3>
-                                    <p className="ep-section-subtitle">Introduce your family members, values and background</p>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => handleEditSection('family')}><Edit2 size={18} /></button>
-                            </div>
-                            <div className="ep-detail-list">
-                                {profileData.fatherOccupation && (
-                                    <div className="ep-detail-item"><Users size={18} className="ep-detail-icon" /><span>Father: {profileData.fatherOccupation}</span></div>
-                                )}
-                                {profileData.motherOccupation && (
-                                    <div className="ep-detail-item"><Users size={18} className="ep-detail-icon" /><span>Mother: {profileData.motherOccupation}</span></div>
-                                )}
-                                {(profileData.numberOfBrothers || profileData.numberOfSisters) && (
-                                    <div className="ep-detail-item"><Users size={18} className="ep-detail-icon" /><span>{profileData.numberOfBrothers || 0} Brothers, {profileData.numberOfSisters || 0} Sisters</span></div>
-                                )}
-                            </div>
-                            {!profileData.fatherOccupation && !profileData.motherOccupation && (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '10px' }}>
-                                    <p className="ep-empty-text" style={{ margin: 0 }}>No family details added yet</p>
-                                    <button className="ep-empty-add-action" onClick={() => handleEditSection('family')}>
-                                        <Plus size={16} /> Add Family Details
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Contact */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Contact</h3>
-                                    <p className="ep-section-subtitle">Details that would help profiles get in touch with you</p>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => handleEditSection('contact')}><Edit2 size={18} /></button>
-                            </div>
-                            <div className="ep-detail-list">
-                                <div className="ep-detail-item ep-contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ep-detail-icon"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
-                                        <span style={{ fontSize: '1rem', color: '#1f2937' }}>{profileData.email || 'Add email'}</span>
-                                    </div>
-                                </div>
-                                <div className="ep-detail-item ep-contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ep-detail-icon"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                                        <span style={{ fontSize: '1rem', color: '#1f2937' }}>{profileData.mobile ? `${profileData.isdCode || '+91'} ${profileData.mobile}` : 'Add phone number'}</span>
-                                    </div>
-                                    <Settings size={20} color="#9ca3af" style={{ cursor: 'pointer' }} onClick={() => setShowPrivacyModal(true)} />
-                                </div>
-                            </div>
-                            <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                <p style={{ color: '#64748b', fontSize: '0.95rem', margin: '0 0 12px 0' }}>Add Alternate Email, Alternate Mobile No.</p>
-                                <button className="ep-empty-add-action" onClick={() => handleEditSection('contact')} style={{ margin: 0 }}>
-                                    <Plus size={16} /> Add Additional Contact
+                                </button>
+                                <button
+                                    type="button"
+                                    className="ep-eye-btn"
+                                    onClick={openProfilePreview}
+                                    aria-label="View profile preview"
+                                >
+                                    <Eye size={18} />
                                 </button>
                             </div>
-                        </div>
-
-                        {/* My Lifestyle & Interests */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">My Lifestyle & Interests</h3>
-                                    <p className="ep-section-subtitle">Give other profiles a glimpse of your favourite activities</p>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => handleEditSection('lifestyle')}><Edit2 size={18} /></button>
+                            <div className="ep-hero-info">
+                                <h1 className="ep-hero-name">{profileData.fullName}</h1>
+                                <p className="ep-hero-id">ID - {profileData.uniqueId}</p>
                             </div>
-
-                            <h4 className="ep-subsection-title" style={{ marginTop: '24px' }}>Habits</h4>
-                            <div className="ep-habits-grid">
-                                <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.drinking ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.drinking ? '#fef9e7' : 'transparent' }}>
-                                    <Wine size={24} color={profileData.drinking ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.drinking ? 2 : 1.5} />
-                                    <span style={{ fontSize: '0.9rem', color: profileData.drinking ? '#D4AF37' : '#64748b', fontWeight: profileData.drinking ? '600' : '500' }}>{profileData.drinking ? `Drinking: ${profileData.drinking}` : 'Add Drinking Habits'}</span>
-                                </div>
-                                <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.dietaryHabit ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.dietaryHabit ? '#fef9e7' : 'transparent' }}>
-                                    <Utensils size={24} color={profileData.dietaryHabit ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.dietaryHabit ? 2 : 1.5} />
-                                    <span style={{ fontSize: '0.9rem', color: profileData.dietaryHabit ? '#D4AF37' : '#64748b', fontWeight: profileData.dietaryHabit ? '600' : '500' }}>{profileData.dietaryHabit ? `Diet: ${profileData.dietaryHabit}` : 'Add Dietary Habits'}</span>
-                                </div>
-                                <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.smoking ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.smoking ? '#fef9e7' : 'transparent' }}>
-                                    <Cigarette size={24} color={profileData.smoking ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.smoking ? 2 : 1.5} />
-                                    <span style={{ fontSize: '0.9rem', color: profileData.smoking ? '#D4AF37' : '#64748b', fontWeight: profileData.smoking ? '600' : '500' }}>{profileData.smoking ? `Smoking: ${profileData.smoking}` : 'Add Smoking Habits'}</span>
-                                </div>
-                            </div>
-
-                            <h4 className="ep-subsection-title" style={{ marginTop: '32px' }}>My Favourites</h4>
-                            <div className="fav-categories-list">
-                                {favouritesCategories.map(cat => (
-                                    <div
-                                        key={cat.key}
-                                        className="fav-category-item"
-                                        onClick={() => setActiveFavModal(cat.key)}
-                                    >
-                                        <span className="fav-category-label">{cat.label}</span>
-                                        {favouritesData[cat.key] && favouritesData[cat.key].length > 0 ? (
-                                            <span className="fav-category-values">
-                                                {favouritesData[cat.key].join(', ')}
-                                            </span>
-                                        ) : (
-                                            <span className="fav-category-empty">Tap to add</span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {(!profileData.drinking || !profileData.dietaryHabit || !profileData.smoking || !profileData.hobbies) && (
-                                <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                    <button className="ep-empty-add-action" onClick={() => handleEditSection('lifestyle')} style={{ margin: 0 }}>
-                                        <Plus size={16} /> Add Lifestyle Details
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Update Profile */}
-                        <div style={{ textAlign: 'center', padding: '1rem 0 2rem' }}>
-                            <button className="btn btn-outline" onClick={handleLogout} style={{ color: '#D4AF37', borderColor: '#D4AF37' }}>
-                                <LogOut size={16} /> Logout
-                            </button>
                         </div>
                     </div>
-                )}
 
-                {activeTab === 'looking' && (
-                    <div className="ep-about-content">
-
-                        {/* Partner's Basic Details */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Partner's Basic Details</h3>
-                                    <p className="ep-section-subtitle">Basic preferences for your life partner</p>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => setActivePrefEditor('basic')}><Edit2 size={18} /></button>
-                            </div>
-                            <div className="ep-detail-list">
-                                <div className="ep-detail-item">
-                                    <Calendar size={18} className="ep-detail-icon" />
-                                    <span>{preferenceData.prefAgeFrom && preferenceData.prefAgeTo ? `${preferenceData.prefAgeFrom} years - ${preferenceData.prefAgeTo} years` : "Doesn't Matter"}</span>
-                                </div>
-                                <div className="ep-detail-item">
-                                    <Ruler size={18} className="ep-detail-icon" />
-                                    <span>{preferenceData.prefHeightFrom && preferenceData.prefHeightTo ? `${preferenceData.prefHeightFrom} - ${preferenceData.prefHeightTo}` : "Doesn't Matter"}</span>
-                                </div>
-                                <div className="ep-detail-item">
-                                    <MapPin size={18} className="ep-detail-icon" />
-                                    <span>{preferenceData.prefCountry || "Doesn't Matter"}</span>
-                                </div>
-                                <div className="ep-detail-item">
-                                    <Heart size={18} className="ep-detail-icon" />
-                                    <span>{preferenceData.prefMaritalStatus || "Doesn't Matter"}</span>
-                                </div>
-                                {(preferenceData.prefMaritalStatus && preferenceData.prefMaritalStatus.trim() !== 'Never Married') && (
-                                    <div className="ep-detail-item">
-                                        <Users size={18} className="ep-detail-icon" />
-                                        <span>Having Children: {preferenceData.prefHavingChildren || "Doesn't Matter"}</span>
-                                    </div>
-                                )}
-                                <div className="ep-detail-item">
-                                    <Users size={18} className="ep-detail-icon" />
-                                    <span>Profile managed by {profileData.profileFor || "Doesn't Matter"}</span>
-                                </div>
-                            </div>
+                    {/* Main Content */}
+                    <div className="ep-container">
+                        {/* Tabs */}
+                        <div className="ep-tabs">
+                            <button className={`ep-tab ${activeTab === 'about' ? 'active' : ''}`} onClick={() => setActiveTab('about')}>About Me</button>
+                            <button className={`ep-tab ${activeTab === 'looking' ? 'active' : ''}`} onClick={() => setActiveTab('looking')}>Looking For</button>
                         </div>
 
+                        {activeTab === 'about' && (
+                            <div className="ep-about-content">
 
-                        {/* Partner's Education and Occupation */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Partner's Education and Occupation</h3>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => setActivePrefEditor('education')}><Edit2 size={18} /></button>
-                            </div>
-                            <div className="ep-pref-list">
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle"><GraduationCap size={20} /></div>
-                                    <div>
-                                        <strong>Highest degree achieved</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefEducation || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle"><Briefcase size={20} /></div>
-                                    <div>
-                                        <strong>Occupation could be</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefOccupation || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle"><BadgeCheck size={20} /></div>
-                                    <div>
-                                        <strong>Employment type</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefEmploymentType || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row" style={{ borderBottom: 'none' }}>
-                                    <div className="ep-icon-circle">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>
-                                    </div>
-                                    <div>
-                                        <strong>Should be earning</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefIncome || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Partner's Religion and Ethnicity */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Partner's Religion and Ethnicity</h3>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => setActivePrefEditor('religion')}><Edit2 size={18} /></button>
-                            </div>
-                            <div className="ep-pref-list">
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle"><Globe2 size={20} /></div>
-                                    <div>
-                                        <strong>Religion</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefReligion || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h10" /><path d="M7 12h10" /><path d="M7 17h10" /></svg>
-                                    </div>
-                                    <div>
-                                        <strong>Sect</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefSect || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h10" /><path d="M7 12h10" /><path d="M7 17h10" /></svg>
-                                    </div>
-                                    <div>
-                                        <strong>Caste</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefCaste || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row" style={{ borderBottom: (preferenceData.prefReligion?.trim() === 'Hindu') ? '1px solid #f0f0f0' : 'none' }}>
-                                    <div className="ep-icon-circle">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                                    </div>
-                                    <div>
-                                        <strong>Mother Tongue</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefMotherTongue || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                {preferenceData.prefReligion?.trim() === 'Hindu' && (
-                                    <div className="ep-pref-row" style={{ borderBottom: 'none' }}>
-                                        <div className="ep-icon-circle">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a10 10 0 0 1 10 10" /></svg>
-                                        </div>
+                                {/* Basic Details */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
                                         <div>
-                                            <strong>Horoscope</strong>
-                                            <p className="ep-sub-text">{preferenceData.prefHoroscope || "Doesn't Matter"}</p>
+                                            <h3 className="ep-section-title">Basic Details</h3>
+                                            <p className="ep-section-subtitle">Brief outline of personal information</p>
                                         </div>
+                                        <button className="ep-edit-btn" onClick={() => handleEditSection('basic')}><Edit2 size={18} /></button>
                                     </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Partner's Family Details */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Partner's Family Details</h3>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => setActivePrefEditor('family')}><Edit2 size={18} /></button>
-                            </div>
-                            <div className="ep-pref-list">
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle"><Users size={20} /></div>
-                                    <div>
-                                        <strong>Family Status</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefFamilyStatus || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle"><Users size={20} /></div>
-                                    <div>
-                                        <strong>Family Type</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefFamilyType || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row" style={{ borderBottom: 'none' }}>
-                                    <div className="ep-icon-circle"><Users size={20} /></div>
-                                    <div>
-                                        <strong>Living with Parents</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefLivingWithParents || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Partner's Lifestyle and Appearance */}
-                        <div className="ep-section-card">
-                            <div className="ep-section-header">
-                                <div>
-                                    <h3 className="ep-section-title">Partner's Lifestyle and Appearance</h3>
-                                </div>
-                                <button className="ep-edit-btn" onClick={() => setActivePrefEditor('lifestyle')}><Edit2 size={18} /></button>
-                            </div>
-                            <div className="ep-pref-list">
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle"><Wine size={20} /></div>
-                                    <div>
-                                        <strong>Drinking Habits</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefDrinking || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle"><Utensils size={20} /></div>
-                                    <div>
-                                        <strong>Dietary Habits</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefDietary || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row">
-                                    <div className="ep-icon-circle"><Cigarette size={20} /></div>
-                                    <div>
-                                        <strong>Smoking Habits</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefSmoking || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                                <div className="ep-pref-row" style={{ borderBottom: 'none' }}>
-                                    <div className="ep-icon-circle">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></svg>
-                                    </div>
-                                    <div>
-                                        <strong>Special Cases</strong>
-                                        <p className="ep-sub-text">{preferenceData.prefPhysicalStatus || "Doesn't Matter"}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Update Profile (Preferences) */}
-                        <div style={{ textAlign: 'center', padding: '1rem 0 2rem' }}>
-                            <button className="btn btn-outline" onClick={handleUpdateProfile} style={{ color: '#c49b63', borderColor: '#c49b63' }}>
-                                <Save size={16} /> Update Profile
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {showProfilePreview && createPortal(
-                <div
-                    className="ppv-overlay"
-                    onClick={(event) => {
-                        if (event.target === event.currentTarget) {
-                            setShowProfilePreview(false);
-                        }
-                    }}
-                >
-                    <div className="ppv-container">
-                        <div className="ppv-topbar">
-                            <button type="button" className="ppv-back-btn" onClick={() => setShowProfilePreview(false)} aria-label="Close preview">
-                                <ArrowLeft size={24} />
-                            </button>
-                        </div>
-
-                        <div className="ppv-hero">
-                            <div className="ppv-hero-main">
-                                <div className="ppv-hero-photo">
-                                    {profileData.photo ? (
-                                        <img src={profileData.photo} alt={profileData.fullName || 'Profile'} />
-                                    ) : (
-                                        <div className="ppv-photo-placeholder">
-                                            <User size={88} color="#6b7c8e" />
+                                    <div className="ep-detail-list">
+                                        <div className="ep-detail-item">
+                                            <Ruler size={18} className="ep-detail-icon" />
+                                            <span>{profileData.height || 'Height not specified'}</span>
                                         </div>
-                                    )}
-                                </div>
-                                <div className="ppv-hero-text">
-                                    <h2>{profileData.fullName || 'Member Name'}{previewAge ? `, ${previewAge}` : ''}</h2>
-                                    <p>ID - {profileData.uniqueId || uniqueId}</p>
-                                </div>
-                            </div>
-                            <div className="ppv-managed-strip">
-                                Profile is managed by {profileData.profileFor || 'Self'}
-                            </div>
-                            <div className="ppv-tabs">
-                                <button type="button" className={`ppv-tab ${previewTab === 'about' ? 'active' : ''}`} onClick={() => setPreviewTab('about')}>About {pronounObj}</button>
-                                <button type="button" className={`ppv-tab ${previewTab === 'family' ? 'active' : ''}`} onClick={() => setPreviewTab('family')}>{pronounPossCap} Family</button>
-                                <button type="button" className={`ppv-tab ${previewTab === 'looking' ? 'active' : ''}`} onClick={() => setPreviewTab('looking')}>What {pronounSubj} is looking for</button>
-                            </div>
-                        </div>
-
-                        <div className="ppv-content">
-                            {previewTab === 'about' && (
-                                <>
-                                    <div className="ppv-quick-grid">
-                                        <div className="ppv-quick-item"><Ruler size={18} /><span>{profileData.height || 'Not specified'}</span></div>
-                                        <div className="ppv-quick-item"><MapPin size={18} /><span>{getLocationString()}</span></div>
-                                        <div className="ppv-quick-item"><Globe2 size={18} /><span>{previewReligionText}</span></div>
-                                        <div className="ppv-quick-item"><Briefcase size={18} /><span>{profileData.income || 'No Income'}</span></div>
-                                        <div className="ppv-quick-item"><Languages size={18} /><span>Mother tongue is {profileData.motherTongue || 'not specified'}</span></div>
-                                        <div className="ppv-quick-item">
-                                            <Heart size={18} />
+                                        <div className="ep-detail-item">
+                                            <Globe2 size={18} className="ep-detail-icon" />
+                                            <span>{[profileData.religion, profileData.sect, profileData.caste, profileData.horoscope].filter(Boolean).join(' • ') || 'Religion not specified'}</span>
+                                        </div>
+                                        <div className="ep-detail-item">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ep-detail-icon"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                                            <span>Mother Tongue is {profileData.motherTongue || 'not specified'}</span>
+                                        </div>
+                                        <div className="ep-detail-item">
+                                            <MapPin size={18} className="ep-detail-icon" />
+                                            <span>{getLocationString()}</span>
+                                        </div>
+                                        <div className="ep-detail-item">
+                                            <Briefcase size={18} className="ep-detail-icon" />
+                                            <span>{profileData.income || 'No Income'}</span>
+                                        </div>
+                                        <div className="ep-detail-item">
+                                            <Calendar size={18} className="ep-detail-icon" />
+                                            <span>{formatDate(profileData.dob)}</span>
+                                        </div>
+                                        <div className="ep-detail-item">
+                                            <Heart size={18} className="ep-detail-icon" />
                                             <span>
                                                 {profileData.maritalStatus || 'Never Married'}
                                                 {profileData.maritalStatus && profileData.maritalStatus !== 'Never Married' && profileData.havingChildren === 'Yes' && profileData.numberOfChildren && (
@@ -2121,433 +1605,1002 @@ const Profile = () => {
                                                 )}
                                             </span>
                                         </div>
-                                        <div className="ppv-quick-item"><Calendar size={18} /><span>{previewDobText}</span></div>
-                                        {profileData.timeOfBirth && (
-                                            <div className="ppv-quick-item"><Clock size={18} /><span>{profileData.timeOfBirth}</span></div>
-                                        )}
-                                        {profileData.placeOfBirth && (
-                                            <div className="ppv-quick-item"><MapPin size={18} /><span>Born in {profileData.placeOfBirth}</span></div>
-                                        )}
                                     </div>
-
-                                    <div className="ppv-card">
-                                        <h3>About {pronounObj}</h3>
-                                        <p>{profileData.about || 'No description added yet.'}</p>
-                                        {profileData.disability && profileData.disability !== 'None' && (
-                                            <p style={{ marginTop: '8px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Disability:</strong> {profileData.disability}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="ppv-card">
-                                        <h3>{pronounPossCap} Education</h3>
-                                        <p>{profileData.education || 'Not specified'}</p>
-                                        {profileData.ugCollege && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>College:</strong> {profileData.ugCollege}</p>}
-                                        {profileData.schoolName && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>School:</strong> {profileData.schoolName}</p>}
-                                    </div>
-
-                                    <div className="ppv-card">
-                                        <h3>{pronounPossCap} Career</h3>
-                                        <p><strong>Occupation:</strong> {profileData.occupation || 'Not specified'}</p>
-                                        <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Employment Type:</strong> {profileData.employmentType || 'Not specified'}</p>
-                                        {profileData.organizationName && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Organization:</strong> {profileData.organizationName}</p>}
-                                        {profileData.settlingAbroad && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Interested in settling abroad?:</strong> {profileData.settlingAbroad}</p>}
-                                    </div>
-                                </>
-                            )}
-
-                            {previewTab === 'family' && (
-                                <>
-                                    <div className="ppv-card">
-                                        <h3>{pronounPossCap} Family</h3>
-                                        <div className="ppv-row"><span>Family Type</span><strong>{previewFamilyType}</strong></div>
-                                        <div className="ppv-row"><span>Based Out Of</span><strong>{previewFamilyLocation}</strong></div>
-                                        <div className="ppv-row"><span>Family Status</span><strong>{profileData.familyStatus || 'Not specified'}</strong></div>
-                                        <div className="ppv-row"><span>Living With Parents</span><strong>{profileData.livingWithParents || 'Not specified'}</strong></div>
-                                        <div className="ppv-row"><span>Family Income</span><strong>{profileData.familyIncome || 'Not specified'}</strong></div>
-                                        <div className="ppv-row"><span>Father</span><strong>{profileData.fatherOccupation || 'Not specified'}</strong></div>
-                                        <div className="ppv-row"><span>Mother</span><strong>{profileData.motherOccupation || 'Not specified'}</strong></div>
-                                        <div className="ppv-row"><span>Siblings</span><strong>{previewBrothers || 0} Brothers, {previewSisters || 0} Sisters</strong></div>
-                                        <div className="ppv-row"><span>Married Siblings</span><strong>{previewMarriedBrothers || 0} Brothers, {previewMarriedSisters || 0} Sisters</strong></div>
-                                    </div>
-
-                                    <div className="ppv-card">
-                                        <h3>{pronounPossCap} Lifestyle and Interests</h3>
-                                        <div className="ppv-row"><span>Diet</span><strong>{previewDiet}</strong></div>
-                                        <div className="ppv-row"><span>Drinking</span><strong>{profileData.drinking || 'Not specified'}</strong></div>
-                                        <div className="ppv-row"><span>Smoking</span><strong>{profileData.smoking || 'Not specified'}</strong></div>
-                                        {favouritesCategories.map(cat => {
-                                            const vals = favouritesData[cat.key];
-                                            if (vals && vals.length > 0) {
-                                                return <div className="ppv-row" key={cat.key}><span>{cat.label}</span><strong>{vals.join(', ')}</strong></div>;
-                                            }
-                                            // Fallback for Hobbies if missing in favouritesData
-                                            if (cat.key === 'hobbies') {
-                                                return <div className="ppv-row" key={cat.key}><span>Hobbies</span><strong>{profileData.hobbies || 'Not specified'}</strong></div>;
-                                            }
-                                            return null;
-                                        })}
-                                    </div>
-                                </>
-                            )}
-
-                            {previewTab === 'looking' && (
-                                <>
-                                    <div className="ppv-card">
-                                        <h3>What {pronounSubj} is looking for...</h3>
-                                        <p>{profileData.partnerPreference || 'These are the desired partner qualities.'}</p>
-                                    </div>
-
-                                    <div className="ppv-card">
-                                        <h3>Basic Details</h3>
-                                        <div className="ppv-row"><span>Height</span><strong>{preferenceData.prefHeightFrom && preferenceData.prefHeightTo ? `${preferenceData.prefHeightFrom} - ${preferenceData.prefHeightTo}` : "Doesn't Matter"}</strong></div>
-                                        <div className="ppv-row"><span>Age</span><strong>{preferenceData.prefAgeFrom || '18'} to {preferenceData.prefAgeTo || '30'} Years</strong></div>
-                                        <div className="ppv-row"><span>Marital Status</span><strong>{preferenceData.prefMaritalStatus || "Doesn't Matter"}</strong></div>
-                                        {(preferenceData.prefMaritalStatus && preferenceData.prefMaritalStatus.trim() !== 'Never Married') && (
-                                            <div className="ppv-row"><span>Having Children</span><strong>{preferenceData.prefHavingChildren || "Doesn't Matter"}</strong></div>
-                                        )}
-                                        <div className="ppv-row"><span>Religion</span><strong>{preferenceData.prefReligion || "Doesn't Matter"}</strong></div>
-                                        <div className="ppv-row"><span>Mother Tongue</span><strong>{preferenceData.prefMotherTongue || "Doesn't Matter"}</strong></div>
-                                        {preferenceData.prefReligion?.trim() === 'Hindu' && (
-                                            <div className="ppv-row"><span>Horoscope</span><strong>{preferenceData.prefHoroscope || "Doesn't Matter"}</strong></div>
-                                        )}
-                                        <div className="ppv-row"><span>Country</span><strong>{previewCountryPreference}</strong></div>
-                                        <div className="ppv-row"><span>State</span><strong>{preferenceData.prefState || "Doesn't Matter"}</strong></div>
-                                        <div className="ppv-row"><span>City</span><strong>{preferenceData.prefCity || "Doesn't Matter"}</strong></div>
-                                    </div>
-
-                                    <div className="ppv-card">
-                                        <h3>Desired Education and Occupation</h3>
-                                        <div className="ppv-row"><span>Educational Level</span><strong>{previewEducationPreference}</strong></div>
-                                        <div className="ppv-row"><span>Occupation</span><strong>{previewOccupationPreference}</strong></div>
-                                        <div className="ppv-row"><span>Employment Type</span><strong>{previewEmploymentPreference}</strong></div>
-                                        <div className="ppv-row"><span>Earning</span><strong>{previewIncomePreference}</strong></div>
-                                    </div>
-
-                                    <div className="ppv-card">
-                                        <h3>Partner's Family Details</h3>
-                                        <div className="ppv-row"><span>Family Status</span><strong>{preferenceData.prefFamilyStatus || "Doesn't Matter"}</strong></div>
-                                        <div className="ppv-row"><span>Family Type</span><strong>{preferenceData.prefFamilyType || "Doesn't Matter"}</strong></div>
-                                        <div className="ppv-row"><span>Living with Parents</span><strong>{preferenceData.prefLivingWithParents || "Doesn't Matter"}</strong></div>
-                                    </div>
-
-                                    <div className="ppv-card">
-                                        <h3>Partner's Lifestyle and Appearance</h3>
-                                        <div className="ppv-row"><span>Drinking Habits</span><strong>{preferenceData.prefDrinking || "Doesn't Matter"}</strong></div>
-                                        <div className="ppv-row"><span>Dietary Habits</span><strong>{preferenceData.prefDietary || "Doesn't Matter"}</strong></div>
-                                        <div className="ppv-row"><span>Smoking Habits</span><strong>{preferenceData.prefSmoking || "Doesn't Matter"}</strong></div>
-                                        <div className="ppv-row"><span>Special Cases</span><strong>{preferenceData.prefPhysicalStatus || "Doesn't Matter"}</strong></div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {renderSectionModal()}
-            {renderDropdownModal()}
-
-            {/* Preference Modal (Generic - Other fields) */}
-            {activePrefEditor === 'generic' && (
-                <div className="modal-overlay" onClick={() => setActivePrefEditor(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>Edit Partner Preference</h3>
-                            <button className="modal-close" onClick={() => setActivePrefEditor(null)}><X size={24} /></button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="form-grid">
-                                <div className="form-group"><label>Age From</label>
-                                    <select name="prefAgeFrom" value={prefForm.prefAgeFrom || ''} onChange={handlePrefFormChange}>
-                                        <option value="">Select</option>
-                                        {Array.from({ length: 43 }, (_, i) => 18 + i).map(a => <option key={a} value={a}>{a} years</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group"><label>Age To</label>
-                                    <select name="prefAgeTo" value={prefForm.prefAgeTo || ''} onChange={handlePrefFormChange}>
-                                        <option value="">Select</option>
-                                        {Array.from({ length: 43 }, (_, i) => 18 + i).map(a => <option key={a} value={a}>{a} years</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group"><label>Religion</label>
-                                    <select name="prefReligion" value={prefForm.prefReligion || ''} onChange={handlePrefFormChange}>
-                                        <option value="">Any</option>
-                                        <option value="Hindu">Hindu</option><option value="Muslim">Muslim</option><option value="Christian">Christian</option><option value="Sikh">Sikh</option>
-                                    </select>
-                                </div>
-                                {prefForm.prefReligion && (
-                                    <div className="form-group"><label>Caste</label>
-                                        <select name="prefCaste" value={prefForm.prefCaste || ''} onChange={handlePrefFormChange}>
-                                            <option value="">Any</option>
-                                            {getCastes(prefForm.prefReligion).map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
-                                    </div>
-                                )}
-                                <div className="form-group"><label>Mother Tongue</label>
-                                    <select name="prefMotherTongue" value={prefForm.prefMotherTongue || ''} onChange={handlePrefFormChange}>
-                                        <option value="">Any</option>
-                                        {languages.map(l => <option key={l} value={l}>{l}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group"><label>Marital Status</label>
-                                    <select name="prefMaritalStatus" value={prefForm.prefMaritalStatus || ''} onChange={handlePrefFormChange}>
-                                        <option value="">Any</option>
-                                        <option value="Never Married">Never Married</option><option value="Divorced">Divorced</option><option value="Widowed">Widowed</option>
-                                    </select>
-                                </div>
-                                <div className="form-group"><label>Education</label>
-                                    <select name="prefEducation" value={prefForm.prefEducation || ''} onChange={handlePrefFormChange}>
-                                        <option value="">Any</option>
-                                        <option value="Doctorate">Doctorate</option><option value="Masters">Masters</option><option value="Bachelors">Bachelors</option><option value="Diploma">Diploma</option>
-                                    </select>
-                                </div>
-                                <div className="form-group"><label>Occupation</label>
-                                    <select name="prefOccupation" value={prefForm.prefOccupation || ''} onChange={handlePrefFormChange}>
-                                        <option value="">Any</option>
-                                        {occupations.map(o => <option key={o} value={o}>{o}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group"><label>Country</label>
-                                    <select name="prefCountry" value={prefForm.prefCountry || ''} onChange={handlePrefFormChange}>
-                                        <option value="">Any</option>
-                                        {getCountries().map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button className="btn btn-outline" onClick={() => setActivePrefEditor(null)}>Cancel</button>
-                            <button className="btn btn-primary" onClick={handlePrefSave}><Save size={16} /> Save</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Photo Manager Overlay */}
-            {showPhotoManager && (
-                <div className="pm-overlay">
-                    <div className="pm-container">
-                        <div className="pm-header">
-                            <button className="pm-back-btn" onClick={() => { setShowPhotoManager(false); setPhotoMenuIndex(null); }}>
-                                <ArrowLeft size={22} />
-                            </button>
-                            {getAllPhotos().length > 0 && (
-                                <label className="pm-add-more-btn">
-                                    <Camera size={16} /> Add Photos
-                                    <input type="file" hidden accept="image/jpg,image/jpeg,image/png" multiple onChange={handleAddPhoto} />
-                                </label>
-                            )}
-                        </div>
-
-                        {getAllPhotos().length === 0 ? (
-                            /* Upload Screen - No photos yet */
-                            <div className="pm-upload-screen">
-                                <h2 className="pm-upload-title">Impress them with your latest photo</h2>
-                                <p className="pm-upload-subtitle">Profile photos ensure a 5% increase in matches</p>
-
-                                <label className="pm-upload-btn">
-                                    Upload Photo
-                                    <input type="file" hidden accept="image/jpg,image/jpeg,image/png" multiple onChange={handleAddPhoto} />
-                                </label>
-                                <p className="pm-upload-format">Supported file format jpg, jpeg, png | upto 10 mb</p>
-
-                                <div className="pm-tips">
-                                    <div className="pm-tips-header">
-                                        <span className="pm-tips-icon">💡</span>
-                                        <h4>Here are a few tips</h4>
-                                    </div>
-                                    <p className="pm-tips-subtitle">Avoid the following photos to highlight your profile better</p>
-                                    <div className="pm-tips-grid">
-                                        <div className="pm-tip-item">
-                                            <div className="pm-tip-avatar">
-                                                <User size={32} color="#bbb" />
-                                                <span className="pm-tip-x">✕</span>
-                                            </div>
-                                            <span>Blur photo</span>
-                                        </div>
-                                        <div className="pm-tip-item">
-                                            <div className="pm-tip-avatar">
-                                                <User size={32} color="#bbb" />
-                                                <span className="pm-tip-x">✕</span>
-                                            </div>
-                                            <span>Side face</span>
-                                        </div>
-                                        <div className="pm-tip-item">
-                                            <div className="pm-tip-avatar">
-                                                <User size={32} color="#bbb" />
-                                                <span className="pm-tip-x">✕</span>
-                                            </div>
-                                            <span>Watermark</span>
-                                        </div>
-                                        <div className="pm-tip-item">
-                                            <div className="pm-tip-avatar">
-                                                <User size={32} color="#bbb" />
-                                                <span className="pm-tip-x">✕</span>
-                                            </div>
-                                            <span>Group profile pic</span>
+                                    <div className="ep-detail-extra">
+                                        <div className="ep-detail-item">
+                                            <Users size={18} className="ep-detail-icon" />
+                                            <span>Profile managed by {profileData.profileFor || 'Self'}</span>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        ) : (
-                            /* Photo Grid - Has photos */
-                            <div className="pm-photo-grid" onClick={() => setPhotoMenuIndex(null)}>
-                                {getAllPhotos().map((photo, index) => (
-                                    <div className="pm-photo-card" key={index} onClick={e => e.stopPropagation()}>
-                                        <div className="pm-photo-wrapper" onClick={() => setFullViewPhoto(photo.src)}>
-                                            <img src={photo.src} alt={`Photo ${index + 1}`} />
-                                            {photo.isMain && (
-                                                <div className="pm-profile-badge">Profile Photo</div>
-                                            )}
+                                    {(!profileData.height || !profileData.religion || !profileData.motherTongue || !profileData.country || !profileData.income || !profileData.dob || !profileData.maritalStatus) && (
+                                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                            <button className="ep-empty-add-action" onClick={() => handleEditSection('basic')} style={{ margin: 0 }}>
+                                                <Plus size={16} /> Add Basic Details
+                                            </button>
                                         </div>
-                                        <button className="pm-menu-btn" onClick={(e) => { e.stopPropagation(); togglePhotoMenu(index); }}>
-                                            <MoreVertical size={18} />
-                                        </button>
-                                        {photoMenuIndex === index && (
-                                            <div className="pm-dropdown">
-                                                {!photo.isMain && (
-                                                    <button className="pm-dropdown-item" onClick={() => handleSetAsProfile(photo.src)}>
-                                                        <Image size={16} /> Set as Profile Picture
-                                                    </button>
-                                                )}
-                                                <button className="pm-dropdown-item pm-dropdown-delete" onClick={() => handleDeletePhoto(photo.src, photo.isMain)}>
-                                                    <Trash2 size={16} /> Delete Image
+                                    )}
+                                </div>
+
+                                {/* About Me */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">About Me</h3>
+                                            <p className="ep-section-subtitle">Describe yourself in a few words</p>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => handleEditSection('about')}><Edit2 size={18} /></button>
+                                    </div>
+                                    <div>
+                                        {profileData.about ? (
+                                            <p className="ep-about-text">{profileData.about}</p>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                                <p className="ep-about-text" style={{ fontStyle: 'italic', margin: 0 }}>Write something about yourself...</p>
+                                                <button className="ep-empty-add-action" onClick={() => handleEditSection('about')}>
+                                                    <Plus size={16} /> Add About Me
                                                 </button>
                                             </div>
                                         )}
+                                        {profileData.disability && profileData.disability !== 'None' && (
+                                            <p className="ep-about-text" style={{ marginTop: '12px' }}><strong>Disability:</strong> {profileData.disability}</p>
+                                        )}
                                     </div>
-                                ))}
+                                </div>
+
+                                {/* Education */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Education</h3>
+                                            <p className="ep-section-subtitle">Showcase your educational qualification</p>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => handleEditSection('education')}><Edit2 size={18} /></button>
+                                    </div>
+                                    {profileData.education || profileData.ugCollege || profileData.schoolName ? (
+                                        <>
+                                            {profileData.education && (
+                                                <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
+                                                    <div className="ep-icon-circle"><GraduationCap size={20} /></div>
+                                                    <div>
+                                                        <strong>{profileData.education}</strong>
+                                                        <p className="ep-sub-text">Degree</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {profileData.ugCollege && (
+                                                <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
+                                                    <div className="ep-icon-circle"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></svg></div>
+                                                    <div>
+                                                        <strong>{profileData.ugCollege}</strong>
+                                                        <p className="ep-sub-text">College</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {profileData.schoolName && (
+                                                <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
+                                                    <div className="ep-icon-circle"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /></svg></div>
+                                                    <div>
+                                                        <strong>{profileData.schoolName}</strong>
+                                                        <p className="ep-sub-text">School</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                            <p className="ep-empty-text" style={{ margin: 0 }}>No education details added yet</p>
+                                            <button className="ep-empty-add-action" onClick={() => handleEditSection('education')}>
+                                                <Plus size={16} /> Add Education
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Career */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Career</h3>
+                                            <p className="ep-section-subtitle">Give a glimpse of your professional life</p>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => handleEditSection('career')}><Edit2 size={18} /></button>
+                                    </div>
+                                    {profileData.occupation ? (
+                                        <>
+                                            <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
+                                                <div className="ep-icon-circle"><Briefcase size={20} /></div>
+                                                <div>
+                                                    <strong>{profileData.occupation}</strong>
+                                                    <p className="ep-sub-text">{profileData.employmentType || 'Employment type not specified'}</p>
+                                                </div>
+                                            </div>
+                                            {profileData.organizationName && (
+                                                <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
+                                                    <div className="ep-icon-circle"><BadgeCheck size={20} /></div>
+                                                    <div>
+                                                        <strong>{profileData.organizationName}</strong>
+                                                        <p className="ep-sub-text">Organisation</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {profileData.settlingAbroad && (
+                                                <div className="ep-detail-item" style={{ marginBottom: '12px' }}>
+                                                    <div className="ep-icon-circle"><Globe2 size={20} /></div>
+                                                    <div>
+                                                        <strong>Settling Abroad: {profileData.settlingAbroad}</strong>
+                                                        <p className="ep-sub-text">Preference</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                            <p className="ep-empty-text" style={{ margin: 0 }}>No career details added yet</p>
+                                            <button className="ep-empty-add-action" onClick={() => handleEditSection('career')}>
+                                                <Plus size={16} /> Add Career Details
+                                            </button>
+                                        </div>
+                                    )}
+                                    {(!profileData.organizationName || !profileData.settlingAbroad) && profileData.occupation && (
+                                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                            <p style={{ color: '#64748b', fontSize: '0.95rem', margin: '0 0 12px 0' }}>Add Organisation Name, Thoughts on settling abroad</p>
+                                            <button className="ep-empty-add-action" onClick={() => handleEditSection('career')} style={{ margin: 0 }}>
+                                                <Plus size={16} /> Add Missing Details
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Family */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Family</h3>
+                                            <p className="ep-section-subtitle">Introduce your family members, values and background</p>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => handleEditSection('family')}><Edit2 size={18} /></button>
+                                    </div>
+                                    <div className="ep-detail-list">
+                                        {profileData.fatherOccupation && (
+                                            <div className="ep-detail-item"><Users size={18} className="ep-detail-icon" /><span>Father: {profileData.fatherOccupation}</span></div>
+                                        )}
+                                        {profileData.motherOccupation && (
+                                            <div className="ep-detail-item"><Users size={18} className="ep-detail-icon" /><span>Mother: {profileData.motherOccupation}</span></div>
+                                        )}
+                                        {(profileData.numberOfBrothers || profileData.numberOfSisters) && (
+                                            <div className="ep-detail-item"><Users size={18} className="ep-detail-icon" /><span>{profileData.numberOfBrothers || 0} Brothers, {profileData.numberOfSisters || 0} Sisters</span></div>
+                                        )}
+                                    </div>
+                                    {!profileData.fatherOccupation && !profileData.motherOccupation && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '10px' }}>
+                                            <p className="ep-empty-text" style={{ margin: 0 }}>No family details added yet</p>
+                                            <button className="ep-empty-add-action" onClick={() => handleEditSection('family')}>
+                                                <Plus size={16} /> Add Family Details
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Contact */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Contact</h3>
+                                            <p className="ep-section-subtitle">Details that would help profiles get in touch with you</p>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => handleEditSection('contact')}><Edit2 size={18} /></button>
+                                    </div>
+                                    <div className="ep-detail-list">
+                                        <div className="ep-detail-item ep-contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ep-detail-icon"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+                                                <span style={{ fontSize: '1rem', color: '#1f2937' }}>{profileData.email || 'Add email'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="ep-detail-item ep-contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ep-detail-icon"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                                                <span style={{ fontSize: '1rem', color: '#1f2937' }}>{profileData.mobile ? `${profileData.isdCode || '+91'} ${profileData.mobile}` : 'Add phone number'}</span>
+                                            </div>
+                                            <Settings size={20} color="#9ca3af" style={{ cursor: 'pointer' }} onClick={() => setShowPrivacyModal(true)} />
+                                        </div>
+                                    </div>
+                                    <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                        <p style={{ color: '#64748b', fontSize: '0.95rem', margin: '0 0 12px 0' }}>Add Alternate Email, Alternate Mobile No.</p>
+                                        <button className="ep-empty-add-action" onClick={() => handleEditSection('contact')} style={{ margin: 0 }}>
+                                            <Plus size={16} /> Add Additional Contact
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* My Lifestyle & Interests */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">My Lifestyle & Interests</h3>
+                                            <p className="ep-section-subtitle">Give other profiles a glimpse of your favourite activities</p>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => handleEditSection('lifestyle')}><Edit2 size={18} /></button>
+                                    </div>
+
+                                    <h4 className="ep-subsection-title" style={{ marginTop: '24px' }}>Habits</h4>
+                                    <div className="ep-habits-grid">
+                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.drinking ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.drinking ? '#fef9e7' : 'transparent' }}>
+                                            <Wine size={24} color={profileData.drinking ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.drinking ? 2 : 1.5} />
+                                            <span style={{ fontSize: '0.9rem', color: profileData.drinking ? '#D4AF37' : '#64748b', fontWeight: profileData.drinking ? '600' : '500' }}>{profileData.drinking ? `Drinking: ${profileData.drinking}` : 'Add Drinking Habits'}</span>
+                                        </div>
+                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.dietaryHabit ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.dietaryHabit ? '#fef9e7' : 'transparent' }}>
+                                            <Utensils size={24} color={profileData.dietaryHabit ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.dietaryHabit ? 2 : 1.5} />
+                                            <span style={{ fontSize: '0.9rem', color: profileData.dietaryHabit ? '#D4AF37' : '#64748b', fontWeight: profileData.dietaryHabit ? '600' : '500' }}>{profileData.dietaryHabit ? `Diet: ${profileData.dietaryHabit}` : 'Add Dietary Habits'}</span>
+                                        </div>
+                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.smoking ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.smoking ? '#fef9e7' : 'transparent' }}>
+                                            <Cigarette size={24} color={profileData.smoking ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.smoking ? 2 : 1.5} />
+                                            <span style={{ fontSize: '0.9rem', color: profileData.smoking ? '#D4AF37' : '#64748b', fontWeight: profileData.smoking ? '600' : '500' }}>{profileData.smoking ? `Smoking: ${profileData.smoking}` : 'Add Smoking Habits'}</span>
+                                        </div>
+                                    </div>
+
+                                    <h4 className="ep-subsection-title" style={{ marginTop: '32px' }}>My Favourites</h4>
+                                    <div className="fav-categories-list">
+                                        {favouritesCategories.map(cat => (
+                                            <div
+                                                key={cat.key}
+                                                className="fav-category-item"
+                                                onClick={() => setActiveFavModal(cat.key)}
+                                            >
+                                                <span className="fav-category-label">{cat.label}</span>
+                                                {favouritesData[cat.key] && favouritesData[cat.key].length > 0 ? (
+                                                    <span className="fav-category-values">
+                                                        {favouritesData[cat.key].join(', ')}
+                                                    </span>
+                                                ) : (
+                                                    <span className="fav-category-empty">Tap to add</span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {(!profileData.drinking || !profileData.dietaryHabit || !profileData.smoking || !profileData.hobbies) && (
+                                        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                            <button className="ep-empty-add-action" onClick={() => handleEditSection('lifestyle')} style={{ margin: 0 }}>
+                                                <Plus size={16} /> Add Lifestyle Details
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Update Profile */}
+                                <div style={{ textAlign: 'center', padding: '1rem 0 2rem' }}>
+                                    <button className="btn btn-outline" onClick={handleLogout} style={{ color: '#D4AF37', borderColor: '#D4AF37' }}>
+                                        <LogOut size={16} /> Logout
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'looking' && (
+                            <div className="ep-about-content">
+
+                                {/* Partner's Basic Details */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Partner's Basic Details</h3>
+                                            <p className="ep-section-subtitle">Basic preferences for your life partner</p>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => setActivePrefEditor('basic')}><Edit2 size={18} /></button>
+                                    </div>
+                                    <div className="ep-detail-list">
+                                        <div className="ep-detail-item">
+                                            <Calendar size={18} className="ep-detail-icon" />
+                                            <span>{preferenceData.prefAgeFrom && preferenceData.prefAgeTo ? `${preferenceData.prefAgeFrom} years - ${preferenceData.prefAgeTo} years` : "Doesn't Matter"}</span>
+                                        </div>
+                                        <div className="ep-detail-item">
+                                            <Ruler size={18} className="ep-detail-icon" />
+                                            <span>{preferenceData.prefHeightFrom && preferenceData.prefHeightTo ? `${preferenceData.prefHeightFrom} - ${preferenceData.prefHeightTo}` : "Doesn't Matter"}</span>
+                                        </div>
+                                        <div className="ep-detail-item">
+                                            <MapPin size={18} className="ep-detail-icon" />
+                                            <span>{preferenceData.prefCountry || "Doesn't Matter"}</span>
+                                        </div>
+                                        <div className="ep-detail-item">
+                                            <Heart size={18} className="ep-detail-icon" />
+                                            <span>{preferenceData.prefMaritalStatus || "Doesn't Matter"}</span>
+                                        </div>
+                                        {(preferenceData.prefMaritalStatus && preferenceData.prefMaritalStatus.trim() !== 'Never Married') && (
+                                            <div className="ep-detail-item">
+                                                <Users size={18} className="ep-detail-icon" />
+                                                <span>Having Children: {preferenceData.prefHavingChildren || "Doesn't Matter"}</span>
+                                            </div>
+                                        )}
+                                        <div className="ep-detail-item">
+                                            <Users size={18} className="ep-detail-icon" />
+                                            <span>Profile managed by {profileData.profileFor || "Doesn't Matter"}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                {/* Partner's Education and Occupation */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Partner's Education and Occupation</h3>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => setActivePrefEditor('education')}><Edit2 size={18} /></button>
+                                    </div>
+                                    <div className="ep-pref-list">
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle"><GraduationCap size={20} /></div>
+                                            <div>
+                                                <strong>Highest degree achieved</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefEducation || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle"><Briefcase size={20} /></div>
+                                            <div>
+                                                <strong>Occupation could be</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefOccupation || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle"><BadgeCheck size={20} /></div>
+                                            <div>
+                                                <strong>Employment type</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefEmploymentType || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row" style={{ borderBottom: 'none' }}>
+                                            <div className="ep-icon-circle">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>
+                                            </div>
+                                            <div>
+                                                <strong>Should be earning</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefIncome || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Partner's Religion and Ethnicity */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Partner's Religion and Ethnicity</h3>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => setActivePrefEditor('religion')}><Edit2 size={18} /></button>
+                                    </div>
+                                    <div className="ep-pref-list">
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle"><Globe2 size={20} /></div>
+                                            <div>
+                                                <strong>Religion</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefReligion || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h10" /><path d="M7 12h10" /><path d="M7 17h10" /></svg>
+                                            </div>
+                                            <div>
+                                                <strong>Sect</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefSect || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h10" /><path d="M7 12h10" /><path d="M7 17h10" /></svg>
+                                            </div>
+                                            <div>
+                                                <strong>Caste</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefCaste || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row" style={{ borderBottom: (preferenceData.prefReligion?.trim() === 'Hindu') ? '1px solid #f0f0f0' : 'none' }}>
+                                            <div className="ep-icon-circle">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                                            </div>
+                                            <div>
+                                                <strong>Mother Tongue</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefMotherTongue || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        {preferenceData.prefReligion?.trim() === 'Hindu' && (
+                                            <div className="ep-pref-row" style={{ borderBottom: 'none' }}>
+                                                <div className="ep-icon-circle">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                                                </div>
+                                                <div>
+                                                    <strong>Horoscope</strong>
+                                                    <p className="ep-sub-text">{preferenceData.prefHoroscope || "Doesn't Matter"}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Partner's Family Details */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Partner's Family Details</h3>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => setActivePrefEditor('family')}><Edit2 size={18} /></button>
+                                    </div>
+                                    <div className="ep-pref-list">
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle"><Users size={20} /></div>
+                                            <div>
+                                                <strong>Family Status</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefFamilyStatus || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle"><Users size={20} /></div>
+                                            <div>
+                                                <strong>Family Type</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefFamilyType || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row" style={{ borderBottom: 'none' }}>
+                                            <div className="ep-icon-circle"><Users size={20} /></div>
+                                            <div>
+                                                <strong>Living with Parents</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefLivingWithParents || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Partner's Lifestyle and Appearance */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Partner's Lifestyle and Appearance</h3>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => setActivePrefEditor('lifestyle')}><Edit2 size={18} /></button>
+                                    </div>
+                                    <div className="ep-pref-list">
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle"><Wine size={20} /></div>
+                                            <div>
+                                                <strong>Drinking Habits</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefDrinking || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle"><Utensils size={20} /></div>
+                                            <div>
+                                                <strong>Dietary Habits</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefDietary || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row">
+                                            <div className="ep-icon-circle"><Cigarette size={20} /></div>
+                                            <div>
+                                                <strong>Smoking Habits</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefSmoking || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                        <div className="ep-pref-row" style={{ borderBottom: 'none' }}>
+                                            <div className="ep-icon-circle">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></svg>
+                                            </div>
+                                            <div>
+                                                <strong>Special Cases</strong>
+                                                <p className="ep-sub-text">{preferenceData.prefPhysicalStatus || "Doesn't Matter"}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Update Profile (Preferences) */}
+                                <div style={{ textAlign: 'center', padding: '1rem 0 2rem' }}>
+                                    <button className="btn btn-outline" onClick={handleUpdateProfile} style={{ color: '#c49b63', borderColor: '#c49b63' }}>
+                                        <Save size={16} /> Update Profile
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
-                </div>
-            )}
 
-            {/* Full Size Photo Viewer */}
-            {fullViewPhoto && (
-                <div className="pm-fullview-overlay" onClick={() => setFullViewPhoto(null)}>
-                    <button className="pm-fullview-close" onClick={() => setFullViewPhoto(null)}><X size={28} /></button>
-                    <img src={fullViewPhoto} alt="Full size" className="pm-fullview-img" onClick={e => e.stopPropagation()} />
-                </div>
-            )}
+                    {showProfilePreview && createPortal(
+                        <div
+                            className="ppv-overlay"
+                            onClick={(event) => {
+                                if (event.target === event.currentTarget) {
+                                    setShowProfilePreview(false);
+                                }
+                            }}
+                        >
+                            <div className="ppv-container">
+                                <div className="ppv-topbar">
+                                    <button type="button" className="ppv-back-btn" onClick={() => setShowProfilePreview(false)} aria-label="Close preview">
+                                        <ArrowLeft size={24} />
+                                    </button>
+                                </div>
 
-            {/* Mobile Privacy Modal */}
-            {showPrivacyModal && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowPrivacyModal(false)}>
-                    <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '24px', width: '90%', maxWidth: '400px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} onClick={e => e.stopPropagation()}>
-                        <h3 style={{ fontSize: '1.25rem', color: '#1a2a3a', marginBottom: '20px', fontWeight: 600 }}>Mobile Privacy</h3>
-                        {[
-                            { val: 'Visible to all paid members', desc: 'Only premium members can view' },
-                            { val: 'Only to Interest Sent/Accepted', desc: 'Showonly to members I accept/expressed interest in' },
-                            { val: 'Hide from All', desc: 'No contact to be shown to anyone' }
-                        ].map(opt => {
-                            const currentPrivacy = editingSection === 'contact' ? editForm?.mobilePrivacy : profileData?.mobilePrivacy;
-                            const isActive = currentPrivacy === opt.val || (opt.val === 'Visible to all paid members' && !currentPrivacy);
-                            return (
-                                <div key={opt.val} style={{ display: 'flex', gap: '15px', marginBottom: '20px', cursor: 'pointer' }} onClick={() => {
-                                    if (editingSection === 'contact') {
-                                        setEditForm(prev => ({ ...prev, mobilePrivacy: opt.val }));
-                                    } else {
-                                        setProfileData(prev => {
-                                            const updated = { ...prev, mobilePrivacy: opt.val };
-                                            localStorage.setItem('userProfile', JSON.stringify(updated));
-                                            return updated;
-                                        });
-                                    }
-                                    setTimeout(() => setShowPrivacyModal(false), 200);
-                                }}>
-                                    <div style={{ marginTop: '2px' }}>
-                                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: isActive ? '6px solid #D4AF37' : '2px solid #9ca3af', boxSizing: 'border-box' }}></div>
+                                <div className="ppv-hero">
+                                    <div className="ppv-hero-main">
+                                        <div className="ppv-hero-photo">
+                                            {profileData.photo ? (
+                                                <img src={profileData.photo} alt={profileData.fullName || 'Profile'} />
+                                            ) : (
+                                                <div className="ppv-photo-placeholder">
+                                                    <User size={88} color="#6b7c8e" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="ppv-hero-text">
+                                            <h2>{profileData.fullName || 'Member Name'}{previewAge ? `, ${previewAge}` : ''}</h2>
+                                            <p>ID - {profileData.uniqueId || uniqueId}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div style={{ color: isActive ? '#1a2a3a' : '#475569', fontWeight: 600, fontSize: '1rem', margin: '0 0 4px 0' }}>{opt.val}</div>
-                                        <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{opt.desc}</div>
+                                    <div className="ppv-managed-strip">
+                                        Profile is managed by {profileData.profileFor || 'Self'}
+                                    </div>
+                                    <div className="ppv-tabs">
+                                        <button type="button" className={`ppv-tab ${previewTab === 'about' ? 'active' : ''}`} onClick={() => setPreviewTab('about')}>About {pronounObj}</button>
+                                        <button type="button" className={`ppv-tab ${previewTab === 'family' ? 'active' : ''}`} onClick={() => setPreviewTab('family')}>{pronounPossCap} Family</button>
+                                        <button type="button" className={`ppv-tab ${previewTab === 'looking' ? 'active' : ''}`} onClick={() => setPreviewTab('looking')}>What {pronounSubj} is looking for</button>
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                </div>
+
+                                <div className="ppv-content">
+                                    {previewTab === 'about' && (
+                                        <>
+                                            <div className="ppv-quick-grid">
+                                                <div className="ppv-quick-item"><Ruler size={18} /><span>{profileData.height || 'Not specified'}</span></div>
+                                                <div className="ppv-quick-item"><MapPin size={18} /><span>{getLocationString()}</span></div>
+                                                <div className="ppv-quick-item"><Globe2 size={18} /><span>{previewReligionText}</span></div>
+                                                <div className="ppv-quick-item"><Briefcase size={18} /><span>{profileData.income || 'No Income'}</span></div>
+                                                <div className="ppv-quick-item"><Languages size={18} /><span>Mother tongue is {profileData.motherTongue || 'not specified'}</span></div>
+                                                <div className="ppv-quick-item">
+                                                    <Heart size={18} />
+                                                    <span>
+                                                        {profileData.maritalStatus || 'Never Married'}
+                                                        {profileData.maritalStatus && profileData.maritalStatus !== 'Never Married' && profileData.havingChildren === 'Yes' && profileData.numberOfChildren && (
+                                                            ` • ${profileData.numberOfChildren} Children`
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div className="ppv-quick-item"><Calendar size={18} /><span>{previewDobText}</span></div>
+                                                {profileData.timeOfBirth && (
+                                                    <div className="ppv-quick-item"><Clock size={18} /><span>{profileData.timeOfBirth}</span></div>
+                                                )}
+                                                {profileData.placeOfBirth && (
+                                                    <div className="ppv-quick-item"><MapPin size={18} /><span>Born in {profileData.placeOfBirth}</span></div>
+                                                )}
+                                            </div>
+
+                                            <div className="ppv-card">
+                                                <h3>About {pronounObj}</h3>
+                                                <p>{profileData.about || 'No description added yet.'}</p>
+                                                {profileData.disability && profileData.disability !== 'None' && (
+                                                    <p style={{ marginTop: '8px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Disability:</strong> {profileData.disability}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="ppv-card">
+                                                <h3>{pronounPossCap} Education</h3>
+                                                <p>{profileData.education || 'Not specified'}</p>
+                                                {profileData.ugCollege && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>College:</strong> {profileData.ugCollege}</p>}
+                                                {profileData.schoolName && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>School:</strong> {profileData.schoolName}</p>}
+                                            </div>
+
+                                            <div className="ppv-card">
+                                                <h3>{pronounPossCap} Career</h3>
+                                                <p><strong>Occupation:</strong> {profileData.occupation || 'Not specified'}</p>
+                                                <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Employment Type:</strong> {profileData.employmentType || 'Not specified'}</p>
+                                                {profileData.organizationName && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Organization:</strong> {profileData.organizationName}</p>}
+                                                {profileData.settlingAbroad && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Interested in settling abroad?:</strong> {profileData.settlingAbroad}</p>}
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {previewTab === 'family' && (
+                                        <>
+                                            <div className="ppv-card">
+                                                <h3>{pronounPossCap} Family</h3>
+                                                <div className="ppv-row"><span>Family Type</span><strong>{previewFamilyType}</strong></div>
+                                                <div className="ppv-row"><span>Based Out Of</span><strong>{previewFamilyLocation}</strong></div>
+                                                <div className="ppv-row"><span>Family Status</span><strong>{profileData.familyStatus || 'Not specified'}</strong></div>
+                                                <div className="ppv-row"><span>Living With Parents</span><strong>{profileData.livingWithParents || 'Not specified'}</strong></div>
+                                                <div className="ppv-row"><span>Family Income</span><strong>{profileData.familyIncome || 'Not specified'}</strong></div>
+                                                <div className="ppv-row"><span>Father</span><strong>{profileData.fatherOccupation || 'Not specified'}</strong></div>
+                                                <div className="ppv-row"><span>Mother</span><strong>{profileData.motherOccupation || 'Not specified'}</strong></div>
+                                                <div className="ppv-row"><span>Siblings</span><strong>{previewBrothers || 0} Brothers, {previewSisters || 0} Sisters</strong></div>
+                                                <div className="ppv-row"><span>Married Siblings</span><strong>{previewMarriedBrothers || 0} Brothers, {previewMarriedSisters || 0} Sisters</strong></div>
+                                            </div>
+
+                                            <div className="ppv-card">
+                                                <h3>{pronounPossCap} Lifestyle and Interests</h3>
+                                                <div className="ppv-row"><span>Diet</span><strong>{previewDiet}</strong></div>
+                                                <div className="ppv-row"><span>Drinking</span><strong>{profileData.drinking || 'Not specified'}</strong></div>
+                                                <div className="ppv-row"><span>Smoking</span><strong>{profileData.smoking || 'Not specified'}</strong></div>
+                                                {favouritesCategories.map(cat => {
+                                                    const vals = favouritesData[cat.key];
+                                                    if (vals && vals.length > 0) {
+                                                        return <div className="ppv-row" key={cat.key}><span>{cat.label}</span><strong>{vals.join(', ')}</strong></div>;
+                                                    }
+                                                    // Fallback for Hobbies if missing in favouritesData
+                                                    if (cat.key === 'hobbies') {
+                                                        return <div className="ppv-row" key={cat.key}><span>Hobbies</span><strong>{profileData.hobbies || 'Not specified'}</strong></div>;
+                                                    }
+                                                    return null;
+                                                })}
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {previewTab === 'looking' && (
+                                        <>
+                                            <div className="ppv-card">
+                                                <h3>What {pronounSubj} is looking for...</h3>
+                                                <p>{profileData.partnerPreference || 'These are the desired partner qualities.'}</p>
+                                            </div>
+
+                                            <div className="ppv-card">
+                                                <h3>Basic Details</h3>
+                                                <div className="ppv-row"><span>Height</span><strong>{preferenceData.prefHeightFrom && preferenceData.prefHeightTo ? `${preferenceData.prefHeightFrom} - ${preferenceData.prefHeightTo}` : "Doesn't Matter"}</strong></div>
+                                                <div className="ppv-row"><span>Age</span><strong>{preferenceData.prefAgeFrom || '18'} to {preferenceData.prefAgeTo || '30'} Years</strong></div>
+                                                <div className="ppv-row"><span>Marital Status</span><strong>{preferenceData.prefMaritalStatus || "Doesn't Matter"}</strong></div>
+                                                {(preferenceData.prefMaritalStatus && preferenceData.prefMaritalStatus.trim() !== 'Never Married') && (
+                                                    <div className="ppv-row"><span>Having Children</span><strong>{preferenceData.prefHavingChildren || "Doesn't Matter"}</strong></div>
+                                                )}
+                                                <div className="ppv-row"><span>Religion</span><strong>{preferenceData.prefReligion || "Doesn't Matter"}</strong></div>
+                                                <div className="ppv-row"><span>Mother Tongue</span><strong>{preferenceData.prefMotherTongue || "Doesn't Matter"}</strong></div>
+                                                {preferenceData.prefReligion?.trim() === 'Hindu' && (
+                                                    <div className="ppv-row"><span>Horoscope</span><strong>{preferenceData.prefHoroscope || "Doesn't Matter"}</strong></div>
+                                                )}
+                                                <div className="ppv-row"><span>Country</span><strong>{previewCountryPreference}</strong></div>
+                                                <div className="ppv-row"><span>State</span><strong>{preferenceData.prefState || "Doesn't Matter"}</strong></div>
+                                                <div className="ppv-row"><span>City</span><strong>{preferenceData.prefCity || "Doesn't Matter"}</strong></div>
+                                            </div>
+
+                                            <div className="ppv-card">
+                                                <h3>Desired Education and Occupation</h3>
+                                                <div className="ppv-row"><span>Educational Level</span><strong>{previewEducationPreference}</strong></div>
+                                                <div className="ppv-row"><span>Occupation</span><strong>{previewOccupationPreference}</strong></div>
+                                                <div className="ppv-row"><span>Employment Type</span><strong>{previewEmploymentPreference}</strong></div>
+                                                <div className="ppv-row"><span>Earning</span><strong>{previewIncomePreference}</strong></div>
+                                            </div>
+
+                                            <div className="ppv-card">
+                                                <h3>Partner's Family Details</h3>
+                                                <div className="ppv-row"><span>Family Status</span><strong>{preferenceData.prefFamilyStatus || "Doesn't Matter"}</strong></div>
+                                                <div className="ppv-row"><span>Family Type</span><strong>{preferenceData.prefFamilyType || "Doesn't Matter"}</strong></div>
+                                                <div className="ppv-row"><span>Living with Parents</span><strong>{preferenceData.prefLivingWithParents || "Doesn't Matter"}</strong></div>
+                                            </div>
+
+                                            <div className="ppv-card">
+                                                <h3>Partner's Lifestyle and Appearance</h3>
+                                                <div className="ppv-row"><span>Drinking Habits</span><strong>{preferenceData.prefDrinking || "Doesn't Matter"}</strong></div>
+                                                <div className="ppv-row"><span>Dietary Habits</span><strong>{preferenceData.prefDietary || "Doesn't Matter"}</strong></div>
+                                                <div className="ppv-row"><span>Smoking Habits</span><strong>{preferenceData.prefSmoking || "Doesn't Matter"}</strong></div>
+                                                <div className="ppv-row"><span>Special Cases</span><strong>{preferenceData.prefPhysicalStatus || "Doesn't Matter"}</strong></div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>,
+                        document.body
+                    )}
+
+                    {renderSectionModal()}
+                    {renderDropdownModal()}
+
+                    {/* Preference Modal (Generic - Other fields) */}
+                    {activePrefEditor === 'generic' && (
+                        <div className="modal-overlay" onClick={() => setActivePrefEditor(null)}>
+                            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h3>Edit Partner Preference</h3>
+                                    <button className="modal-close" onClick={() => setActivePrefEditor(null)}><X size={24} /></button>
+                                </div>
+                                <div className="modal-body">
+                                    <div className="form-grid">
+                                        <div className="form-group"><label>Age From</label>
+                                            <select name="prefAgeFrom" value={prefForm.prefAgeFrom || ''} onChange={handlePrefFormChange}>
+                                                <option value="">Select</option>
+                                                {Array.from({ length: 43 }, (_, i) => 18 + i).map(a => <option key={a} value={a}>{a} years</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="form-group"><label>Age To</label>
+                                            <select name="prefAgeTo" value={prefForm.prefAgeTo || ''} onChange={handlePrefFormChange}>
+                                                <option value="">Select</option>
+                                                {Array.from({ length: 43 }, (_, i) => 18 + i).map(a => <option key={a} value={a}>{a} years</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="form-group"><label>Religion</label>
+                                            <select name="prefReligion" value={prefForm.prefReligion || ''} onChange={handlePrefFormChange}>
+                                                <option value="">Any</option>
+                                                <option value="Hindu">Hindu</option><option value="Muslim">Muslim</option><option value="Christian">Christian</option><option value="Sikh">Sikh</option>
+                                            </select>
+                                        </div>
+                                        {prefForm.prefReligion && (
+                                            <div className="form-group"><label>Caste</label>
+                                                <select name="prefCaste" value={prefForm.prefCaste || ''} onChange={handlePrefFormChange}>
+                                                    <option value="">Any</option>
+                                                    {getCastes(prefForm.prefReligion).map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            </div>
+                                        )}
+                                        <div className="form-group"><label>Mother Tongue</label>
+                                            <select name="prefMotherTongue" value={prefForm.prefMotherTongue || ''} onChange={handlePrefFormChange}>
+                                                <option value="">Any</option>
+                                                {languages.map(l => <option key={l} value={l}>{l}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="form-group"><label>Marital Status</label>
+                                            <select name="prefMaritalStatus" value={prefForm.prefMaritalStatus || ''} onChange={handlePrefFormChange}>
+                                                <option value="">Any</option>
+                                                <option value="Never Married">Never Married</option><option value="Divorced">Divorced</option><option value="Widowed">Widowed</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group"><label>Education</label>
+                                            <select name="prefEducation" value={prefForm.prefEducation || ''} onChange={handlePrefFormChange}>
+                                                <option value="">Any</option>
+                                                <option value="Doctorate">Doctorate</option><option value="Masters">Masters</option><option value="Bachelors">Bachelors</option><option value="Diploma">Diploma</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group"><label>Occupation</label>
+                                            <select name="prefOccupation" value={prefForm.prefOccupation || ''} onChange={handlePrefFormChange}>
+                                                <option value="">Any</option>
+                                                {occupations.map(o => <option key={o} value={o}>{o}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="form-group"><label>Country</label>
+                                            <select name="prefCountry" value={prefForm.prefCountry || ''} onChange={handlePrefFormChange}>
+                                                <option value="">Any</option>
+                                                {getCountries().map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button className="btn btn-outline" onClick={() => setActivePrefEditor(null)}>Cancel</button>
+                                    <button className="btn btn-primary" onClick={handlePrefSave}><Save size={16} /> Save</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Photo Manager Overlay */}
+                    {showPhotoManager && (
+                        <div className="pm-overlay">
+                            <div className="pm-container">
+                                <div className="pm-header">
+                                    <button className="pm-back-btn" onClick={() => { setShowPhotoManager(false); setPhotoMenuIndex(null); }}>
+                                        <ArrowLeft size={22} />
+                                    </button>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        {draftPhotos.length > 0 && draftPhotos.length < 3 && (
+                                            <label className="pm-add-more-btn">
+                                                <Camera size={16} /> Add Photos
+                                                <input type="file" hidden accept="image/jpg,image/jpeg,image/png" multiple onChange={handleAddPhoto} />
+                                            </label>
+                                        )}
+                                        {draftPhotos.length >= 3 && (
+                                            <span style={{ fontSize: '0.8rem', color: '#9ca3af', alignSelf: 'center' }}>Max 3 photos</span>
+                                        )}
+                                        <button className="pm-save-btn btn btn-primary" onClick={handleSaveDraftPhotos} disabled={loading}>
+                                            {loading ? <Loader2 size={16} className="spinner" /> : <Save size={16} />} Save
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {draftPhotos.length === 0 ? (
+                                    /* Upload Screen - No photos yet */
+                                    <div className="pm-upload-screen">
+                                        <h2 className="pm-upload-title">Impress them with your latest photo</h2>
+                                        <p className="pm-upload-subtitle">Profile photos ensure a 5% increase in matches</p>
+
+                                        <label className="pm-upload-btn">
+                                            Upload Photo
+                                            <input type="file" hidden accept="image/jpg,image/jpeg,image/png" multiple onChange={handleAddPhoto} />
+                                        </label>
+                                        <p className="pm-upload-format">Supported file format jpg, jpeg, png | upto 10 mb</p>
+
+                                        <div className="pm-tips">
+                                            <div className="pm-tips-header">
+                                                <span className="pm-tips-icon">💡</span>
+                                                <h4>Here are a few tips</h4>
+                                            </div>
+                                            <p className="pm-tips-subtitle">Avoid the following photos to highlight your profile better</p>
+                                            <div className="pm-tips-grid">
+                                                <div className="pm-tip-item">
+                                                    <div className="pm-tip-avatar">
+                                                        <User size={32} color="#bbb" />
+                                                        <span className="pm-tip-x">✕</span>
+                                                    </div>
+                                                    <span>Blur photo</span>
+                                                </div>
+                                                <div className="pm-tip-item">
+                                                    <div className="pm-tip-avatar">
+                                                        <User size={32} color="#bbb" />
+                                                        <span className="pm-tip-x">✕</span>
+                                                    </div>
+                                                    <span>Side face</span>
+                                                </div>
+                                                <div className="pm-tip-item">
+                                                    <div className="pm-tip-avatar">
+                                                        <User size={32} color="#bbb" />
+                                                        <span className="pm-tip-x">✕</span>
+                                                    </div>
+                                                    <span>Watermark</span>
+                                                </div>
+                                                <div className="pm-tip-item">
+                                                    <div className="pm-tip-avatar">
+                                                        <User size={32} color="#bbb" />
+                                                        <span className="pm-tip-x">✕</span>
+                                                    </div>
+                                                    <span>Group profile pic</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Photo Grid - Has photos */
+                                    <div className="pm-photo-grid" onClick={() => setPhotoMenuIndex(null)}>
+                                        {draftPhotos.map((photo, index) => (
+                                            <div className="pm-photo-card" key={index} onClick={e => e.stopPropagation()}>
+                                                <div className="pm-photo-wrapper" onClick={() => setFullViewPhoto(photo.src)}>
+                                                    <img src={photo.src} alt={`Photo ${index + 1}`} />
+                                                    {photo.isMain && (
+                                                        <div className="pm-profile-badge">Profile Photo</div>
+                                                    )}
+                                                </div>
+                                                <button className="pm-menu-btn" onClick={(e) => { e.stopPropagation(); togglePhotoMenu(index); }}>
+                                                    <MoreVertical size={18} />
+                                                </button>
+                                                {photoMenuIndex === index && (
+                                                    <div className="pm-dropdown">
+                                                        {!photo.isMain && (
+                                                            <button className="pm-dropdown-item" onClick={() => handleSetAsProfile(index)}>
+                                                                <Image size={16} /> Set as Profile Picture
+                                                            </button>
+                                                        )}
+                                                        <button className="pm-dropdown-item pm-dropdown-delete" onClick={() => handleDeletePhoto(index)}>
+                                                            <Trash2 size={16} /> Delete Image
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Full Size Photo Viewer */}
+                    {fullViewPhoto && (
+                        <div className="pm-fullview-overlay" onClick={() => setFullViewPhoto(null)}>
+                            <button className="pm-fullview-close" onClick={() => setFullViewPhoto(null)}><X size={28} /></button>
+                            <img src={fullViewPhoto} alt="Full size" className="pm-fullview-img" onClick={e => e.stopPropagation()} />
+                        </div>
+                    )}
+
+                    {/* Mobile Privacy Modal */}
+                    {showPrivacyModal && (
+                        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowPrivacyModal(false)}>
+                            <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '24px', width: '90%', maxWidth: '400px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} onClick={e => e.stopPropagation()}>
+                                <h3 style={{ fontSize: '1.25rem', color: '#1a2a3a', marginBottom: '20px', fontWeight: 600 }}>Mobile Privacy</h3>
+                                {[
+                                    { val: 'Visible to all paid members', desc: 'Only premium members can view' },
+                                    { val: 'Only to Interest Sent/Accepted', desc: 'Showonly to members I accept/expressed interest in' },
+                                    { val: 'Hide from All', desc: 'No contact to be shown to anyone' }
+                                ].map(opt => {
+                                    const currentPrivacy = editingSection === 'contact' ? editForm?.mobilePrivacy : profileData?.mobilePrivacy;
+                                    const isActive = currentPrivacy === opt.val || (opt.val === 'Visible to all paid members' && !currentPrivacy);
+                                    return (
+                                        <div key={opt.val} style={{ display: 'flex', gap: '15px', marginBottom: '20px', cursor: 'pointer' }} onClick={() => {
+                                            if (editingSection === 'contact') {
+                                                setEditForm(prev => ({ ...prev, mobilePrivacy: opt.val }));
+                                            } else {
+                                                setProfileData(prev => {
+                                                    const updated = { ...prev, mobilePrivacy: opt.val };
+                                                    localStorage.setItem('userProfile', JSON.stringify(updated));
+                                                    return updated;
+                                                });
+                                            }
+                                            setTimeout(() => setShowPrivacyModal(false), 200);
+                                        }}>
+                                            <div style={{ marginTop: '2px' }}>
+                                                <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: isActive ? '6px solid #D4AF37' : '2px solid #9ca3af', boxSizing: 'border-box' }}></div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: isActive ? '#1a2a3a' : '#475569', fontWeight: 600, fontSize: '1rem', margin: '0 0 4px 0' }}>{opt.val}</div>
+                                                <div style={{ color: '#64748b', fontSize: '0.85rem' }}>{opt.desc}</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {renderSectionModal()}
+
+                    {/* Favourites Multi-Select Modal */}
+                    {activeFavModal && (
+                        <FavouritesModal
+                            title={favouritesCategories.find(c => c.key === activeFavModal)?.label || ''}
+                            options={favouritesOptions[activeFavModal] || []}
+                            selected={favouritesData[activeFavModal] || []}
+                            onDone={(selectedItems) => handleFavDone(activeFavModal, selectedItems)}
+                            onClose={() => setActiveFavModal(null)}
+                        />
+                    )}
+
+                    {activePrefEditor === 'basic' && (
+                        <PartnerBasicDetailsEditor
+                            initialData={preferenceData}
+                            onSave={(updatedData) => {
+                                setPreferenceData(updatedData);
+                                localStorage.setItem('userPreferences', JSON.stringify(updatedData));
+                                setActivePrefEditor(null);
+                            }}
+                            onClose={() => setActivePrefEditor(null)}
+                        />
+                    )}
+
+                    {activePrefEditor === 'education' && (
+                        <PartnerEducationEditor
+                            initialData={preferenceData}
+                            onSave={(updatedData) => {
+                                setPreferenceData(updatedData);
+                                localStorage.setItem('userPreferences', JSON.stringify(updatedData));
+                                setActivePrefEditor(null);
+                            }}
+                            onClose={() => setActivePrefEditor(null)}
+                        />
+                    )}
+
+                    {activePrefEditor === 'religion' && (
+                        <PartnerReligionEditor
+                            initialData={preferenceData}
+                            onSave={(updatedData) => {
+                                const newData = { ...preferenceData, ...updatedData };
+                                setPreferenceData(newData);
+                                localStorage.setItem('userPreferences', JSON.stringify(newData));
+                                setActivePrefEditor(null);
+                            }}
+                            onCancel={() => setActivePrefEditor(null)}
+                        />
+                    )}
+
+                    {activePrefEditor === 'lifestyle' && (
+                        <PartnerLifestyleEditor
+                            initialData={preferenceData}
+                            onSave={(updatedData) => {
+                                const newData = { ...preferenceData, ...updatedData };
+                                setPreferenceData(newData);
+                                localStorage.setItem('userPreferences', JSON.stringify(newData));
+                                setActivePrefEditor(null);
+                            }}
+                            onCancel={() => setActivePrefEditor(null)}
+                        />
+                    )}
+
+                    {activePrefEditor === 'family' && (
+                        <PartnerFamilyEditor
+                            initialData={preferenceData}
+                            onSave={(updatedData) => {
+                                const newData = { ...preferenceData, ...updatedData };
+                                setPreferenceData(newData);
+                                localStorage.setItem('userPreferences', JSON.stringify(newData));
+                                setActivePrefEditor(null);
+                            }}
+                            onCancel={() => setActivePrefEditor(null)}
+                        />
+                    )}
+
+                    <Footer />
+                </>
             )}
-
-            {renderSectionModal()}
-
-            {/* Favourites Multi-Select Modal */}
-            {activeFavModal && (
-                <FavouritesModal
-                    title={favouritesCategories.find(c => c.key === activeFavModal)?.label || ''}
-                    options={favouritesOptions[activeFavModal] || []}
-                    selected={favouritesData[activeFavModal] || []}
-                    onDone={(selectedItems) => handleFavDone(activeFavModal, selectedItems)}
-                    onClose={() => setActiveFavModal(null)}
-                />
-            )}
-
-            {activePrefEditor === 'basic' && (
-                <PartnerBasicDetailsEditor
-                    initialData={preferenceData}
-                    onSave={(updatedData) => {
-                        setPreferenceData(updatedData);
-                        localStorage.setItem('userPreferences', JSON.stringify(updatedData));
-                        setActivePrefEditor(null);
-                    }}
-                    onClose={() => setActivePrefEditor(null)}
-                />
-            )}
-
-            {activePrefEditor === 'education' && (
-                <PartnerEducationEditor
-                    initialData={preferenceData}
-                    onSave={(updatedData) => {
-                        setPreferenceData(updatedData);
-                        localStorage.setItem('userPreferences', JSON.stringify(updatedData));
-                        setActivePrefEditor(null);
-                    }}
-                    onClose={() => setActivePrefEditor(null)}
-                />
-            )}
-
-            {activePrefEditor === 'religion' && (
-                <PartnerReligionEditor
-                    initialData={preferenceData}
-                    onSave={(updatedData) => {
-                        const newData = { ...preferenceData, ...updatedData };
-                        setPreferenceData(newData);
-                        localStorage.setItem('userPreferences', JSON.stringify(newData));
-                        setActivePrefEditor(null);
-                    }}
-                    onCancel={() => setActivePrefEditor(null)}
-                />
-            )}
-
-            {activePrefEditor === 'lifestyle' && (
-                <PartnerLifestyleEditor
-                    initialData={preferenceData}
-                    onSave={(updatedData) => {
-                        const newData = { ...preferenceData, ...updatedData };
-                        setPreferenceData(newData);
-                        localStorage.setItem('userPreferences', JSON.stringify(newData));
-                        setActivePrefEditor(null);
-                    }}
-                    onCancel={() => setActivePrefEditor(null)}
-                />
-            )}
-
-            {activePrefEditor === 'family' && (
-                <PartnerFamilyEditor
-                    initialData={preferenceData}
-                    onSave={(updatedData) => {
-                        const newData = { ...preferenceData, ...updatedData };
-                        setPreferenceData(newData);
-                        localStorage.setItem('userPreferences', JSON.stringify(newData));
-                        setActivePrefEditor(null);
-                    }}
-                    onCancel={() => setActivePrefEditor(null)}
-                />
-            )}
-
-            <Footer />
         </div>
     );
 };

@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import {
     getMatches, getShortlistedProfiles, getViewedYou, getViewedByYou, getShortlistedYou,
-    sendInterest, shortlistProfile, ignoreProfile, getNearbyMatches, getHoroscopeMatches, getMatchesWithPhotos
+    sendInterest, shortlistProfile, ignoreProfile, getNearbyMatches, getHoroscopeMatches, getMatchesWithPhotos,
+    getEducationPreferenceMatches, getProfile
 } from '../services/api';
 import './Matches.css';
 
@@ -18,6 +19,29 @@ const Matches = () => {
     const [activeCategory, setActiveCategory] = useState('your-matches');
     const [profiles, setProfiles] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [userReligion, setUserReligion] = useState('');
+
+    // Load user's religion from localStorage or API
+    useEffect(() => {
+        const loadReligion = async () => {
+            try {
+                const stored = localStorage.getItem('userProfile');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.religion) {
+                        setUserReligion(parsed.religion);
+                        return;
+                    }
+                }
+                // Fallback: fetch from API
+                const profile = await getProfile();
+                if (profile.religion) {
+                    setUserReligion(profile.religion);
+                }
+            } catch (e) { /* ignore */ }
+        };
+        loadReligion();
+    }, []);
 
     useEffect(() => {
         loadCategoryData();
@@ -36,6 +60,7 @@ const Matches = () => {
                 case 'nearby-matches': data = await getNearbyMatches(); break;
                 case 'matches-with-horoscope': data = await getHoroscopeMatches(); break;
                 case 'matches-with-photos': data = await getMatchesWithPhotos(); break;
+                case 'education-preference': data = await getEducationPreferenceMatches(); break;
                 default: data = [];
             }
             setProfiles(data);
@@ -119,17 +144,29 @@ const Matches = () => {
             title: "Based on profile details",
             items: [
                 { id: 'matches-with-photos', label: 'Matches with photos', desc: 'Matches that have added photos', icon: <Image size={20} /> },
-                { id: 'matches-with-horoscope', label: 'Matches with horoscope', desc: 'Matches that have added horoscope', icon: <Sparkles size={20} /> }
+                { id: 'matches-with-horoscope', label: 'Matches with horoscope', desc: 'Matches that have added horoscope', icon: <Sparkles size={20} /> },
+                { id: 'education-preference', label: 'Educational Preference', desc: 'Matches based on your partner education preference', icon: <GraduationCap size={20} /> }
             ]
         }
     ];
 
+    // Filter matchGroups based on user's religion
+    const isHindu = userReligion && userReligion.toLowerCase() === 'hindu';
+    const filteredMatchGroups = matchGroups.map(group => ({
+        ...group,
+        items: group.items.filter(item => {
+            // Hide horoscope matches for non-Hindu users
+            if (item.id === 'matches-with-horoscope' && !isHindu) return false;
+            return true;
+        })
+    })).filter(group => group.items.length > 0); // Remove empty groups
+
     const getActiveItem = () => {
-        for (const group of matchGroups) {
+        for (const group of filteredMatchGroups) {
             const item = group.items.find(i => i.id === activeCategory);
             if (item) return item;
         }
-        return matchGroups[0].items[0];
+        return filteredMatchGroups[0].items[0];
     };
 
     const activeItem = getActiveItem();
@@ -139,7 +176,9 @@ const Matches = () => {
             ? 'You have not viewed any profiles yet'
             : activeCategory === 'shortlisted-by-you'
                 ? 'Your shortlist is empty'
-                : 'You have no matches right now';
+                : activeCategory === 'education-preference'
+                    ? "No matches found. Make sure you've set an Educational Preference."
+                    : 'You have no matches right now';
 
     const renderList = () => {
         if (loading) {
@@ -164,6 +203,40 @@ const Matches = () => {
                     {activeCategory === 'your-matches' && (
                         <button className="change-pref-btn" onClick={() => navigate('/profile', { state: { openPreferences: true } })}>Change Preferences</button>
                     )}
+                </div>
+            );
+        }
+
+        if (activeCategory === 'education-preference') {
+            return (
+                <div className="edu-pref-section">
+                    <div className="edu-pref-scroll">
+                        {profiles.map(p => (
+                            <div key={p.uniqueId} className="edu-pref-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
+                                <div className="edu-photo-container">
+                                    {p.photo ? (
+                                        <img src={p.photo} alt={p.fullName} />
+                                    ) : (
+                                        <div className="edu-no-photo">
+                                            <Image size={24} />
+                                            <span>No Photo</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="edu-info">
+                                    <h4 className="edu-name">{p.fullName}</h4>
+                                    <span className="edu-age">{p.age} Yrs, {p.height}</span>
+                                    <span className="edu-detail"><GraduationCap size={14} /> {p.education || 'Education N/A'}</span>
+                                    <span className="edu-detail"><MapPin size={14} /> {p.city || 'Location N/A'}</span>
+                                </div>
+                                <div className="edu-actions">
+                                    <button className="edu-btn edu-interest" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
+                                        <Heart size={16} /> Interest
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             );
         }
@@ -242,7 +315,7 @@ const Matches = () => {
 
                     {/* Sidebar */}
                     <aside className="matches-sidebar">
-                        {matchGroups.map((group, groupIndex) => (
+                        {filteredMatchGroups.map((group, groupIndex) => (
                             <div key={groupIndex} className="match-group">
                                 {group.title && <h4 className="group-title">{group.title}</h4>}
                                 <ul className="group-list">

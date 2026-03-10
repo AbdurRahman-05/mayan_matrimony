@@ -117,6 +117,10 @@ const Home = () => {
         // Use upstream granular completion logic
         const allFields = [];
         profileSections.forEach(sec => {
+          // Skip horoscope for non-Hindu users
+          if (sec.id === 'horoscope' && parsed.religion && parsed.religion.toLowerCase() !== 'hindu') {
+            return;
+          }
           sec.fields.forEach(f => {
             if (!allFields.includes(f)) allFields.push(f);
           });
@@ -138,6 +142,10 @@ const Home = () => {
         // Find incomplete sections
         const incomplete = profileSections.filter(sec => {
           if (sec.fields.length === 0) return false;
+          // Only show horoscope section for Hindu users
+          if (sec.id === 'horoscope' && parsed.religion && parsed.religion.toLowerCase() !== 'hindu') {
+            return false;
+          }
           return sec.fields.some(field => {
             const value = parsed[field];
             return !value || value === 'Not Specified' || value === '';
@@ -195,6 +203,9 @@ const Home = () => {
             </div>
             <div className="sidebar-menu-item" onClick={() => navigate('/profile', { state: { openPreferences: true } })}>
               <Settings size={16} /> Edit preferences
+            </div>
+            <div className="sidebar-menu-item" onClick={() => navigate('/settings')}>
+              <Settings size={16} /> Settings
             </div>
             <div className="sidebar-menu-item" style={{ color: '#D4AF37' }} onClick={handleLogout}>
               <LogOut size={16} /> Logout

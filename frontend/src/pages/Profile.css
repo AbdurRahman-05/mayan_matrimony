@@ -6,9 +6,49 @@
     flex-direction: column;
 }
 
+/* Loading Spinner Overlay */
+.profile-loading-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 70px);
+    background: #f0f2f5;
+    flex: 1;
+}
+
+.profile-loading-spinner-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+}
+
+.profile-spinner-icon {
+    color: #D4AF37;
+    animation: profile-spin 1s linear infinite;
+}
+
+.profile-loading-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin: 0;
+    letter-spacing: 0.02em;
+}
+
+@keyframes profile-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Hero Section */
 .ep-hero {
-    padding-top: 80px;
+    padding-top: 100px;
     background: #f0f2f5;
 }
 
@@ -1817,5 +1857,149 @@
     .pm-tip-avatar {
         width: 65px;
         height: 65px;
+    }
+
+    /* Profile page responsive */
+    .ep-hero-inner {
+        max-width: 100%;
+        border-radius: 0;
+        min-height: 240px;
+    }
+
+    .ep-container {
+        max-width: 100%;
+        padding: 0 0 2rem;
+    }
+
+    .ep-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .ep-tab {
+        font-size: 0.88rem;
+        padding: 0.85rem 1rem;
+        white-space: nowrap;
+    }
+
+    .ep-section-card {
+        border-radius: 0;
+        margin-top: 8px;
+        padding: 1.25rem;
+    }
+
+    .ep-habits-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ep-hero-name {
+        font-size: 1.3rem;
+    }
+
+    .bd-container {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .ep-hero {
+        padding-top: 80px;
+    }
+
+    .ep-hero-inner {
+        padding: 1rem;
+        min-height: 220px;
+    }
+
+    .ep-hero-photo {
+        width: 50%;
+        max-width: 180px;
+    }
+
+    .ep-hero-name {
+        font-size: 1.15rem;
+    }
+
+    .ep-hero-id {
+        font-size: 0.82rem;
+    }
+
+    .ep-tab {
+        font-size: 0.82rem;
+        padding: 0.75rem 0.75rem;
+    }
+
+    .ep-section-card {
+        padding: 1rem 0.75rem;
+    }
+
+    .ep-section-title {
+        font-size: 1.1rem;
+    }
+
+    .ep-detail-item {
+        font-size: 0.88rem;
+    }
+
+    .ep-habits-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .ep-habit-card {
+        padding: 12px 6px;
+    }
+
+    .ep-habit-card span {
+        font-size: 0.72rem;
+    }
+
+    .ep-verify-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.85rem 1rem;
+    }
+
+    .ep-completion-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+    }
+
+    .pm-photo-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .bd-container {
+        padding: 0.75rem;
+    }
+
+    .bd-title {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 375px) {
+    .ep-hero-inner {
+        min-height: 200px;
+    }
+
+    .ep-hero-name {
+        font-size: 1.05rem;
+    }
+
+    .ep-tab {
+        font-size: 0.78rem;
+        padding: 0.65rem 0.6rem;
+    }
+
+    .ep-section-title {
+        font-size: 1rem;
+    }
+
+    .ep-habits-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
     }
 }

@@ -5,7 +5,7 @@
     width: 100%;
     z-index: 1000;
     transition: all 0.3s ease;
-    padding: 0.8rem 0;
+    padding: 1.2rem 0;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -32,7 +32,7 @@
 }
 
 .logo-img {
-    width: 120px;
+    width: 150px;
     height: auto;
     display: block;
     object-fit: contain;
@@ -80,6 +80,7 @@
 
 .nav-actions {
     display: flex;
+    align-items: center;
     gap: 1rem;
 }
 
@@ -135,13 +136,39 @@
 
 @media (max-width: 768px) {
 
-    .nav-links,
-    .nav-actions {
+    .nav-links {
+        display: none;
+    }
+
+    .landing-nav-actions {
         display: none;
     }
 
     .mobile-toggle {
         display: block;
+    }
+
+    .logo-img {
+        width: 120px;
+    }
+
+    .navbar {
+        padding: 0.8rem 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-img {
+        width: 100px;
+    }
+
+    .mobile-menu {
+        padding: 1.5rem 1rem;
+        gap: 1rem;
+    }
+
+    .mobile-menu a {
+        font-size: 1rem;
     }
 }
 

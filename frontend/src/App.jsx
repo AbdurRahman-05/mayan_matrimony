@@ -7,7 +7,10 @@ import Search from './pages/Search';
 import Interests from './pages/Interests';
 import ProfileView from './pages/ProfileView';
 import Matches from './pages/Matches';
+import Membership from './pages/Membership';
 import ComingSoon from './pages/ComingSoon';
+import AdminPanel from './pages/AdminPanel';
+import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
@@ -30,6 +33,9 @@ function App() {
           <Route path="/profile-view" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
 
           <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
+          <Route path="/membership" element={<ProtectedRoute><Membership /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/admin" element={<AdminPanel />} />
 
           <Route path="*" element={<ComingSoon title="Page Not Found" />} />
         </Routes>

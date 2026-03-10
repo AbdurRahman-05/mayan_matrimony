@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { UserPlus, ArrowRight, ArrowLeft, Check, Camera, Upload, X, RefreshCw, Smartphone, Mail, ShieldCheck, Send, Lock, Headphones, Users, HelpCircle, Eye, EyeOff } from 'lucide-react';
@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './Register.css';
 import SearchableSelect from '../components/SearchableSelect';
 import { getCountries, getStates, getCities, getCastes, getSects } from '../data/locationData';
-import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions } from '../data/sharedOptions';
+import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions, getMarriedCounts } from '../data/sharedOptions';
 import { login as apiLogin, register as apiRegister, sendOtp as apiSendOtp, verifyOtp as apiVerifyOtp, checkEmailAvailability, checkIdAvailability as apiCheckId, isAuthenticated, checkMobileAvailability } from '../services/api';
 
 const StepIndicator = ({ step, title, currentStep }) => (
@@ -25,6 +25,28 @@ const Register = () => {
     const [loginOtp, setLoginOtp] = useState('');
     const [loginError, setLoginError] = useState('');
     const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+    // Dynamic story data
+    const [storyData, setStoryData] = useState({
+        story1: { coupleName: 'Anjush & Pahuja', description: 'We met through Sri Mayan and felt an instant connection. The platform made it so easy to find my perfect match. Thank you!' },
+        story2: { coupleName: 'Shobhit & Gaurangi', description: 'Sri Mayan helped us find our perfect match effortlessly. The personalized matchmaking experience is truly commendable.' },
+        story3: { coupleName: 'Kanika & Siddharth', description: 'We are grateful to the platform for bringing us together. Our families are extremely happy with this beautiful union.' }
+    });
+
+    useEffect(() => {
+        const fetchStories = async () => {
+            try {
+                const response = await fetch('/api/admin/stories');
+                if (response.ok) {
+                    const data = await response.json();
+                    setStoryData(data);
+                }
+            } catch (error) {
+                console.error('Error fetching story data:', error);
+            }
+        };
+        fetchStories();
+    }, []);
 
     const handleLogin = async () => {
         if (!loginForm.username || !loginForm.password) {
@@ -51,6 +73,16 @@ const Register = () => {
             setLoginOtpMode(true);
         } catch (err) {
             setLoginError(err.message || 'Error checking user credentials. Please try again.');
+        }
+    };
+
+    const handleResendLoginOtp = async () => {
+        setLoginError('');
+        try {
+            await apiSendOtp('login', loginForm.username);
+            alert('OTP has been resent successfully.');
+        } catch (err) {
+            setLoginError(err.message || 'Error resending OTP. Please try again.');
         }
     };
 
@@ -153,6 +185,15 @@ const Register = () => {
     const [isdCode, setIsdCode] = useState('+91');
     const [verificationError, setVerificationError] = useState('');
     const [verificationSuccess, setVerificationSuccess] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    React.useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Validation for Step 0 (Registration)
     const validateJvStep0 = async () => {
@@ -287,28 +328,31 @@ const Register = () => {
         }
 
         try {
-            const result = await apiSendOtp(type, val);
+            await apiSendOtp(type, val);
             setVerification(prev => ({
                 ...prev,
-                [type]: { ...prev[type], sent: true, otp: result.otp }
+                [type]: { ...prev[type], sent: true }
             }));
-            alert(`OTP sent to ${val}: ${result.otp}`);
+            alert(`OTP sent to ${val} successfully.`);
             setErrors(prev => ({ ...prev, [type]: '' }));
         } catch (err) {
             setErrors(prev => ({ ...prev, [type]: err.message || 'Failed to send OTP' }));
         }
     };
 
-    const handleVerifyOtp = (type) => {
-        const { otp, enteredOtp } = verification[type];
-        if (enteredOtp === otp) {
+    const handleVerifyOtp = async (type) => {
+        const val = formData[type];
+        const { enteredOtp } = verification[type];
+
+        try {
+            await apiVerifyOtp(val, enteredOtp);
             setVerification(prev => ({
                 ...prev,
                 [type]: { ...prev[type], verified: true, sent: false }
             }));
             setErrors(prev => ({ ...prev, [type]: '' }));
-        } else {
-            setErrors(prev => ({ ...prev, [type]: 'Invalid OTP. Please try again.' }));
+        } catch (err) {
+            setErrors(prev => ({ ...prev, [type]: err.message || 'Invalid OTP. Please try again.' }));
         }
     };
 
@@ -366,6 +410,10 @@ const Register = () => {
                 }
                 return newData;
             });
+        } else if (name === 'brothers') {
+            setFormData(prev => ({ ...prev, brothers: value, brothersMarried: '' }));
+        } else if (name === 'sisters') {
+            setFormData(prev => ({ ...prev, sisters: value, sistersMarried: '' }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -686,7 +734,7 @@ const Register = () => {
         <div className="register-page">
             <div className="new-landing-wrapper">
                 {/* Landing Navbar */}
-                <nav className="landing-navbar">
+                <nav className={`landing-navbar ${scrolled ? 'scrolled' : ''}`}>
                     <div className="landing-navbar-inner">
                         <div className="landing-navbar-logo">
                             <img src="/logo.png" alt="Sri Mayan" />
@@ -703,8 +751,8 @@ const Register = () => {
                     <div className="ts-hero-overlay"></div>
                     <div className="ts-hero-content">
                         <h1 className="ts-hero-title">
-                            <span className="ts-hero-title-line">Find the one meant</span>
-                            <span className="ts-hero-title-line ts-hero-title-focus">for you</span>
+                            <span className="ts-hero-title-line">Find the one <span className="ts-hero-highlight">meant</span></span>
+                            <span className="ts-hero-title-line ts-hero-title-focus"><span className="ts-hero-highlight">for you</span></span>
                         </h1>
                         <button className="ts-hero-btn" onClick={() => setShowRegistrationForm(true)}>Let's Begin</button>
                     </div>
@@ -719,8 +767,8 @@ const Register = () => {
                                 <img src="/couple1.png" alt="Couple 1" />
                             </div>
                             <div className="ts-story-card-content">
-                                <h3>Anjush & Pahuja</h3>
-                                <p>We met through Sri Mayan and felt an instant connection. The platform made it so easy to find my perfect match. Thank you!</p>
+                                <h3>{storyData.story1.coupleName}</h3>
+                                <p>{storyData.story1.description}</p>
                             </div>
                         </div>
                         <div className="ts-story-card">
@@ -728,8 +776,8 @@ const Register = () => {
                                 <img src="/couple2.png" alt="Couple 2" />
                             </div>
                             <div className="ts-story-card-content">
-                                <h3>Shobhit & Gaurangi</h3>
-                                <p>Sri Mayan helped us find our perfect match effortlessly. The personalized matchmaking experience is truly commendable.</p>
+                                <h3>{storyData.story2.coupleName}</h3>
+                                <p>{storyData.story2.description}</p>
                             </div>
                         </div>
                         <div className="ts-story-card">
@@ -737,8 +785,8 @@ const Register = () => {
                                 <img src="/couple3.png" alt="Couple 3" />
                             </div>
                             <div className="ts-story-card-content">
-                                <h3>Kanika & Siddharth</h3>
-                                <p>We are grateful to the platform for bringing us together. Our families are extremely happy with this beautiful union.</p>
+                                <h3>{storyData.story3.coupleName}</h3>
+                                <p>{storyData.story3.description}</p>
                             </div>
                         </div>
                     </div>
@@ -811,52 +859,7 @@ const Register = () => {
                 </section>
 
                 {/* Footer */}
-                <footer className="ts-footer">
-                    <div className="ts-footer-top">
-                        <div className="ts-footer-col">
-                            <h4>Need Help?</h4>
-                            <ul>
-                                <li>Member Login</li>
-                                <li>Sign Up</li>
-                                <li>Partner Search</li>
-                                <li>How to Use Sri Mayan</li>
-                                <li>Premium Memberships</li>
-                                <li>Customer Support</li>
-                                <li>Site Map</li>
-                            </ul>
-                        </div>
-                        <div className="ts-footer-col">
-                            <h4>Company</h4>
-                            <ul>
-                                <li>About Us</li>
-                                <li>Blog</li>
-                                <li>Careers</li>
-                                <li>Awards & Recognition</li>
-                                <li>Contact Us</li>
-                            </ul>
-                        </div>
-                        <div className="ts-footer-col">
-                            <h4>Privacy & You</h4>
-                            <ul>
-                                <li>Terms of Use</li>
-                                <li>Privacy Policy</li>
-                                <li>Be Safe Online</li>
-                                <li>Report Misuse</li>
-                            </ul>
-                        </div>
-                        <div className="ts-footer-col">
-                            <h4>More</h4>
-                            <ul>
-                                <li>VIP Matchmaking</li>
-                                <li>Success Stories</li>
-                                <li>Live Support</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div className="ts-footer-bottom">
-                        <p className="ts-footer-copy">© 2024 Sri Mayan Matrimony. All rights reserved.</p>
-                    </div>
-                </footer>
+                <Footer />
             </div>
 
             {showLoginModal && (
@@ -930,11 +933,15 @@ const Register = () => {
 
                                 <button className="custom-login-btn primary" onClick={handleLogin}>Login</button>
 
-                                <div className="custom-login-divider">
-                                    <span>OR</span>
-                                </div>
+                                {!/^[a-zA-Z]/.test(loginForm.username) && (
+                                    <>
+                                        <div className="custom-login-divider">
+                                            <span>OR</span>
+                                        </div>
 
-                                <button className="custom-login-btn primary-outline" onClick={handleLoginWithOtp}>Login with OTP</button>
+                                        <button className="custom-login-btn primary-outline" onClick={handleLoginWithOtp}>Login with OTP</button>
+                                    </>
+                                )}
                             </>
                         ) : (
                             <>
@@ -948,6 +955,15 @@ const Register = () => {
                                         onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyLoginOtp(); }}
                                         maxLength={6}
                                     />
+                                    <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                                        <button
+                                            type="button"
+                                            onClick={handleResendLoginOtp}
+                                            style={{ background: 'none', border: 'none', color: '#D4AF37', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, padding: 0 }}
+                                        >
+                                            Resend OTP
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <button className="custom-login-btn primary" onClick={handleVerifyLoginOtp}>Verify OTP & Login</button>
@@ -974,21 +990,9 @@ const Register = () => {
                     <div className="jv-register-overlay">
                         <div className="jv-register-header">
                             <div className="jv-register-header-top">
-                                {jvStep > 0 && jvStep < 4 && (
-                                    <button
-                                        onClick={() => setJvStep(jvStep - 1)}
-                                        className="jv-nav-back-btn"
-                                        title="Go Back"
-                                    >
-                                        <ArrowLeft size={20} color="#333" />
-                                    </button>
-                                )}
                                 <div className="jv-logo-box">
                                     <img src="/logo.png" alt="Sri Mayan" style={{ width: '120px', height: 'auto' }} />
                                 </div>
-                                <button className="jv-close-btn" onClick={() => setShowRegistrationForm(false)}>
-                                    <X size={20} color="#333" />
-                                </button>
                             </div>
                             {jvStep > 0 && jvStep <= 3 && (
                                 <div className="jv-register-tabs">
@@ -1024,17 +1028,9 @@ const Register = () => {
                                         <input type="email" name="email" className="jv-step0-input" placeholder="Your Email *" value={formData.email} onChange={handleInputChange} />
                                     </div>
                                     <div className="jv-step0-input-row" style={{ display: 'flex' }}>
-                                        <select
-                                            style={{ width: '80px', padding: '10px', border: '1px solid #d1d5db', borderRight: 'none', borderRadius: '4px 0 0 4px', outline: 'none', background: '#f3f4f6', fontSize: '1rem', color: '#1f2937' }}
-                                            value={isdCode}
-                                            onChange={(e) => setIsdCode(e.target.value)}
-                                        >
-                                            <option value="+91">+91</option>
-                                            <option value="+1">+1</option>
-                                            <option value="+44">+44</option>
-                                            <option value="+971">+971</option>
-                                            <option value="+61">+61</option>
-                                        </select>
+                                        <div style={{ width: '80px', padding: '10px', border: '1px solid #d1d5db', borderRight: 'none', borderRadius: '4px 0 0 4px', background: '#f3f4f6', fontSize: '1rem', color: '#1f2937', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}>
+                                            +91
+                                        </div>
                                         <input type="tel" name="mobile" className="jv-step0-input" style={{ borderRadius: '0 4px 4px 0', borderLeft: '1px solid #d1d5db' }} placeholder="Mobile No. *" value={formData.mobile} onChange={handleInputChange} />
                                     </div>
                                     <div className="jv-step0-input-row">
@@ -1150,22 +1146,15 @@ const Register = () => {
                                             <div className="jv-form-row">
                                                 <label className="jv-label">Sect</label>
                                                 <div className="jv-input-group">
-                                                    <input
-                                                        type="text"
-                                                        list="sect-options"
+                                                    <SearchableSelect
                                                         name="sect"
                                                         value={formData.sect}
                                                         onChange={handleInputChange}
-                                                        placeholder="Type or select sect"
+                                                        placeholder="Select sect"
                                                         disabled={!formData.religion}
+                                                        options={availableSects}
                                                         className="full"
-                                                        style={{ padding: '10px 14px', width: '100%', border: '1px solid #d1d5db', borderRadius: '4px', outline: 'none', background: !formData.religion ? '#f3f4f6' : '#fff' }}
                                                     />
-                                                    <datalist id="sect-options">
-                                                        {availableSects.map(s => (
-                                                            <option key={s} value={s}>{s}</option>
-                                                        ))}
-                                                    </datalist>
                                                 </div>
                                             </div>
 
@@ -1300,7 +1289,7 @@ const Register = () => {
                                                         ))}
                                                     </div>
                                                 )}
-                                                <button className="jv-submit-btn" onClick={() => handleJvNext(2)}>Continue to Career Details</button>
+                                                <button className="jv-submit-btn" onClick={() => handleJvNext(2)}>Continue</button>
                                             </div>
                                         </div>
                                     )}
@@ -1435,7 +1424,7 @@ const Register = () => {
                                                         ))}
                                                     </div>
                                                 )}
-                                                <button className="jv-submit-btn" onClick={() => handleJvNext(3)}>Continue to Lifestyle Details</button>
+                                                <button className="jv-submit-btn" onClick={() => handleJvNext(3)}>Continue</button>
                                             </div>
                                         </div>
                                     )}
@@ -1544,7 +1533,7 @@ const Register = () => {
                                                 </div>
                                             </div>
 
-                                            {formData.brothers && formData.brothers !== 'None' && (
+                                            {formData.brothers && formData.brothers !== '0' && (
                                                 <div className="jv-form-row">
                                                     <label className="jv-label">Brothers Married</label>
                                                     <div className="jv-input-group">
@@ -1553,7 +1542,7 @@ const Register = () => {
                                                             value={formData.brothersMarried}
                                                             onChange={handleInputChange}
                                                             placeholder="Select"
-                                                            options={['1', '2', '3', '3+']}
+                                                            options={getMarriedCounts(formData.brothers)}
                                                             className="full"
                                                         />
                                                     </div>
@@ -1574,7 +1563,7 @@ const Register = () => {
                                                 </div>
                                             </div>
 
-                                            {formData.sisters && formData.sisters !== 'None' && (
+                                            {formData.sisters && formData.sisters !== '0' && (
                                                 <div className="jv-form-row">
                                                     <label className="jv-label">Sisters Married</label>
                                                     <div className="jv-input-group">
@@ -1583,7 +1572,7 @@ const Register = () => {
                                                             value={formData.sistersMarried}
                                                             onChange={handleInputChange}
                                                             placeholder="Select"
-                                                            options={['1', '2', '3', '3+']}
+                                                            options={getMarriedCounts(formData.sisters)}
                                                             className="full"
                                                         />
                                                     </div>
@@ -1613,37 +1602,19 @@ const Register = () => {
                                     )}
 
                                     {jvStep === 4 && (
-                                        <div style={{ maxWidth: '700px', margin: '0 auto', padding: '20px 0' }}>
-                                            <h2 style={{ fontSize: '1.6rem', color: '#444', fontWeight: 400, textAlign: 'center', marginBottom: '15px' }}>We are almost done!</h2>
-                                            <p style={{ textAlign: 'center', color: '#888', fontSize: '0.9rem', maxWidth: '550px', margin: '0 auto 35px', lineHeight: '1.7' }}>
+                                        <div style={{ maxWidth: '700px', width: '100%', margin: '0 auto', padding: '20px 10px', boxSizing: 'border-box' }}>
+                                            <h2 style={{ fontSize: '1.3rem', color: '#444', fontWeight: 400, textAlign: 'center', marginBottom: '15px' }}>We are almost done!</h2>
+                                            <p style={{ textAlign: 'center', color: '#888', fontSize: '0.85rem', maxWidth: '100%', margin: '0 auto 25px', lineHeight: '1.7', padding: '0 5px', wordWrap: 'break-word' }}>
                                                 To let you connect with other members or for you to get contacted by them, we need to verify that this number belongs to you.
                                                 Just click the button below and follow the instructions - it will just take a few seconds
                                             </p>
 
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '30px' }}>
-                                                <label style={{ color: '#555', fontSize: '0.95rem', whiteSpace: 'nowrap' }}>Mobile number</label>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '25px', flexWrap: 'wrap' }}>
+                                                <label style={{ color: '#555', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Mobile number</label>
                                                 <div style={{ display: 'flex', border: '1px solid #ccc', borderRadius: '6px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-                                                    <select
-                                                        value={isdCode}
-                                                        onChange={(e) => setIsdCode(e.target.value)}
-                                                        style={{ background: '#f7f7f7', padding: '10px 8px', borderRight: '1px solid #ccc', border: 'none', color: '#333', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', outline: 'none' }}
-                                                    >
-                                                        <option value="+91">🇮🇳 +91</option>
-                                                        <option value="+1">🇺🇸 +1</option>
-                                                        <option value="+44">🇬🇧 +44</option>
-                                                        <option value="+971">🇦🇪 +971</option>
-                                                        <option value="+65">🇸🇬 +65</option>
-                                                        <option value="+60">🇲🇾 +60</option>
-                                                        <option value="+61">🇦🇺 +61</option>
-                                                        <option value="+64">🇳🇿 +64</option>
-                                                        <option value="+94">🇱🇰 +94</option>
-                                                        <option value="+49">🇩🇪 +49</option>
-                                                        <option value="+33">🇫🇷 +33</option>
-                                                        <option value="+966">🇸🇦 +966</option>
-                                                        <option value="+974">🇶🇦 +974</option>
-                                                        <option value="+968">🇴🇲 +968</option>
-                                                        <option value="+977">🇳🇵 +977</option>
-                                                    </select>
+                                                    <div style={{ background: '#f7f7f7', padding: '10px 15px', borderRight: '1px solid #ccc', color: '#333', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', userSelect: 'none' }}>
+                                                        🇮🇳 +91
+                                                    </div>
                                                     <input
                                                         type="tel"
                                                         name="mobile"
@@ -1651,7 +1622,7 @@ const Register = () => {
                                                         onChange={handleInputChange}
                                                         placeholder="Enter mobile number"
                                                         maxLength={10}
-                                                        style={{ border: 'none', outline: 'none', padding: '10px 15px', fontSize: '0.95rem', color: '#333', width: '220px', background: '#fff' }}
+                                                        style={{ border: 'none', outline: 'none', padding: '10px 12px', fontSize: '0.9rem', color: '#333', width: '150px', maxWidth: '100%', background: '#fff' }}
                                                     />
                                                 </div>
                                             </div>
@@ -1693,7 +1664,7 @@ const Register = () => {
                                                             value={verificationOtp}
                                                             onChange={(e) => { setVerificationOtp(e.target.value); setVerificationError(''); }}
                                                             maxLength={6}
-                                                            style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '12px 15px', fontSize: '1.1rem', width: '220px', textAlign: 'center', letterSpacing: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+                                                            style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '12px 15px', fontSize: '1rem', width: '180px', maxWidth: '100%', textAlign: 'center', letterSpacing: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', boxSizing: 'border-box' }}
                                                         />
                                                     </div>
                                                     {verificationError && (
@@ -1749,16 +1720,11 @@ const Register = () => {
                                                 </div>
                                             )}
 
-                                            <div style={{ maxWidth: '600px', margin: '0 auto', fontSize: '0.82rem', color: '#777', lineHeight: '1.8', textAlign: 'left', padding: '0 10px' }}>
+                                            <div style={{ maxWidth: '100%', margin: '0 auto', fontSize: '0.8rem', color: '#777', lineHeight: '1.8', textAlign: 'left', padding: '0 10px', boxSizing: 'border-box', wordWrap: 'break-word' }}>
                                                 <p style={{ marginBottom: '14px' }}>
                                                     By verifying the number <strong style={{ color: '#333' }}>{formData.mobile}</strong> against this profile, I acknowledge that the other profile(s) which I have created and verified on Sri Mayan with the same number are of person(s) different from the person represented in this profile.
                                                 </p>
-                                                <p style={{ marginBottom: '14px' }}>
-                                                    We would like to inform you that by verifying the above number you are agreeing to receive calls from the customer support team of Sri Mayan, even though your number is registered with the NCPR.
-                                                </p>
-                                                <p style={{ color: '#D4AF37' }}>
-                                                    Please note that you can change your preference from the 'Alert Manager Settings' page on the Desktop site any time.
-                                                </p>
+
                                             </div>
 
                                             {verificationSuccess && (

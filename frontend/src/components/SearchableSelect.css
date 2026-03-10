@@ -121,18 +121,18 @@
 
 .ss-option:hover,
 .ss-option.ss-highlighted {
-    background: #d1304f;
+    background: #D4AF37;
     color: #fff;
 }
 
 .ss-option.ss-selected {
-    background: #d1304f;
+    background: #D4AF37;
     color: #fff;
     font-weight: 500;
 }
 
 .ss-option.ss-selected.ss-highlighted {
-    background: #bd2745;
+    background: #c49a2f;
 }
 
 .ss-header {

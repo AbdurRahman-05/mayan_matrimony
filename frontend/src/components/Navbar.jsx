@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import NotificationDropdown from './NotificationDropdown';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -35,10 +36,14 @@ const Navbar = () => {
             <li><Link to="/interests">Interests</Link></li>
 
             <li><Link to="/matches">Matches</Link></li>
+            <li><Link to="/membership">Membership</Link></li>
           </ul>
         )}
 
         <div className="nav-actions">
+          {!isLandingPage && (
+            <NotificationDropdown />
+          )}
           {isLandingPage && (
             <div className="landing-nav-actions">
               <Link to="/login" className="nav-login-link">
@@ -68,6 +73,7 @@ const Navbar = () => {
           <Link to="/interests" onClick={() => setIsOpen(false)}>Interests</Link>
 
           <Link to="/matches" onClick={() => setIsOpen(false)}>Matches</Link>
+          <Link to="/membership" onClick={() => setIsOpen(false)}>Membership</Link>
         </div>
       )}
     </nav>

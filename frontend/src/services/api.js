@@ -102,6 +102,12 @@ export async function login(username, password) {
             gender: data.user.gender,
             profileFor: data.user.profileFor
         }));
+        // Store deactivation status
+        if (data.isDeactivated) {
+            localStorage.setItem('isDeactivated', 'true');
+        } else {
+            localStorage.removeItem('isDeactivated');
+        }
     }
     return data;
 }
@@ -157,6 +163,22 @@ export async function verifyOtp(value, otp) {
 
 // ============ PROFILE ============
 
+export async function getFullProfile() {
+    const data = await apiFetch('/profile/full');
+    // Sync all caches at once
+    if (data.profile) {
+        localStorage.setItem('userProfile', JSON.stringify(data.profile));
+        localStorage.setItem('uniqueId', data.profile.uniqueId);
+    }
+    if (data.preferences) {
+        localStorage.setItem('userPreferences', JSON.stringify(data.preferences));
+    }
+    if (data.favourites) {
+        localStorage.setItem('userFavourites', JSON.stringify(data.favourites));
+    }
+    return data;
+}
+
 export async function getProfile() {
     const data = await apiFetch('/profile');
     // Sync with localStorage for backward compatibility
@@ -195,6 +217,13 @@ export async function deletePhoto(photoId) {
 export async function setMainPhoto(photoId) {
     return apiFetch(`/profile/photo/${photoId}/set-main`, {
         method: 'PUT',
+    });
+}
+
+export async function syncPhotos(photos) {
+    return apiFetch('/profile/photos/sync', {
+        method: 'PUT',
+        body: JSON.stringify({ photos }),
     });
 }
 
@@ -321,6 +350,10 @@ export async function getMatchesWithPhotos() {
     return apiFetch('/matches/with-photos');
 }
 
+export async function getEducationPreferenceMatches() {
+    return apiFetch('/matches/education-preference');
+}
+
 // ============ FAVOURITES ============
 
 export async function getFavourites() {
@@ -338,6 +371,78 @@ export async function updateFavourites(favData) {
     return data;
 }
 
+// ============ NOTIFICATIONS ============
+
+export async function getNotifications() {
+    return apiFetch('/notifications');
+}
+
+// ============ SETTINGS ============
+
+export async function verifyPassword(currentPassword) {
+    return apiFetch('/settings/verify-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword }),
+    });
+}
+
+export async function changePassword(currentPassword, newPassword, confirmPassword) {
+    return apiFetch('/settings/change-password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+    });
+}
+
+export async function deactivateProfile(duration) {
+    return apiFetch('/settings/deactivate', {
+        method: 'POST',
+        body: JSON.stringify({ duration }),
+    });
+}
+
+export async function activateProfile() {
+    return apiFetch('/settings/activate', {
+        method: 'POST',
+    });
+}
+
+export async function getDeactivationStatus() {
+    return apiFetch('/settings/deactivation-status');
+}
+
+export async function deleteProfile(reason, otherReason, confirmDelete) {
+    return apiFetch('/settings/delete-profile', {
+        method: 'POST',
+        body: JSON.stringify({ reason, otherReason, confirmDelete }),
+    });
+}
+
+export async function getIgnoredProfiles() {
+    return apiFetch('/settings/ignored');
+}
+
+export async function removeFromIgnored(uniqueId) {
+    return apiFetch(`/settings/ignored/${uniqueId}`, {
+        method: 'DELETE',
+    });
+}
+
+export async function getBlockedProfiles() {
+    return apiFetch('/settings/blocked');
+}
+
+export async function blockProfile(uniqueId) {
+    return apiFetch(`/settings/block/${uniqueId}`, {
+        method: 'POST',
+    });
+}
+
+export async function removeFromBlocked(uniqueId) {
+    return apiFetch(`/settings/blocked/${uniqueId}`, {
+        method: 'DELETE',
+    });
+}
+
 // ============ LOGOUT ============
 
 export function logout() {
@@ -348,6 +453,7 @@ export function logout() {
     localStorage.removeItem('userPreferences');
     localStorage.removeItem('userFavourites');
     localStorage.removeItem('profileViewEvents');
+    localStorage.removeItem('isDeactivated');
 }
 
 // ============ AUTH CHECK ============
@@ -355,3 +461,4 @@ export function logout() {
 export function isAuthenticated() {
     return !!getToken() && localStorage.getItem('isLoggedIn') === 'true';
 }
+

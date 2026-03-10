@@ -153,8 +153,8 @@ const Search = () => {
         state: availableStates,
         city: availableCities,
         residentialStatus: ['Citizenship', 'Permanent Resident', 'Work Permit', 'Student Visa', 'Temporary Visa'],
-        smoking: ['No', 'Occasionally', 'Regularly'],
-        drinking: ['No', 'Occasionally', 'Regularly'],
+        smoking: ['No', 'Occasionally', 'Yes', 'Regularly'],
+        drinking: ['No', 'Occasionally', 'Yes', 'Regularly'],
         foodHabits: ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', 'Vegan']
     };
 

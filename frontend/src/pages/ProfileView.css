@@ -9,7 +9,7 @@
     max-width: 620px;
     width: 100%;
     margin: 0 auto;
-    padding: 5.5rem 1rem 3rem;
+    padding: 6.5rem 1rem 3rem;
     flex: 1;
 }
 
@@ -216,7 +216,7 @@
 /* Responsive */
 @media (max-width: 768px) {
     .pv-container {
-        padding: 5rem 0.5rem 2rem;
+        padding: 6rem 0.5rem 2rem;
     }
 
     .pv-photo-block {
@@ -243,5 +243,53 @@
         white-space: nowrap;
         font-size: 0.85rem;
         padding: 11px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pv-container {
+        padding: 5.5rem 0.25rem 2rem;
+    }
+
+    .pv-photo-block {
+        min-height: 240px;
+    }
+
+    .pv-photo-block img {
+        height: 240px;
+    }
+
+    .pv-photo-placeholder {
+        height: 240px;
+    }
+
+    .pv-hero-info {
+        padding: 16px 16px 8px;
+    }
+
+    .pv-name {
+        font-size: 1.2rem;
+    }
+
+    .pv-content {
+        padding: 16px 12px;
+    }
+
+    .pv-tab {
+        font-size: 0.8rem;
+        padding: 10px 10px;
+    }
+
+    .pv-card {
+        padding: 14px;
+    }
+
+    .pv-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .pv-row strong {
+        text-align: left;
     }
 }

@@ -3,8 +3,8 @@ import { ArrowLeft, X } from 'lucide-react';
 import './PartnerReligionEditor.css';
 
 const dietaryOptions = ["Vegetarian", "Non Vegetarian", "Jain", "Eggetarian"];
-const smokingOptions = ["Yes", "No", "Occasionally"];
-const drinkingOptions = ["Yes", "No", "Occasionally"];
+const smokingOptions = ['No', 'Occasionally', 'Yes', 'Regularly'];
+const drinkingOptions = ['No', 'Occasionally', 'Yes', 'Regularly'];
 const specialCaseOptions = [
     "None",
     "Physically disabled from birth",

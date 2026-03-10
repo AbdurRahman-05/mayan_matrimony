@@ -263,7 +263,7 @@ const Interests = () => {
                                                 <div className="match-card-footer">
                                                     {activeSection === 'received' && item.status === 'pending' ? (
                                                         <>
-                                                            <button className="card-action-btn" style={{ color: '#00a650', borderRight: '1px solid #fee2e2' }} onClick={(e) => handleRespond(e, item.id, 'accepted')}>
+                                                            <button className="card-action-btn" style={{ color: '#00a650', borderRight: '1px solid #fde68a' }} onClick={(e) => handleRespond(e, item.id, 'accepted')}>
                                                                 <Check size={18} />
                                                                 Accept Interest
                                                             </button>
