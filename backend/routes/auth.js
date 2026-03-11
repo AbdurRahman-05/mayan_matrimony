@@ -315,10 +315,10 @@ router.post('/send-otp', async (req, res) => {
     try {
         const { type, value } = req.body;
 
-        if (type === 'login') {
+        if (type === 'login' || type === 'forgot') {
             const users = await sql`SELECT id FROM users WHERE email = ${value} OR mobile = ${value} OR unique_id = ${value}`;
             if (users.length === 0) {
-                return res.status(404).json({ error: 'User does not exist.' });
+                return res.status(404).json({ error: 'Account with this mobile/email does not exist.' });
             }
         }
 
@@ -427,6 +427,66 @@ router.post('/verify-otp', async (req, res) => {
     } catch (error) {
         console.error('Verify OTP Error:', error);
         res.status(500).json({ error: 'Verification failed: ' + error.message });
+    }
+});
+
+// Reset Password
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { value, otp, newPassword } = req.body;
+
+        if (!value || !otp || !newPassword) {
+            return res.status(400).json({ error: 'Value, OTP, and new password are required' });
+        }
+
+        // 1. Verify OTP first
+        const stored = global.otpStore?.[value];
+        if (!stored || stored.expires < Date.now()) {
+            return res.status(400).json({ error: 'OTP expired. Please request a new one.' });
+        }
+
+        if (stored.type === 'sms') {
+            try {
+                const token = await getMessageCentralToken();
+                const customerId = process.env.MESSAGECENTRAL_CUSTOMER_ID;
+                const url = `https://cpaas.messagecentral.com/verification/v3/validateOtp?countryCode=91&customerId=${customerId}&mobileNumber=${value}&verificationId=${stored.verificationId}&code=${otp}`;
+
+                const response = await axios.get(url, { headers: { authToken: token } });
+                
+                if (!(response.data && response.data.responseCode == 200)) {
+                    return res.status(400).json({ error: 'Incorrect or expired OTP' });
+                }
+            } catch (err) {
+                console.error("Message Central Verify Error:", err.response?.data || err.message);
+                return res.status(400).json({ error: 'Invalid OTP' });
+            }
+        } else {
+            if (stored.otp !== otp) {
+                return res.status(400).json({ error: 'Invalid OTP' });
+            }
+        }
+
+        // 2. OTP is valid, clear it
+        delete global.otpStore[value];
+
+        // 3. Update password
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(newPassword, salt);
+
+        const result = await sql`
+            UPDATE users SET password_hash = ${hash}
+            WHERE email = ${value} OR mobile = ${value} OR unique_id = ${value}
+            RETURNING id
+        `;
+
+        if (result.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({ success: true, message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Reset Password Error:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
     }
 });
 

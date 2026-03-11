@@ -1,9 +1,31 @@
 import sql from './db.js';
+import bcrypt from 'bcryptjs';
 
 async function setupDatabase() {
   console.log('🚀 Setting up database tables...');
 
   try {
+    // Admin settings table
+    await sql`
+      CREATE TABLE IF NOT EXISTS admin_settings (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        otp VARCHAR(10),
+        otp_expires TIMESTAMP
+      )
+    `;
+    console.log('✅ admin_settings table created');
+
+    // Seed default admin if none exists
+    const adminCheck = await sql`SELECT * FROM admin_settings WHERE email = 'srimayan2000@gmail.com'`;
+    if (adminCheck.length === 0) {
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash('srimayan@1234', salt);
+      await sql`INSERT INTO admin_settings (email, password_hash) VALUES ('srimayan2000@gmail.com', ${hash})`;
+      console.log('✅ Default admin user seeded');
+    }
+
     // Users table - auth and account
     await sql`
       CREATE TABLE IF NOT EXISTS users (

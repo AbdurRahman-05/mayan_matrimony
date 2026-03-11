@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import sql from '../db.js';
+import bcrypt from 'bcryptjs';
+import { Resend } from 'resend';
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -120,13 +122,155 @@ router.get('/users', async (req, res) => {
 });
 
 // 4. Admin Login
-router.post('/login', (req, res) => {
-    const { id, password } = req.body;
-    // Hardcoded credentials for now since we don't have an admin table
-    if (id === 'srimayan2000@gmail.com' && password === 'srimayan@1234') {
-        res.json({ success: true });
-    } else {
-        res.status(401).json({ success: false, error: 'Invalid ID or Password' });
+router.post('/login', async (req, res) => {
+    try {
+        const { id, password } = req.body;
+        if (!id || !password) {
+            return res.status(400).json({ success: false, error: 'ID and Password are required' });
+        }
+
+        const admins = await sql`SELECT * FROM admin_settings WHERE email = ${id}`;
+        if (admins.length === 0) {
+            return res.status(401).json({ success: false, error: 'Invalid ID or Password' });
+        }
+
+        const admin = admins[0];
+        const validPassword = await bcrypt.compare(password, admin.password_hash);
+        
+        if (validPassword) {
+            res.json({ success: true });
+        } else {
+            res.status(401).json({ success: false, error: 'Invalid ID or Password' });
+        }
+    } catch (error) {
+        console.error('Admin login error:', error);
+        res.status(500).json({ success: false, error: 'Login failed due to server error' });
+    }
+});
+
+// Configure Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// 4.1 Forgot Password (Send OTP)
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Email is required' });
+        }
+
+        const admins = await sql`SELECT * FROM admin_settings WHERE email = ${email}`;
+        if (admins.length === 0) {
+            return res.status(404).json({ success: false, error: 'No admin account found with this email' });
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        // Set expiry to 10 minutes from now
+        const expiresAt = new Date(Date.now() + 10 * 60000);
+
+        await sql`
+            UPDATE admin_settings 
+            SET otp = ${otp}, otp_expires = ${expiresAt} 
+            WHERE email = ${email}
+        `;
+
+        // Check if Resend API key is provided, if not fallback to console
+        if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.startsWith('re_')) {
+            const { data, error } = await resend.emails.send({
+                from: 'Matrimony Admin <onboarding@resend.dev>',
+                to: email,
+                subject: 'Admin Password Reset OTP',
+                html: `<p>Your OTP for resetting the admin password is: <b>${otp}</b>.</p><p>It will expire in 10 minutes.</p>`,
+            });
+
+            if (error) {
+                console.error("[Resend Error]", error);
+                throw new Error("Failed to send OTP email via Resend");
+            }
+            console.log(`[Email Sent] OTP sent to ${email}`);
+        } else {
+            console.log(`\n================================`);
+            console.log(`[Mock Email] OTP for ${email}: ${otp}`);
+            console.log(`================================\n`);
+        }
+
+        res.json({ success: true, message: 'OTP sent successfully' });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ success: false, error: 'Failed to process request' });
+    }
+});
+
+// 4.2 Verify OTP
+router.post('/verify-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp) {
+            return res.status(400).json({ success: false, error: 'Email and OTP are required' });
+        }
+
+        const admins = await sql`SELECT otp, otp_expires FROM admin_settings WHERE email = ${email}`;
+        if (admins.length === 0) {
+            return res.status(404).json({ success: false, error: 'Admin account not found' });
+        }
+
+        const admin = admins[0];
+        
+        if (admin.otp !== otp) {
+            return res.status(400).json({ success: false, error: 'Invalid OTP' });
+        }
+
+        if (new Date() > new Date(admin.otp_expires)) {
+            return res.status(400).json({ success: false, error: 'OTP has expired' });
+        }
+
+        res.json({ success: true, message: 'OTP verified successfully' });
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        res.status(500).json({ success: false, error: 'Verification failed' });
+    }
+});
+
+// 4.3 Reset Password
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ success: false, error: 'Missing required fields' });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+        }
+
+        const admins = await sql`SELECT otp, otp_expires FROM admin_settings WHERE email = ${email}`;
+        if (admins.length === 0) {
+            return res.status(404).json({ success: false, error: 'Admin account not found' });
+        }
+
+        const admin = admins[0];
+        
+        // Double check OTP and expiry one last time
+        if (admin.otp !== otp || new Date() > new Date(admin.otp_expires)) {
+            return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update password and clear OTP
+        await sql`
+            UPDATE admin_settings 
+            SET password_hash = ${hashedPassword}, otp = NULL, otp_expires = NULL 
+            WHERE email = ${email}
+        `;
+
+        res.json({ success: true, message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ success: false, error: 'Failed to reset password' });
     }
 });
 
