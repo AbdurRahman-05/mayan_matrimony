@@ -25,6 +25,7 @@ function App() {
           <Route path="/" element={<Register />} />
           <Route path="/login" element={<Register />} />
           <Route path="/register" element={<Navigate to="/" replace />} />
+          <Route path="/membership" element={<Membership />} />
 
           {/* Protected Routes */}
           <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
@@ -35,7 +36,6 @@ function App() {
           <Route path="/profile-view" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
 
           <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
-          <Route path="/membership" element={<ProtectedRoute><Membership /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminPanel />} />
 

@@ -161,6 +161,13 @@ export async function verifyOtp(value, otp) {
     return data;
 }
 
+export async function resetPassword(value, otp, newPassword) {
+    return apiFetch('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ value, otp, newPassword }),
+    });
+}
+
 // ============ PROFILE ============
 
 export async function getFullProfile() {

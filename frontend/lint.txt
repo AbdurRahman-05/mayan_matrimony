@@ -1,0 +1,168 @@
+﻿
+> matrimony@0.0.0 lint
+> eslint .
+
+
+C:\Matrimony\frontend\src\components\GlobalModal.jsx
+   6:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  13:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  17:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Matrimony\frontend\src\components\PartnerEducationEditor.jsx
+  21:11  error  'suggestedDegrees' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Matrimony\frontend\src\components\PartnerFamilyEditor.jsx
+  20:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  18 |     useEffect(() => {
+  19 |         if (initialData) {
+> 20 |             setForm({
+     |             ^^^^^^^ Avoid calling setState() directly within an effect
+  21 |                 prefFamilyStatus: initialData.prefFamilyStatus || '',
+  22 |                 prefFamilyType: initialData.prefFamilyType || '',
+  23 |                 prefLivingWithParents: initialData.prefLivingWithParents || ''  react-hooks/set-state-in-effect
+
+C:\Matrimony\frontend\src\components\PartnerLifestyleEditor.jsx
+  28:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  26 |     useEffect(() => {
+  27 |         if (initialData) {
+> 28 |             setForm({
+     |             ^^^^^^^ Avoid calling setState() directly within an effect
+  29 |                 prefDietary: initialData.prefDietary || '',
+  30 |                 prefSmoking: initialData.prefSmoking || '',
+  31 |                 prefDrinking: initialData.prefDrinking || '',  react-hooks/set-state-in-effect
+
+C:\Matrimony\frontend\src\components\PartnerReligionEditor.jsx
+  97:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+   95 |     useEffect(() => {
+   96 |         if (initialData) {
+>  97 |             setForm({
+      |             ^^^^^^^ Avoid calling setState() directly within an effect
+   98 |                 prefReligion: initialData.prefReligion || '',
+   99 |                 prefSect: initialData.prefSect || '',
+  100 |                 prefCaste: initialData.prefCaste || '',  react-hooks/set-state-in-effect
+
+C:\Matrimony\frontend\src\pages\AdminPanel.jsx
+   7:11  error  'navigate' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  58:18  error  'error' is defined but never used                                                         no-unused-vars
+
+C:\Matrimony\frontend\src\pages\Home.jsx
+  105:10  error    'loading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                             no-unused-vars
+  163:6   warning  React Hook useEffect has a missing dependency: 'profileSections'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Matrimony\frontend\src\pages\Interests.jsx
+  22:8   warning  React Hook useEffect has a missing dependency: 'loadInterests'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  60:11  error    'handleShortlistAction' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u             no-unused-vars
+  85:11  error    'handleChatAction' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                  no-unused-vars
+  85:34  error    'uniqueId' is defined but never used                                                                              no-unused-vars
+
+C:\Matrimony\frontend\src\pages\Matches.jsx
+  42:22  error    'e' is defined but never used                                                                                        no-unused-vars
+  49:8   warning  React Hook useEffect has a missing dependency: 'loadCategoryData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Matrimony\frontend\src\pages\Membership.jsx
+  101:11  error  'navigate' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Matrimony\frontend\src\pages\Profile.jsx
+   14:102  error  'uploadPhoto' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                         no-unused-vars
+   14:130  error  'apiDeletePhoto' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                      no-unused-vars
+   14:146  error  'setMainPhoto' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                        no-unused-vars
+   17:33   error  'genderOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                       no-unused-vars
+   17:64   error  'booleanOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                      no-unused-vars
+   17:80   error  'childrenCountOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                no-unused-vars
+   17:102  error  'physicalStatusOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u               no-unused-vars
+   17:144  error  'heights' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                             no-unused-vars
+   17:153  error  'religions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                           no-unused-vars
+   17:226  error  'currencies' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                          no-unused-vars
+   17:249  error  'incomes' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                             no-unused-vars
+   17:258  error  'residentialStatusOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u            no-unused-vars
+   17:370  error  'familyValuesOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                 no-unused-vars
+   38:12   error  'emailError' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                 no-unused-vars
+   51:98   error  'e' is defined but never used                                                                              no-unused-vars
+  119:18   error  'err' is defined but never used                                                                            no-unused-vars
+  127:107  error  'e' is defined but never used                                                                              no-unused-vars
+  213:101  error  'e' is defined but never used                                                                              no-unused-vars
+  268:34   error  'e' is defined but never used                                                                              no-unused-vars
+  268:37   error  Empty block statement                                                                                      no-empty
+  483:11   error  'handleEditPreferenceClick' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  531:11   error  'completionPercentage' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u       no-unused-vars
+  587:11   error  'previewHobbies' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u             no-unused-vars
+  597:11   error  'pronounPoss' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                no-unused-vars
+  598:11   error  'pronounObjCap' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u              no-unused-vars
+  616:19   error  'locationStr' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                no-unused-vars
+  617:19   error  'formatDob' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                  no-unused-vars
+
+C:\Matrimony\frontend\src\pages\ProfileView.jsx
+    6:10  error  'searchProfileById' is defined but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+    6:41  error  'sendInterest' is defined but never used. Allowed unused vars must match /^[A-Z_]/u          no-unused-vars
+    6:55  error  'shortlistProfile' is defined but never used. Allowed unused vars must match /^[A-Z_]/u      no-unused-vars
+    6:73  error  'getViewedYou' is defined but never used. Allowed unused vars must match /^[A-Z_]/u          no-unused-vars
+   33:40  error  'getProfileById' is not defined                                                              no-undef
+   41:25  error  'getPreferences' is not defined                                                              no-undef
+   42:25  error  'getFavourites' is not defined                                                               no-undef
+  125:11  error  'pronounPoss' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Matrimony\frontend\src\pages\Register.jsx
+    11:10   error  'profileManagedOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u       no-unused-vars
+    11:33   error  'genderOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u               no-unused-vars
+    11:102  error  'physicalStatusOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u       no-unused-vars
+    11:125  error  'disabilityOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u           no-unused-vars
+    11:226  error  'currencies' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                  no-unused-vars
+    11:349  error  'familyStatusOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+    11:370  error  'familyValuesOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+    11:456  error  'familyIncomes' is defined but never used. Allowed unused vars must match /^[A-Z_]/u               no-unused-vars
+    11:471  error  'livingWithParentsOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u    no-unused-vars
+    11:497  error  'settleAbroadOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+    14:32   error  'title' is defined but never used                                                                  no-unused-vars
+   171:28   error  'setRegisterMethod' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   179:12   error  'isCameraOpen' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u       no-unused-vars
+   180:26   error  'setIsRegistered' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u    no-unused-vars
+   181:12   error  'loading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u            no-unused-vars
+   182:12   error  'photoPreview' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u       no-unused-vars
+   187:21   error  'setIsdCode' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+   236:22   error  'err' is defined but never used                                                                    no-unused-vars
+   325:11   error  'handleSendOtp' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u      no-unused-vars
+   345:11   error  'handleVerifyOtp' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u    no-unused-vars
+   361:11   error  'handleOtpChange' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u    no-unused-vars
+   429:11   error  'handleFileChange' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u   no-unused-vars
+   438:11   error  'startCamera' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u        no-unused-vars
+   461:11   error  'capturePhoto' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u       no-unused-vars
+   484:11   error  'retakePhoto' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u        no-unused-vars
+   581:18   error  'err' is defined but never used                                                                    no-unused-vars
+   601:11   error  'handleBack' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+   638:11   error  'handleNext' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+   653:11   error  'handleSkip' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+  1647:70   error  'err' is defined but never used                                                                    no-unused-vars
+
+C:\Matrimony\frontend\src\pages\Search.jsx
+    1:27  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+    9:10  error  'getSearchOptions' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  219:33  error  'searchProfileById' is not defined                                                       no-undef
+
+C:\Matrimony\frontend\src\pages\Settings.jsx
+   69:18  error  'e' is defined but never used  no-unused-vars
+  213:18  error  'e' is defined but never used  no-unused-vars
+  239:18  error  'e' is defined but never used  no-unused-vars
+
+Γ£û 89 problems (86 errors, 3 warnings)
+

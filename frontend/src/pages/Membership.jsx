@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Check, X, Shield, Star, Crown, Diamond } from 'lucide-react';
+import { Check, X, Shield, Star, Crown, Diamond, Award, Gem, Zap } from 'lucide-react';
 import { showAlert } from '../components/GlobalModal';
 import './Membership.css';
 
@@ -101,6 +101,11 @@ const Membership = () => {
     const navigate = useNavigate();
 
     const handlePay = (plan) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/', { state: { showRegister: true } });
+            return;
+        }
         showAlert(`Payment for ${plan.name} plan (${plan.price}) — Payment gateway integration coming soon!`, 'Information');
     };
 

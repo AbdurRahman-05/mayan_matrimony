@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { ArrowLeft, User, Heart, Lock, Bookmark, Image as ImageIcon, MapPin, Briefcase, GraduationCap, Clock, MessageCircle, MoreVertical, ShieldCheck, Phone, Mail, X, Check, Eye } from 'lucide-react';
+import { ArrowLeft, User, Heart, Lock, Bookmark, Image as ImageIcon, MapPin, Briefcase, GraduationCap, Clock, MessageCircle, MoreVertical, ShieldCheck, Phone, Mail, X, Check, Eye, Loader2, Ruler, Globe2, Images } from 'lucide-react';
 import { showAlert } from '../components/GlobalModal';
-import { searchProfileById, getProfile, sendInterest, shortlistProfile, getViewedYou } from '../services/api';
+import { getProfileById, getProfile, getPreferences, getFavourites, sendInterest, shortlistProfile, getViewedYou } from '../services/api';
 import './ProfileView.css';
 
 const ProfileView = () => {

@@ -6,7 +6,7 @@ import { Search as SearchIcon, User, Heart, Bookmark, Loader2, MapPin, Briefcase
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import { showAlert, showConfirm } from '../components/GlobalModal';
 import { countryStateCityMap } from '../data/locationData';
-import { getSearchOptions, searchProfiles, sendInterest, shortlistProfile, ignoreProfile } from '../services/api';
+import { searchProfiles, searchProfileById, sendInterest, shortlistProfile, ignoreProfile } from '../services/api';
 import './Search.css';
 import './Matches.css';
 

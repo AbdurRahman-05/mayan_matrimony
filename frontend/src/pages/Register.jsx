@@ -9,7 +9,7 @@ import './Register.css';
 import SearchableSelect from '../components/SearchableSelect';
 import { getCountries, getStates, getCities, getCastes, getSects } from '../data/locationData';
 import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions, getMarriedCounts } from '../data/sharedOptions';
-import { login as apiLogin, register as apiRegister, sendOtp as apiSendOtp, verifyOtp as apiVerifyOtp, checkEmailAvailability, checkIdAvailability as apiCheckId, isAuthenticated, checkMobileAvailability } from '../services/api';
+import { login as apiLogin, register as apiRegister, sendOtp as apiSendOtp, verifyOtp as apiVerifyOtp, resetPassword as apiResetPassword, checkEmailAvailability, checkIdAvailability as apiCheckId, isAuthenticated, checkMobileAvailability } from '../services/api';
 
 const StepIndicator = ({ step, title, currentStep }) => (
     <div className={`step-indicator ${step === currentStep ? 'active' : step < currentStep ? 'completed' : ''}`}>
@@ -27,6 +27,11 @@ const Register = () => {
     const [loginOtp, setLoginOtp] = useState('');
     const [loginError, setLoginError] = useState('');
     const [showLoginPassword, setShowLoginPassword] = useState(false);
+    const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
+    const [forgotPasswordStep, setForgotPasswordStep] = useState('request'); // 'request', 'verify', 'reset'
+    const [forgotPasswordData, setForgotPasswordData] = useState({ mobile: '', otp: '', newPassword: '', confirmPassword: '' });
+    const [forgotPasswordError, setForgotPasswordError] = useState('');
+    const [isForgotLoading, setIsForgotLoading] = useState(false);
 
     // Dynamic story data
     const [storyData, setStoryData] = useState({
@@ -104,6 +109,56 @@ const Register = () => {
             setLoginError(err.message || 'Invalid OTP. Please try again.');
         }
     };
+
+    const handleForgotPasswordRequest = async () => {
+        if (!forgotPasswordData.mobile || forgotPasswordData.mobile.length < 10) {
+            setForgotPasswordError('Please enter a valid mobile number.');
+            return;
+        }
+        setIsForgotLoading(true);
+        setForgotPasswordError('');
+        try {
+            await apiSendOtp('forgot', forgotPasswordData.mobile);
+            setForgotPasswordStep('verify');
+        } catch (err) {
+            setForgotPasswordError(err.message || 'Error sending OTP. Please try again.');
+        } finally {
+            setIsForgotLoading(false);
+        }
+    };
+
+    const handleForgotPasswordVerify = async () => {
+        if (!forgotPasswordData.otp || forgotPasswordData.otp.length < 4) {
+            setForgotPasswordError('Please enter a valid OTP.');
+            return;
+        }
+        setForgotPasswordStep('reset');
+    };
+
+    const handleForgotPasswordReset = async () => {
+        if (forgotPasswordData.newPassword !== forgotPasswordData.confirmPassword) {
+            setForgotPasswordError('Passwords do not match.');
+            return;
+        }
+        if (forgotPasswordData.newPassword.length < 8) {
+            setForgotPasswordError('Password must be at least 8 characters long.');
+            return;
+        }
+        setIsForgotLoading(true);
+        setForgotPasswordError('');
+        try {
+            await apiResetPassword(forgotPasswordData.mobile, forgotPasswordData.otp, forgotPasswordData.newPassword);
+            showAlert('Password reset successfully! Please login with your new password.', 'Success');
+            setIsForgotPasswordMode(false);
+            setForgotPasswordStep('request');
+            setForgotPasswordData({ mobile: '', otp: '', newPassword: '', confirmPassword: '' });
+            setLoginForm(prev => ({ ...prev, username: forgotPasswordData.mobile }));
+        } catch (err) {
+            setForgotPasswordError(err.message || 'Error resetting password. Please try again.');
+        } finally {
+            setIsForgotLoading(false);
+        }
+    };
     // Check for existing session
     React.useEffect(() => {
         if (isAuthenticated()) {
@@ -116,7 +171,13 @@ const Register = () => {
             setShowRegistrationForm(false);
             setShowLoginModal(true);
         }
-    }, [location.pathname]);
+
+        if (location.state?.showRegister) {
+            setShowRegistrationForm(true);
+            // Optional: clear state so a page refresh doesn't reopen it
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.pathname, location.state]);
 
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -860,6 +921,28 @@ const Register = () => {
                     </div>
                 </section>
 
+                {/* Membership Preview Section */}
+                <section className="ts-membership-preview" style={{ padding: '80px 20px', textAlign: 'center', backgroundColor: '#fafafa', borderTop: '1px solid #eaeaea' }}>
+                    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                        <p className="ts-steps-kicker" style={{ color: '#ca9d42', fontWeight: 600, fontSize: '0.85rem', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1.5px' }}>UPGRADE YOUR EXPERIENCE</p>
+                        <h2 className="ts-steps-title" style={{ fontSize: '2.5rem', color: '#1a1a1a', marginBottom: '20px' }}>
+                            Premium <span style={{ color: '#ca9d42' }}>Membership Plans</span>
+                        </h2>
+                        <p style={{ color: '#606060', fontSize: '1.1rem', marginBottom: '40px', lineHeight: '1.6' }}>
+                            Unlock exclusive features to find your perfect match faster. View contact details, send direct messages, and get priority visibility.
+                        </p>
+                        <button 
+                            className="ts-steps-cta" 
+                            onClick={() => window.location.href = '/membership'}
+                            style={{ backgroundColor: '#1a1a1a', color: '#fff', padding: '16px 40px', fontSize: '1.1rem', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 500, transition: 'all 0.3s' }}
+                            onMouseOver={(e) => { e.target.style.backgroundColor = '#ca9d42'; e.target.style.transform = 'translateY(-2px)'; }}
+                            onMouseOut={(e) => { e.target.style.backgroundColor = '#1a1a1a'; e.target.style.transform = 'translateY(0)'; }}
+                        >
+                            See Membership Plans
+                        </button>
+                    </div>
+                </section>
+
                 {/* Footer */}
                 <Footer />
             </div>
@@ -867,115 +950,245 @@ const Register = () => {
             {showLoginModal && (
                 <div className="custom-login-modal-overlay">
                     <div className="custom-login-modal">
-                        <button className="custom-login-close" onClick={() => { setShowLoginModal(false); setLoginOtpMode(false); setLoginError(''); setLoginOtp(''); }}>
+                        <button className="custom-login-close" onClick={() => { 
+                            setShowLoginModal(false); 
+                            setLoginOtpMode(false); 
+                            setLoginError(''); 
+                            setLoginOtp(''); 
+                            setIsForgotPasswordMode(false);
+                            setForgotPasswordStep('request');
+                            setForgotPasswordError('');
+                        }}>
                             <X size={20} color="#b1b1b1" />
                         </button>
-                        <h2 className="custom-login-title">Welcome back! Please Login</h2>
 
-                        {loginError && (
-                            <div style={{ color: '#e74c3c', fontSize: '0.85rem', marginBottom: '10px', padding: '8px 12px', background: '#fdf2f2', borderRadius: '6px', border: '1px solid #fecaca' }}>
-                                {loginError}
-                            </div>
-                        )}
-
-                        <div className="custom-login-field">
-                            <label>Mobile No. / Email ID</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Mobile no. / Email ID"
-                                value={loginForm.username}
-                                onChange={(e) => { setLoginForm(prev => ({ ...prev, username: e.target.value })); setLoginError(''); }}
-                            />
-                        </div>
-
-                        {!loginOtpMode ? (
+                        {isForgotPasswordMode ? (
                             <>
-                                <div className="custom-login-field">
-                                    <label>Password</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <input
-                                            type={showLoginPassword ? "text" : "password"}
-                                            placeholder="Enter password"
-                                            value={loginForm.password}
-                                            onChange={(e) => { setLoginForm(prev => ({ ...prev, password: e.target.value })); setLoginError(''); }}
-                                            onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
-                                            style={{ width: '100%', paddingRight: '40px' }}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowLoginPassword(!showLoginPassword)}
-                                            style={{
-                                                position: 'absolute',
-                                                right: '10px',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                background: 'none',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                color: '#888',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                padding: 0
-                                            }}
-                                        >
-                                            {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                        </button>
+                                <h2 className="custom-login-title">Reset Your Password</h2>
+                                
+                                {forgotPasswordError && (
+                                    <div style={{ color: '#e74c3c', fontSize: '0.85rem', marginBottom: '10px', padding: '8px 12px', background: '#fdf2f2', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                        {forgotPasswordError}
                                     </div>
-                                </div>
+                                )}
 
-                                <div className="custom-login-options">
-                                    <label className="custom-login-stay">
-                                        <input type="checkbox" defaultChecked />
-                                        <span>Stay Logged in</span>
-                                        <HelpCircle size={15} color="#999" style={{ marginLeft: '4px', cursor: 'help' }} />
-                                    </label>
-                                    <a href="#forgot" className="custom-login-forgot">Forgot Password?</a>
-                                </div>
-
-                                <button className="custom-login-btn primary" onClick={handleLogin}>Login</button>
-
-                                {!/^[a-zA-Z]/.test(loginForm.username) && (
+                                {forgotPasswordStep === 'request' && (
                                     <>
-                                        <div className="custom-login-divider">
-                                            <span>OR</span>
+                                        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>Enter your registered mobile number to receive an OTP.</p>
+                                        <div className="custom-login-field">
+                                            <label>Mobile Number</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Enter 10-digit mobile number"
+                                                value={forgotPasswordData.mobile}
+                                                onChange={(e) => { 
+                                                    setForgotPasswordData(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) })); 
+                                                    setForgotPasswordError(''); 
+                                                }}
+                                                maxLength={10}
+                                            />
                                         </div>
-
-                                        <button className="custom-login-btn primary-outline" onClick={handleLoginWithOtp}>Login with OTP</button>
+                                        <button 
+                                            className="custom-login-btn primary" 
+                                            onClick={handleForgotPasswordRequest}
+                                            disabled={isForgotLoading}
+                                        >
+                                            {isForgotLoading ? <RefreshCw size={18} className="animate-spin" /> : 'Send OTP'}
+                                        </button>
                                     </>
                                 )}
+
+                                {forgotPasswordStep === 'verify' && (
+                                    <>
+                                        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>Enter the OTP sent to {forgotPasswordData.mobile}</p>
+                                        <div className="custom-login-field">
+                                            <label>Verification OTP</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Enter OTP"
+                                                value={forgotPasswordData.otp}
+                                                onChange={(e) => { 
+                                                    setForgotPasswordData(prev => ({ ...prev, otp: e.target.value.replace(/\D/g, '').slice(0, 6) })); 
+                                                    setForgotPasswordError(''); 
+                                                }}
+                                                maxLength={6}
+                                            />
+                                        </div>
+                                        <button className="custom-login-btn primary" onClick={handleForgotPasswordVerify}>Verify OTP</button>
+                                        <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                                            <button 
+                                                type="button" 
+                                                onClick={handleForgotPasswordRequest}
+                                                style={{ background: 'none', border: 'none', color: '#D4AF37', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}
+                                            >
+                                                Resend OTP
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {forgotPasswordStep === 'reset' && (
+                                    <>
+                                        <div className="custom-login-field">
+                                            <label>New Password</label>
+                                            <input
+                                                type="password"
+                                                placeholder="Enter new password (min 8 characters)"
+                                                value={forgotPasswordData.newPassword}
+                                                onChange={(e) => { setForgotPasswordData(prev => ({ ...prev, newPassword: e.target.value })); setForgotPasswordError(''); }}
+                                                minLength={8}
+                                            />
+                                        </div>
+                                        <div className="custom-login-field">
+                                            <label>Confirm New Password</label>
+                                            <input
+                                                type="password"
+                                                placeholder="Confirm new password"
+                                                value={forgotPasswordData.confirmPassword}
+                                                onChange={(e) => { setForgotPasswordData(prev => ({ ...prev, confirmPassword: e.target.value })); setForgotPasswordError(''); }}
+                                            />
+                                        </div>
+                                        <button 
+                                            className="custom-login-btn primary" 
+                                            onClick={handleForgotPasswordReset}
+                                            disabled={isForgotLoading}
+                                        >
+                                            {isForgotLoading ? <RefreshCw size={18} className="animate-spin" /> : 'Update Password'}
+                                        </button>
+                                    </>
+                                )}
+
+                                <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setIsForgotPasswordMode(false); setForgotPasswordStep('request'); }}
+                                        style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.85rem' }}
+                                    >
+                                        Back to Login
+                                    </button>
+                                </div>
                             </>
                         ) : (
                             <>
+                                <h2 className="custom-login-title">Welcome back! Please Login</h2>
+
+                                {loginError && (
+                                    <div style={{ color: '#e74c3c', fontSize: '0.85rem', marginBottom: '10px', padding: '8px 12px', background: '#fdf2f2', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                                        {loginError}
+                                    </div>
+                                )}
+
                                 <div className="custom-login-field">
-                                    <label>Enter OTP sent to {loginForm.username}</label>
+                                    <label>Mobile No. / Email ID</label>
                                     <input
                                         type="text"
-                                        placeholder="Enter OTP"
-                                        value={loginOtp}
-                                        onChange={(e) => { setLoginOtp(e.target.value); setLoginError(''); }}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyLoginOtp(); }}
-                                        maxLength={6}
+                                        placeholder="Enter Mobile no. / Email ID"
+                                        value={loginForm.username}
+                                        onChange={(e) => { setLoginForm(prev => ({ ...prev, username: e.target.value })); setLoginError(''); }}
                                     />
-                                    <div style={{ textAlign: 'right', marginTop: '8px' }}>
-                                        <button
-                                            type="button"
-                                            onClick={handleResendLoginOtp}
-                                            style={{ background: 'none', border: 'none', color: '#D4AF37', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, padding: 0 }}
-                                        >
-                                            Resend OTP
-                                        </button>
-                                    </div>
                                 </div>
 
-                                <button className="custom-login-btn primary" onClick={handleVerifyLoginOtp}>Verify OTP & Login</button>
+                                {!loginOtpMode ? (
+                                    <>
+                                        <div className="custom-login-field">
+                                            <label>Password</label>
+                                            <div style={{ position: 'relative' }}>
+                                                <input
+                                                    type={showLoginPassword ? "text" : "password"}
+                                                    placeholder="Enter password"
+                                                    value={loginForm.password}
+                                                    onChange={(e) => { setLoginForm(prev => ({ ...prev, password: e.target.value })); setLoginError(''); }}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
+                                                    style={{ width: '100%', paddingRight: '40px' }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        right: '10px',
+                                                        top: '50%',
+                                                        transform: 'translateY(-50%)',
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        color: '#888',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        padding: 0
+                                                    }}
+                                                >
+                                                    {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
+                                        </div>
 
-                                <button
-                                    className="custom-login-btn primary-outline"
-                                    onClick={() => { setLoginOtpMode(false); setLoginOtp(''); setLoginError(''); }}
-                                >
-                                    Back to Password Login
-                                </button>
+                                        <div className="custom-login-options">
+                                            <label className="custom-login-stay">
+                                                <input type="checkbox" defaultChecked />
+                                                <span>Stay Logged in</span>
+                                                <HelpCircle size={15} color="#999" style={{ marginLeft: '4px', cursor: 'help' }} />
+                                            </label>
+                                            <button 
+                                                type="button" 
+                                                className="custom-login-forgot" 
+                                                onClick={() => {
+                                                    setIsForgotPasswordMode(true);
+                                                    setForgotPasswordData(prev => ({ ...prev, mobile: /^\d+$/.test(loginForm.username) ? loginForm.username : '' }));
+                                                }}
+                                                style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer' }}
+                                            >
+                                                Forgot Password?
+                                            </button>
+                                        </div>
+
+                                        <button className="custom-login-btn primary" onClick={handleLogin}>Login</button>
+
+                                        {!/^[a-zA-Z]/.test(loginForm.username) && (
+                                            <>
+                                                <div className="custom-login-divider">
+                                                    <span>OR</span>
+                                                </div>
+
+                                                <button className="custom-login-btn primary-outline" onClick={handleLoginWithOtp}>Login with OTP</button>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="custom-login-field">
+                                            <label>Enter OTP sent to {loginForm.username}</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Enter OTP"
+                                                value={loginOtp}
+                                                onChange={(e) => { setLoginOtp(e.target.value); setLoginError(''); }}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyLoginOtp(); }}
+                                                maxLength={6}
+                                            />
+                                            <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleResendLoginOtp}
+                                                    style={{ background: 'none', border: 'none', color: '#D4AF37', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, padding: 0 }}
+                                                >
+                                                    Resend OTP
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <button className="custom-login-btn primary" onClick={handleVerifyLoginOtp}>Verify OTP & Login</button>
+
+                                        <button
+                                            className="custom-login-btn primary-outline"
+                                            onClick={() => { setLoginOtpMode(false); setLoginOtp(''); setLoginError(''); }}
+                                            style={{ marginTop: '10px' }}
+                                        >
+                                            Back to Password Login
+                                        </button>
+                                    </>
+                                )}
                             </>
                         )}
 
@@ -984,8 +1197,7 @@ const Register = () => {
                         </p>
                     </div>
                 </div>
-            )
-            }
+            )}
 
             {
                 showRegistrationForm && (

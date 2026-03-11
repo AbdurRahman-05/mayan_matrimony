@@ -10,6 +10,14 @@ const AdminPanel = () => {
     const [loginPassword, setLoginPassword] = useState('');
     const [loginError, setLoginError] = useState('');
 
+    const [forgotStep, setForgotStep] = useState('login'); // 'login', 'email', 'otp', 'reset'
+    const [resetEmail, setResetEmail] = useState('');
+    const [resetOtp, setResetOtp] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [resetError, setResetError] = useState('');
+    const [resetMessage, setResetMessage] = useState('');
+
     const [stats, setStats] = useState({ totalUsers: 0 });
     const [loading, setLoading] = useState(true);
     const [uploadStatus, setUploadStatus] = useState({ message: '', error: false });
@@ -61,7 +69,80 @@ const AdminPanel = () => {
     };
 
     const handleForgotPassword = () => {
-        showAlert("Please contact the system administrator to reset your password.", "Contact Admin");
+        setForgotStep('email');
+        setResetError('');
+        setResetMessage('');
+    };
+
+    const handleSendOtp = async (e) => {
+        e.preventDefault();
+        setResetError('');
+        setResetMessage('');
+        try {
+            const response = await fetch('/api/admin/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: resetEmail })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setResetMessage('OTP sent successfully to your email.');
+                setForgotStep('otp');
+            } else {
+                setResetError(data.error || 'Failed to send OTP.');
+            }
+        } catch (error) {
+            setResetError('An error occurred while sending OTP.');
+        }
+    };
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setResetError('');
+        setResetMessage('');
+        try {
+            const response = await fetch('/api/admin/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: resetEmail, otp: resetOtp })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setResetMessage('OTP verified. Please enter your new password.');
+                setForgotStep('reset');
+            } else {
+                setResetError(data.error || 'Invalid OTP.');
+            }
+        } catch (error) {
+            setResetError('An error occurred while verifying OTP.');
+        }
+    };
+
+    const handleResetPassword = async (e) => {
+        e.preventDefault();
+        setResetError('');
+        setResetMessage('');
+        if (newPassword !== confirmNewPassword) {
+            setResetError('Passwords do not match.');
+            return;
+        }
+        try {
+            const response = await fetch('/api/admin/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: resetEmail, otp: resetOtp, newPassword })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showAlert('Password reset successfully. You can now login.', 'Success');
+                setForgotStep('login');
+                setLoginId(resetEmail);
+            } else {
+                setResetError(data.error || 'Failed to reset password.');
+            }
+        } catch (error) {
+            setResetError('An error occurred while resetting password.');
+        }
     };
 
     const fetchStats = async () => {
@@ -225,34 +306,127 @@ const AdminPanel = () => {
             <div className="admin-page">
                 <div className="admin-login-wrapper">
                     <div className="admin-login-card">
-                        <h2>Admin Login</h2>
-                        {loginError && <div className="admin-login-error">{loginError}</div>}
-                        <form onSubmit={handleLogin}>
-                            <div className="admin-form-group">
-                                <label>Email ID</label>
-                                <input
-                                    type="email"
-                                    value={loginId}
-                                    onChange={(e) => setLoginId(e.target.value)}
-                                    placeholder="Enter Admin Email"
-                                    required
-                                />
-                            </div>
-                            <div className="admin-form-group">
-                                <label>Password</label>
-                                <input
-                                    type="password"
-                                    value={loginPassword}
-                                    onChange={(e) => setLoginPassword(e.target.value)}
-                                    placeholder="Enter Password"
-                                    required
-                                />
-                            </div>
-                            <button type="submit" className="admin-login-btn">Login</button>
-                        </form>
-                        <div className="admin-forgot-password" onClick={handleForgotPassword}>
-                            Forgot Password?
-                        </div>
+                        
+                        {forgotStep === 'login' && (
+                            <>
+                                <h2>Admin Login</h2>
+                                {loginError && <div className="admin-login-error">{loginError}</div>}
+                                <form onSubmit={handleLogin}>
+                                    <div className="admin-form-group">
+                                        <label>Email ID</label>
+                                        <input
+                                            type="email"
+                                            value={loginId}
+                                            onChange={(e) => setLoginId(e.target.value)}
+                                            placeholder="Enter Admin Email"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="admin-form-group">
+                                        <label>Password</label>
+                                        <input
+                                            type="password"
+                                            value={loginPassword}
+                                            onChange={(e) => setLoginPassword(e.target.value)}
+                                            placeholder="Enter Password"
+                                            required
+                                        />
+                                    </div>
+                                    <button type="submit" className="admin-login-btn">Login</button>
+                                </form>
+                                <div className="admin-forgot-password" onClick={handleForgotPassword}>
+                                    Forgot Password?
+                                </div>
+                            </>
+                        )}
+
+                        {forgotStep === 'email' && (
+                            <>
+                                <h2>Reset Password</h2>
+                                <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>Enter your admin email to receive an OTP.</p>
+                                {resetError && <div className="admin-login-error">{resetError}</div>}
+                                {resetMessage && <div className="admin-alert success" style={{ marginBottom: '15px' }}>{resetMessage}</div>}
+                                <form onSubmit={handleSendOtp}>
+                                    <div className="admin-form-group">
+                                        <label>Email ID</label>
+                                        <input
+                                            type="email"
+                                            value={resetEmail}
+                                            onChange={(e) => setResetEmail(e.target.value)}
+                                            placeholder="Enter Admin Email"
+                                            required
+                                        />
+                                    </div>
+                                    <button type="submit" className="admin-login-btn">Send OTP</button>
+                                </form>
+                                <div className="admin-forgot-password" onClick={() => setForgotStep('login')}>
+                                    Back to Login
+                                </div>
+                            </>
+                        )}
+
+                        {forgotStep === 'otp' && (
+                            <>
+                                <h2>Verify OTP</h2>
+                                <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>Enter the 6-digit OTP sent to {resetEmail}</p>
+                                {resetError && <div className="admin-login-error">{resetError}</div>}
+                                {resetMessage && <div className="admin-alert success" style={{ marginBottom: '15px' }}>{resetMessage}</div>}
+                                <form onSubmit={handleVerifyOtp}>
+                                    <div className="admin-form-group">
+                                        <label>OTP</label>
+                                        <input
+                                            type="text"
+                                            value={resetOtp}
+                                            onChange={(e) => setResetOtp(e.target.value)}
+                                            placeholder="Enter 6-digit OTP"
+                                            maxLength={6}
+                                            required
+                                        />
+                                    </div>
+                                    <button type="submit" className="admin-login-btn">Verify OTP</button>
+                                </form>
+                                <div className="admin-forgot-password" onClick={() => setForgotStep('email')}>
+                                    Resend OTP
+                                </div>
+                                <div className="admin-forgot-password" onClick={() => setForgotStep('login')} style={{ marginTop: '10px' }}>
+                                    Back to Login
+                                </div>
+                            </>
+                        )}
+
+                        {forgotStep === 'reset' && (
+                            <>
+                                <h2>Set New Password</h2>
+                                {resetError && <div className="admin-login-error">{resetError}</div>}
+                                {resetMessage && <div className="admin-alert success" style={{ marginBottom: '15px' }}>{resetMessage}</div>}
+                                <form onSubmit={handleResetPassword}>
+                                    <div className="admin-form-group">
+                                        <label>New Password</label>
+                                        <input
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            placeholder="Enter New Password"
+                                            minLength={8}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="admin-form-group">
+                                        <label>Confirm New Password</label>
+                                        <input
+                                            type="password"
+                                            value={confirmNewPassword}
+                                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                            placeholder="Confirm New Password"
+                                            minLength={8}
+                                            required
+                                        />
+                                    </div>
+                                    <button type="submit" className="admin-login-btn">Reset Password</button>
+                                </form>
+                            </>
+                        )}
+
                     </div>
                 </div>
             </div>
