@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { User, Camera, Star, Users, Edit2, Settings, HelpCircle, ChevronDown, Phone, MessageSquare, TrendingUp, Eye, LogOut, FileText, Briefcase, Heart, MapPin, GraduationCap, Utensils, Loader2 } from 'lucide-react';
-import { getProfile, logout as apiLogout } from '../services/api';
+import { getFullProfile, logout as apiLogout } from '../services/api';
 import './Home.css';
 
 const Home = () => {
@@ -33,7 +33,7 @@ const Home = () => {
       label: 'Basic Details',
       icon: <User size={24} color="#1e88e5" />,
       iconBg: '#e3f2fd',
-      fields: ['gender', 'dob', 'height', 'maritalStatus', 'religion'],
+      fields: ['fullName', 'gender', 'dob', 'height', 'maritalStatus', 'religion', 'motherTongue'],
       navState: { openSection: 'basic' }
     },
     {
@@ -41,16 +41,32 @@ const Home = () => {
       label: 'About Me',
       icon: <FileText size={24} color="#8e24aa" />,
       iconBg: '#f3e5f5',
-      fields: ['about'],
+      fields: ['about', 'profileFor'],
       navState: { openSection: 'about' }
     },
     {
       id: 'education',
-      label: 'Education Details',
+      label: 'Education',
       icon: <GraduationCap size={24} color="#00897b" />,
       iconBg: '#e0f2f1',
-      fields: ['education', 'occupation', 'employmentType'],
+      fields: ['education'],
       navState: { openSection: 'education' }
+    },
+    {
+      id: 'career',
+      label: 'Career',
+      icon: <Briefcase size={24} color="#1e88e5" />,
+      iconBg: '#e3f2fd',
+      fields: ['occupation', 'employmentType'],
+      navState: { openSection: 'career' }
+    },
+    {
+      id: 'family',
+      label: 'Family Details',
+      icon: <Users size={24} color="#fb8c00" />,
+      iconBg: '#fff3e0',
+      fields: ['familyType', 'familyStatus', 'fatherOccupation', 'motherOccupation'],
+      navState: { openSection: 'family' }
     },
     {
       id: 'contact',
@@ -61,100 +77,109 @@ const Home = () => {
       navState: { openSection: 'contact' }
     },
     {
-      id: 'family',
-      label: 'Family Details',
-      icon: <Users size={24} color="#fb8c00" />,
-      iconBg: '#fff3e0',
-      fields: ['fatherOccupation', 'motherOccupation', 'familyType', 'familyStatus'],
-      navState: { openSection: 'family' }
-    },
-    {
-      id: 'horoscope',
-      label: 'Add Horoscope',
-      icon: <Star size={24} color="#1e88e5" />,
-      iconBg: '#e3f2fd',
-      fields: ['horoscope'],
-      navState: { openSection: 'basic' }
-    },
-    {
-      id: 'location',
-      label: 'Location Details',
-      icon: <MapPin size={24} color="#6d4c41" />,
-      iconBg: '#efebe9',
-      fields: ['country', 'state', 'city'],
-      navState: { openSection: 'basic' }
-    },
-    {
       id: 'lifestyle',
-      label: 'Lifestyle',
+      label: 'My Lifestyle',
       icon: <Utensils size={24} color="#00acc1" />,
       iconBg: '#e0f7fa',
-      fields: ['smoking', 'drinking'],
+      fields: ['diet', 'smoking', 'drinking'],
       navState: { openSection: 'lifestyle' }
     },
     {
-      id: 'partner',
-      label: 'Partner Preferences',
-      icon: <Heart size={24} color="#D4AF37" />,
+      id: 'interests',
+      label: 'Interests',
+      icon: <Star size={24} color="#D4AF37" />,
       iconBg: '#fdf8e8',
       fields: [],
-      navState: { openPreferences: true }
-    },
+      customCheck: (d) => {
+        const favs = d.favourites || {};
+        return (
+          (favs.hobbies && favs.hobbies.length > 0) ||
+          (favs.sports && favs.sports.length > 0) ||
+          (favs.movies && favs.movies.length > 0) ||
+          (favs.read && favs.read.length > 0) ||
+          (favs.tvShows && favs.tvShows.length > 0) ||
+          (favs.destinations && favs.destinations.length > 0)
+        );
+      },
+      navState: { openSection: 'about' }
+    }
   ];
 
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const loadProfile = async () => {
-      setLoading(true);
-      try {
-        const parsed = await getProfile();
-        setProfileData(parsed);
-
-        // Seed initial display from localStorage
-        setProfileData(prev => ({ ...prev, ...parsed }));
-
-        // Use upstream granular completion logic
+    const processProfileData = (data) => {
+        setProfileData(prev => ({ ...prev, ...data }));
+        
         const allFields = [];
         profileSections.forEach(sec => {
-          // Skip horoscope for non-Hindu users
-          if (sec.id === 'horoscope' && parsed.religion && parsed.religion.toLowerCase() !== 'hindu') {
-            return;
-          }
+          if (sec.id === 'horoscope' && data.religion && data.religion.toLowerCase() !== 'hindu') return;
           sec.fields.forEach(f => {
             if (!allFields.includes(f)) allFields.push(f);
           });
         });
 
-        const calculateCompletion = (data) => {
+        const calculateCompletion = (d) => {
           let completed = 0;
+          let total = allFields.length;
+          
           allFields.forEach(field => {
-            const value = data[field];
-            if (value && value !== 'Not Specified' && value !== '') {
-              completed++;
+            const value = d[field];
+            if (value && value !== 'Not Specified' && value !== '') completed++;
+          });
+
+          // Custom Checks
+          profileSections.forEach(sec => {
+            if (sec.customCheck) {
+              total++;
+              if (sec.customCheck(d)) {
+                completed++;
+              }
             }
           });
-          return Math.round((completed / (allFields.length || 1)) * 100);
+
+          return Math.round((completed / (total || 1)) * 100);
         };
+        setCompletionPercentage(calculateCompletion(data));
 
-        setCompletionPercentage(calculateCompletion(parsed));
-
-        // Find incomplete sections
         const incomplete = profileSections.filter(sec => {
-          if (sec.fields.length === 0) return false;
-          // Only show horoscope section for Hindu users
-          if (sec.id === 'horoscope' && parsed.religion && parsed.religion.toLowerCase() !== 'hindu') {
-            return false;
+          if (sec.id === 'horoscope' && data.religion && data.religion.toLowerCase() !== 'hindu') return false;
+          
+          if (sec.customCheck) {
+              return !sec.customCheck(data);
           }
+          
+          if (sec.fields.length === 0) return false;
+          
           return sec.fields.some(field => {
-            const value = parsed[field];
+            const value = data[field];
             return !value || value === 'Not Specified' || value === '';
           });
         });
         setIncompleteItems(incomplete);
+    };
+
+    const loadProfile = async () => {
+      // Seed initially from cache for instantaneous load
+      const cachedProf = localStorage.getItem('userProfile');
+      const cachedFav = localStorage.getItem('userFavourites');
+      
+      if (cachedProf) {
+          try {
+              const profData = JSON.parse(cachedProf);
+              const favData = cachedFav ? JSON.parse(cachedFav) : {};
+              processProfileData({ ...profData, favourites: favData });
+          } catch(e) {}
+      } else {
+          setLoading(true);
+      }
+
+      try {
+        const fullData = await getFullProfile();
+        processProfileData({ ...fullData.profile, preferences: fullData.preferences, favourites: fullData.favourites });
       } catch (e) {
-        console.error("Error loading profile", e);
-        if (e.message.includes('Access denied')) navigate('/');
+        console.error("Error loading full profile", e);
+        if (e.message && e.message.includes('Access denied')) navigate('/');
       } finally {
         setLoading(false);
       }
@@ -193,7 +218,7 @@ const Home = () => {
           </div>
 
           <div className="sidebar-upgrade-banner">
-            <p>Upgrade membership to call or message with matches</p>
+            <p>Upgrade membership to chat with matches</p>
             <Link to="/membership" className="upgrade-btn">Upgrade now</Link>
           </div>
 
@@ -263,8 +288,8 @@ const Home = () => {
 
               <ul className="promo-features">
                 <li>
-                  <Phone size={16} color="#D4AF37" />
-                  <span>Call/WhatsApp matches</span>
+                  <MessageSquare size={16} color="#D4AF37" />
+                  <span>Chat with matches</span>
                 </li>
                 <li>
                   <MessageSquare size={16} color="#7c3aed" />

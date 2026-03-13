@@ -11,15 +11,16 @@ import {
 import {
     getMatches, getShortlistedProfiles, getViewedYou, getViewedByYou, getShortlistedYou,
     sendInterest, shortlistProfile, ignoreProfile, getNearbyMatches, getHoroscopeMatches, getMatchesWithPhotos,
-    getEducationPreferenceMatches, getProfile
+    getEducationPreferenceMatches, getProfile, globalCache
 } from '../services/api';
 import './Matches.css';
 
 const Matches = () => {
     const navigate = useNavigate();
     const [activeCategory, setActiveCategory] = useState('your-matches');
-    const [profiles, setProfiles] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [profiles, setProfiles] = useState(globalCache.matches['your-matches'] || []);
+    const [cache, setCache] = useState(globalCache.matches);
+    const [loading, setLoading] = useState(!globalCache.matches['your-matches']);
     const [userReligion, setUserReligion] = useState('');
 
     // Load user's religion from localStorage or API
@@ -45,11 +46,58 @@ const Matches = () => {
     }, []);
 
     useEffect(() => {
-        loadCategoryData();
-    }, [activeCategory]);
+        // Pre-fetch all categories on mount to make tab switching instant
+        const prefetchAll = async () => {
+            if (!globalCache.matches['your-matches']) {
+                setLoading(true);
+            }
+            try {
+                const initialData = await getMatches();
+                setCache(prev => {
+                    const newCache = { ...prev, 'your-matches': initialData };
+                    globalCache.matches = newCache;
+                    return newCache;
+                });
+                setProfiles(initialData);
 
-    const loadCategoryData = async () => {
-        setLoading(true);
+                // Fetch the rest asynchronously in background so first load is quick
+                const updateCache = (key, data) => {
+                    setCache(c => {
+                        const newCache = { ...c, [key]: data };
+                        globalCache.matches = newCache;
+                        return newCache;
+                    });
+                };
+                
+                getShortlistedProfiles().then(d => updateCache('shortlisted-by-you', d));
+                getViewedYou().then(d => updateCache('viewed-you', d));
+                getShortlistedYou().then(d => updateCache('shortlisted-you', d));
+                getViewedByYou().then(d => updateCache('viewed-by-you', d));
+                getNearbyMatches().then(d => updateCache('nearby-matches', d));
+                getHoroscopeMatches().then(d => updateCache('matches-with-horoscope', d));
+                getMatchesWithPhotos().then(d => updateCache('matches-with-photos', d));
+                getEducationPreferenceMatches().then(d => updateCache('education-preference', d));
+            } catch (err) {
+                console.error('Initial fetch error', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        prefetchAll();
+    }, []);
+
+    useEffect(() => {
+        if (cache[activeCategory]) {
+            setProfiles(cache[activeCategory]);
+            setLoading(false);
+        } else {
+            // If not in cache (e.g. still pre-fetching or failed), show loading and fetch immediately
+            setLoading(true);
+            refreshCategoryData();
+        }
+    }, [activeCategory, cache]);
+
+    const refreshCategoryData = async () => {
         try {
             let data = [];
             switch (activeCategory) {
@@ -64,6 +112,11 @@ const Matches = () => {
                 case 'education-preference': data = await getEducationPreferenceMatches(); break;
                 default: data = [];
             }
+            setCache(prev => {
+                const newCache = { ...prev, [activeCategory]: data };
+                globalCache.matches = newCache;
+                return newCache;
+            });
             setProfiles(data);
         } catch (err) {
             console.error('Failed to load match data', err);
@@ -91,7 +144,7 @@ const Matches = () => {
             if (activeCategory === 'your-matches' || activeCategory === 'nearby-matches') {
                 // leave as is
             } else {
-                loadCategoryData();
+                refreshCategoryData();
             }
         } catch (err) {
             showAlert(err.message || 'Failed to shortlist', 'Error');
@@ -109,7 +162,7 @@ const Matches = () => {
                 showAlert('You have ignored this profile.', 'Success');
             } catch (err) {
                 showAlert(err.message || 'Failed to ignore profile', 'Error');
-                loadCategoryData(); // revert
+                refreshCategoryData(); // revert
             }
         }
     };

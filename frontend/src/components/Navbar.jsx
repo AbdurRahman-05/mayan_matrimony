@@ -2,14 +2,45 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
+import { getChatUnreadCount, isAuthenticated } from '../services/api';
 import './Navbar.css';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const location = useLocation();
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register';
+
+  useEffect(() => {
+    let timeoutId;
+    let isMounted = true;
+
+    const fetchChatCount = async () => {
+      try {
+        if (isAuthenticated() && !isLandingPage) {
+          const { unreadCount } = await getChatUnreadCount();
+          if (isMounted) setUnreadChatCount(unreadCount);
+        }
+      } catch (error) {
+        console.error('Error fetching unread chat count:', error);
+      } finally {
+        if (isMounted) {
+          timeoutId = setTimeout(fetchChatCount, 2500); // 2.5s progressive polling
+        }
+      }
+    };
+
+    if (!isLandingPage) {
+        fetchChatCount();
+    }
+
+    return () => {
+        isMounted = false;
+        clearTimeout(timeoutId);
+    };
+  }, [isLandingPage]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,7 +65,16 @@ const Navbar = () => {
             <li><Link to="/home">Home</Link></li>
             <li><Link to="/search">Search</Link></li>
             <li><Link to="/interests">Interests</Link></li>
-
+            <li>
+               <Link to="/chat" style={{ position: 'relative' }}>
+                  Chat
+                  {unreadChatCount > 0 && (
+                     <span style={{ position: 'absolute', top: '-8px', right: '-15px', background: 'red', color: 'white', fontSize: '0.7rem', padding: '2px 5px', borderRadius: '10px', minWidth: '16px', textAlign: 'center' }}>
+                        {unreadChatCount}
+                     </span>
+                  )}
+               </Link>
+            </li>
             <li><Link to="/matches">Matches</Link></li>
             <li><Link to="/membership">Membership</Link></li>
           </ul>
@@ -71,7 +111,14 @@ const Navbar = () => {
           <Link to="/profile" onClick={() => setIsOpen(false)}>My Profile</Link>
           <Link to="/search" onClick={() => setIsOpen(false)}>Search</Link>
           <Link to="/interests" onClick={() => setIsOpen(false)}>Interests</Link>
-
+          <Link to="/chat" onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+             Chat
+             {unreadChatCount > 0 && (
+                <span style={{ marginLeft: '6px', background: 'red', color: 'white', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '10px' }}>
+                   {unreadChatCount}
+                </span>
+             )}
+          </Link>
           <Link to="/matches" onClick={() => setIsOpen(false)}>Matches</Link>
           <Link to="/membership" onClick={() => setIsOpen(false)}>Membership</Link>
         </div>

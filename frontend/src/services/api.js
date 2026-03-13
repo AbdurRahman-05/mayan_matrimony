@@ -1,6 +1,14 @@
 // API Service Layer - centralizes all backend API calls
 const API_BASE = '/api';
 
+// Global memory cache to provide instantaneous load times across page navigations
+export const globalCache = {
+    chatList: null,
+    chatMessages: {},
+    matches: {},
+    interests: { received: null, sent: null }
+};
+
 // Get auth token from localStorage
 function getToken() {
     return localStorage.getItem('authToken');
@@ -28,6 +36,7 @@ async function apiFetch(url, options = {}) {
     let response;
     try {
         response = await fetch(`${API_BASE}${url}`, {
+            cache: 'no-store', // Prevent browser from retrieving old payloads without asking server
             ...options,
             headers,
         });
@@ -199,8 +208,8 @@ export async function updateProfile(profileData) {
         method: 'PUT',
         body: JSON.stringify(profileData),
     });
-    // Sync localStorage
-    localStorage.setItem('userProfile', JSON.stringify(profileData));
+    // Do NOT save partial editForm to localStorage here.
+    // The caller should use getFullProfile() afterward to sync the cache correctly.
     return data;
 }
 
@@ -446,6 +455,46 @@ export async function blockProfile(uniqueId) {
 
 export async function removeFromBlocked(uniqueId) {
     return apiFetch(`/settings/blocked/${uniqueId}`, {
+        method: 'DELETE',
+    });
+}
+
+// ============ CHAT ============
+
+export async function startChat(uniqueId) {
+    return apiFetch(`/chat/start/${uniqueId}`, {
+        method: 'POST',
+    });
+}
+
+export async function getChatList() {
+    return apiFetch('/chat/chat-list');
+}
+
+export async function getChatMessages(uniqueId) {
+    return apiFetch(`/chat/${uniqueId}`);
+}
+
+export async function sendChatMessage(uniqueId, content) {
+    return apiFetch(`/chat/send/${uniqueId}`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+    });
+}
+
+export async function getChatUnreadCount() {
+    return apiFetch('/chat/unread-count');
+}
+
+export async function editChatMessage(messageId, content) {
+    return apiFetch(`/chat/edit/${messageId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content }),
+    });
+}
+
+export async function unsendChatMessage(messageId) {
+    return apiFetch(`/chat/unsend/${messageId}`, {
         method: 'DELETE',
     });
 }

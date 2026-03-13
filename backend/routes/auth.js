@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
 import axios from 'axios';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = Router();
 
@@ -143,8 +144,7 @@ router.post('/register', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Register error:', error);
-        res.status(500).json({ error: 'Registration failed. Please try again.' });
+        return dbErrorResponse(res, 'Register error', error, 'Registration failed. Please try again.');
     }
 });
 
@@ -217,8 +217,7 @@ router.post('/login', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Login failed' });
+        return dbErrorResponse(res, 'Login error', error, 'Login failed. Please try again.');
     }
 });
 
@@ -250,8 +249,7 @@ router.get('/me', auth, async (req, res) => {
             createdAt: user.created_at
         });
     } catch (error) {
-        console.error('Get me error:', error);
-        res.status(500).json({ error: 'Failed to get user info' });
+        return dbErrorResponse(res, 'Get me error', error, 'Failed to get user info');
     }
 });
 
@@ -425,8 +423,7 @@ router.post('/verify-otp', async (req, res) => {
 
         res.json({ verified: true, message: 'OTP verified successfully' });
     } catch (error) {
-        console.error('Verify OTP Error:', error);
-        res.status(500).json({ error: 'Verification failed: ' + error.message });
+        return dbErrorResponse(res, 'Verify OTP Error', error, 'Verification failed. Please try again.');
     }
 });
 
@@ -485,8 +482,7 @@ router.post('/reset-password', async (req, res) => {
 
         res.json({ success: true, message: 'Password reset successfully' });
     } catch (error) {
-        console.error('Reset Password Error:', error);
-        res.status(500).json({ error: 'Failed to reset password' });
+        return dbErrorResponse(res, 'Reset Password Error', error, 'Failed to reset password');
     }
 });
 

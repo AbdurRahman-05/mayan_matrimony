@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = Router();
 
@@ -41,8 +42,7 @@ router.post('/send/:uniqueId', auth, async (req, res) => {
 
         res.json({ message: 'Interest sent successfully' });
     } catch (error) {
-        console.error('Send interest error:', error);
-        res.status(500).json({ error: 'Failed to send interest' });
+        return dbErrorResponse(res, 'Send interest error', error, 'Failed to send interest');
     }
 });
 
@@ -71,8 +71,7 @@ router.put('/:id/respond', auth, async (req, res) => {
 
         res.json({ message: `Interest ${status}` });
     } catch (error) {
-        console.error('Respond interest error:', error);
-        res.status(500).json({ error: 'Failed to respond to interest' });
+        return dbErrorResponse(res, 'Respond interest error', error, 'Failed to respond to interest');
     }
 });
 
@@ -125,8 +124,7 @@ router.get('/received', auth, async (req, res) => {
 
         res.json(interests);
     } catch (error) {
-        console.error('Get received interests error:', error);
-        res.status(500).json({ error: 'Failed to get interests' });
+        return dbErrorResponse(res, 'Get received interests error', error, 'Failed to get interests');
     }
 });
 
@@ -179,8 +177,7 @@ router.get('/sent', auth, async (req, res) => {
 
         res.json(interests);
     } catch (error) {
-        console.error('Get sent interests error:', error);
-        res.status(500).json({ error: 'Failed to get sent interests' });
+        return dbErrorResponse(res, 'Get sent interests error', error, 'Failed to get sent interests');
     }
 });
 

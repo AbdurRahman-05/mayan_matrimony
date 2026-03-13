@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import sql from '../db.js';
 import bcrypt from 'bcryptjs';
 import { Resend } from 'resend';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -57,8 +58,7 @@ router.get('/stats', async (req, res) => {
         const result = await sql`SELECT count(*) as total FROM users`;
         res.json({ totalUsers: parseInt(result[0].total) || 0 });
     } catch (error) {
-        console.error('Error fetching stats:', error);
-        res.status(500).json({ error: 'Failed to fetch stats' });
+        return dbErrorResponse(res, 'Error fetching stats', error, 'Failed to fetch stats');
     }
 });
 
@@ -116,8 +116,7 @@ router.get('/users', async (req, res) => {
         `;
         res.json(users);
     } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ error: 'Failed to fetch users' });
+        return dbErrorResponse(res, 'Error fetching users', error, 'Failed to fetch users');
     }
 });
 
@@ -143,8 +142,7 @@ router.post('/login', async (req, res) => {
             res.status(401).json({ success: false, error: 'Invalid ID or Password' });
         }
     } catch (error) {
-        console.error('Admin login error:', error);
-        res.status(500).json({ success: false, error: 'Login failed due to server error' });
+        return dbErrorResponse(res, 'Admin login error', error, 'Login failed due to server error');
     }
 });
 
@@ -197,8 +195,7 @@ router.post('/forgot-password', async (req, res) => {
 
         res.json({ success: true, message: 'OTP sent successfully' });
     } catch (error) {
-        console.error('Forgot password error:', error);
-        res.status(500).json({ success: false, error: 'Failed to process request' });
+        return dbErrorResponse(res, 'Forgot password error', error, 'Failed to process request');
     }
 });
 
@@ -227,8 +224,7 @@ router.post('/verify-otp', async (req, res) => {
 
         res.json({ success: true, message: 'OTP verified successfully' });
     } catch (error) {
-        console.error('Verify OTP error:', error);
-        res.status(500).json({ success: false, error: 'Verification failed' });
+        return dbErrorResponse(res, 'Verify OTP error', error, 'Verification failed');
     }
 });
 
@@ -269,8 +265,7 @@ router.post('/reset-password', async (req, res) => {
 
         res.json({ success: true, message: 'Password reset successfully' });
     } catch (error) {
-        console.error('Reset password error:', error);
-        res.status(500).json({ success: false, error: 'Failed to reset password' });
+        return dbErrorResponse(res, 'Reset password error', error, 'Failed to reset password');
     }
 });
 
@@ -300,8 +295,7 @@ router.get('/users/:id', async (req, res) => {
 
         res.json(userData);
     } catch (error) {
-        console.error('Error fetching user profile:', error);
-        res.status(500).json({ error: 'Failed to fetch user details' });
+        return dbErrorResponse(res, 'Error fetching user profile', error, 'Failed to fetch user details');
     }
 });
 
@@ -315,8 +309,7 @@ router.delete('/users/:id', async (req, res) => {
         await sql`DELETE FROM users WHERE id = ${userId}`;
         res.json({ success: true, message: 'User deleted successfully' });
     } catch (error) {
-        console.error('Error deleting user:', error);
-        res.status(500).json({ error: 'Failed to delete user' });
+        return dbErrorResponse(res, 'Error deleting user', error, 'Failed to delete user');
     }
 });
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = Router();
 
@@ -90,8 +91,7 @@ router.get('/', auth, async (req, res) => {
 
         res.json(profiles);
     } catch (error) {
-        console.error('Get matches error:', error);
-        res.status(500).json({ error: 'Failed to get matches' });
+        return dbErrorResponse(res, 'Get matches error', error, 'Failed to get matches');
     }
 });
 
@@ -119,8 +119,7 @@ router.post('/shortlist/:uniqueId', auth, async (req, res) => {
 
         res.json({ message: 'Profile shortlisted' });
     } catch (error) {
-        console.error('Shortlist error:', error);
-        res.status(500).json({ error: 'Failed to shortlist' });
+        return dbErrorResponse(res, 'Shortlist error', error, 'Failed to shortlist');
     }
 });
 
@@ -136,8 +135,7 @@ router.delete('/shortlist/:uniqueId', auth, async (req, res) => {
 
         res.json({ message: 'Removed from shortlist' });
     } catch (error) {
-        console.error('Remove shortlist error:', error);
-        res.status(500).json({ error: 'Failed to remove from shortlist' });
+        return dbErrorResponse(res, 'Remove shortlist error', error, 'Failed to remove from shortlist');
     }
 });
 
@@ -173,8 +171,7 @@ router.get('/shortlist', auth, async (req, res) => {
 
         res.json(profiles);
     } catch (error) {
-        console.error('Get shortlist error:', error);
-        res.status(500).json({ error: 'Failed to get shortlist' });
+        return dbErrorResponse(res, 'Get shortlist error', error, 'Failed to get shortlist');
     }
 });
 
@@ -203,8 +200,7 @@ router.get('/viewed-you', auth, async (req, res) => {
             viewedAt: row.viewed_at
         })));
     } catch (error) {
-        console.error('Viewed you error:', error);
-        res.status(500).json({ error: 'Failed to get views' });
+        return dbErrorResponse(res, 'Viewed you error', error, 'Failed to get views');
     }
 });
 
@@ -233,8 +229,7 @@ router.get('/viewed-by-you', auth, async (req, res) => {
             viewedAt: row.viewed_at
         })));
     } catch (error) {
-        console.error('Viewed by you error:', error);
-        res.status(500).json({ error: 'Failed to get views' });
+        return dbErrorResponse(res, 'Viewed by you error', error, 'Failed to get views');
     }
 });
 
@@ -263,8 +258,7 @@ router.get('/shortlisted-you', auth, async (req, res) => {
 
         res.json(profiles);
     } catch (error) {
-        console.error('Shortlisted you error:', error);
-        res.status(500).json({ error: 'Failed to get shortlisted-you list' });
+        return dbErrorResponse(res, 'Shortlisted you error', error, 'Failed to get shortlisted-you list');
     }
 });
 
@@ -422,8 +416,7 @@ router.post('/ignore/:uniqueId', auth, async (req, res) => {
 
         res.json({ message: 'Profile ignored' });
     } catch (error) {
-        console.error('Ignore error:', error);
-        res.status(500).json({ error: 'Failed to ignore profile' });
+        return dbErrorResponse(res, 'Ignore error', error, 'Failed to ignore profile');
     }
 });
 

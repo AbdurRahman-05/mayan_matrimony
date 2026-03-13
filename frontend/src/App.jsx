@@ -11,6 +11,7 @@ import Membership from './pages/Membership';
 import ComingSoon from './pages/ComingSoon';
 import AdminPanel from './pages/AdminPanel';
 import Settings from './pages/Settings';
+import Chat from './pages/Chat';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalModal from './components/GlobalModal';
 import './index.css';
@@ -37,6 +38,8 @@ function App() {
 
           <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/chat/:uniqueId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminPanel />} />
 
           <Route path="*" element={<ComingSoon title="Page Not Found" />} />

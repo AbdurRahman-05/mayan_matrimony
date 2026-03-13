@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = Router();
 
@@ -27,8 +28,7 @@ router.get('/', auth, async (req, res) => {
             destinations: row.destinations || []
         });
     } catch (error) {
-        console.error('Get favourites error:', error);
-        res.status(500).json({ error: 'Failed to get favourites' });
+        return dbErrorResponse(res, 'Get favourites error', error, 'Failed to get favourites');
     }
 });
 
@@ -68,8 +68,7 @@ router.put('/', auth, async (req, res) => {
 
         res.json({ message: 'Favourites updated successfully' });
     } catch (error) {
-        console.error('Update favourites error:', error);
-        res.status(500).json({ error: 'Failed to update favourites' });
+        return dbErrorResponse(res, 'Update favourites error', error, 'Failed to update favourites');
     }
 });
 

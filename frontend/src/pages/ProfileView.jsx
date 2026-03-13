@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { ArrowLeft, User, Heart, Lock, Bookmark, Image as ImageIcon, MapPin, Briefcase, GraduationCap, Clock, MessageCircle, MoreVertical, ShieldCheck, Phone, Mail, X, Check, Eye, Loader2, Ruler, Globe2, Images } from 'lucide-react';
+import Footer from '../components/Footer';
+import { ArrowLeft, User, Heart, Lock, Bookmark, Image as ImageIcon, MapPin, Briefcase, GraduationCap, Clock, MessageCircle, MoreVertical, ShieldCheck, Phone, Mail, X, Check, Eye, Loader2, Ruler, Globe2, Images, Languages, Calendar } from 'lucide-react';
 import { showAlert } from '../components/GlobalModal';
-import { getProfileById, getProfile, getPreferences, getFavourites, sendInterest, shortlistProfile, getViewedYou } from '../services/api';
+import { getProfileById, getFullProfile, sendInterest, shortlistProfile, getViewedYou } from '../services/api';
 import './ProfileView.css';
 
 const ProfileView = () => {
@@ -36,14 +37,10 @@ const ProfileView = () => {
                     setFavouritesData(data.favourites || {});
                 } else {
                     // Viewing own profile preview
-                    const [profile, prefs, favs] = await Promise.all([
-                        getProfile(),
-                        getPreferences(),
-                        getFavourites()
-                    ]);
-                    setProfileData(profile);
-                    setPreferenceData(prefs);
-                    setFavouritesData(favs);
+                    const fullData = await getFullProfile();
+                    setProfileData(fullData.profile || {});
+                    setPreferenceData(fullData.preferences || {});
+                    setFavouritesData(fullData.favourites || {});
                 }
             } catch (err) {
                 console.error('Failed to load profile view', err);
@@ -113,7 +110,7 @@ const ProfileView = () => {
     const previewSisters = profileData.numberOfSisters ?? profileData.sisters ?? '';
     const previewMarriedBrothers = profileData.marriedBrothers ?? profileData.brothersMarried ?? '';
     const previewMarriedSisters = profileData.marriedSisters ?? profileData.sistersMarried ?? '';
-    const previewDiet = profileData.dietaryHabit || profileData.diet || 'Not specified';
+    const previewDiet = profileData.diet || 'Not specified';
     const previewEducationPreference = preferenceData.prefEducation || "Doesn't Matter";
     const previewOccupationPreference = preferenceData.prefOccupation || "Doesn't Matter";
     const previewEmploymentPreference = preferenceData.prefEmploymentType || "Doesn't Matter";

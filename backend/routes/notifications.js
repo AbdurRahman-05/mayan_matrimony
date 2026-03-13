@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = Router();
 
@@ -228,8 +229,7 @@ router.get('/', auth, async (req, res) => {
 
         res.json({ notifications, total: notifications.length });
     } catch (error) {
-        console.error('Get notifications error:', error);
-        res.status(500).json({ error: 'Failed to get notifications' });
+        return dbErrorResponse(res, 'Get notifications error', error, 'Failed to get notifications');
     }
 });
 

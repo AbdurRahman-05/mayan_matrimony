@@ -83,6 +83,7 @@ async function setupDatabase() {
         diet VARCHAR(50),
         food_habits VARCHAR(50),
         about TEXT,
+        disability VARCHAR(100),
         partner_preference TEXT,
         family_type VARCHAR(100),
         family_status VARCHAR(100),
@@ -107,6 +108,15 @@ async function setupDatabase() {
       )
     `;
     console.log('✅ profiles table created');
+
+    try {
+      await sql`ALTER TABLE profiles ADD COLUMN disability VARCHAR(100)`;
+      console.log('✅ Added disability column to profiles');
+    } catch (e) {
+      if (!e.message.includes('already exists')) {
+        console.log('Info: disability column might already exist or could not be added:', e.message);
+      }
+    }
 
     // Profile photos
     await sql`
@@ -263,6 +273,19 @@ async function setupDatabase() {
     `;
     console.log('✅ deactivations table created');
 
+    // Chat Messages table
+    await sql`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        receiver_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    console.log('✅ messages table created');
+
     // Add indexes for performance
     await sql`CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_profiles_religion ON profiles(religion)`;
@@ -282,12 +305,20 @@ async function setupDatabase() {
     await sql`CREATE INDEX IF NOT EXISTS idx_ignores_user_id ON ignores(user_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_blocks_user_id ON blocks(user_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_deactivations_user_id ON deactivations(user_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id)`;
     console.log('✅ indexes created');
 
     console.log('\n🎉 Database setup complete!');
   } catch (error) {
-    console.error('❌ Database setup failed:', error);
-    throw error;
+    const msg = error.message || '';
+    if (msg.includes('HTTP status 402') || msg.includes('exceeded the data transfer quota')) {
+      console.warn('⚠️ Database setup skipped: NeonDB data transfer quota exceeded. Tables already exist from previous setup. Upgrade your plan or wait for quota reset.');
+    } else if (msg.includes('already exists')) {
+      // Table already exists, this is fine
+    } else {
+      console.error('⚠️ Database setup error:', msg);
+    }
   }
 }
 

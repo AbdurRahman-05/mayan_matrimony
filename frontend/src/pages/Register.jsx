@@ -734,7 +734,6 @@ const Register = () => {
     if (isRegistered) {
         return (
             <div className="register-page">
-                <Navbar />
                 <div className="register-container">
                     <div className="register-card glass-panel" style={{ textAlign: 'center', padding: '3rem' }}>
                         <div className="success-icon-container" style={{ marginBottom: '1.5rem' }}>

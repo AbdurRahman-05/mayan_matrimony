@@ -6,7 +6,7 @@ import {
     Loader2, User, Clock, Check, X, MapPin, Briefcase, GraduationCap,
     Heart, Languages, Sparkles, Star, MessageCircle
 } from 'lucide-react';
-import { getReceivedInterests, getSentInterests, respondToInterest, shortlistProfile, ignoreProfile } from '../services/api';
+import { getReceivedInterests, getSentInterests, respondToInterest, shortlistProfile, ignoreProfile, getChatList, globalCache } from '../services/api';
 import { showAlert, showConfirm } from '../components/GlobalModal';
 import './Interests.css';
 
@@ -14,20 +14,44 @@ const Interests = () => {
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState('received'); // 'received' or 'sent'
     const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'pending', 'accepted', 'declined'
-    const [interests, setInterests] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [receivedInterests, setReceivedInterests] = useState(globalCache.interests?.received || []);
+    const [sentInterests, setSentInterests] = useState(globalCache.interests?.sent || []);
+    const [chatList, setChatList] = useState([]);
+    const [loading, setLoading] = useState(!globalCache.interests?.received || !globalCache.interests?.sent);
 
     useEffect(() => {
-        loadInterests();
-    }, [activeSection, activeFilter]);
+        loadAllInterests();
+        loadChatData();
+    }, []);
 
-    const loadInterests = async () => {
-        setLoading(true);
+    // Filter data based on active section and filter locally
+    const filteredInterests = React.useMemo(() => {
+        const sourceData = activeSection === 'received' ? receivedInterests : sentInterests;
+        if (activeFilter === 'all') return sourceData;
+        return sourceData.filter(item => item.status === activeFilter);
+    }, [activeSection, activeFilter, receivedInterests, sentInterests]);
+
+    const loadChatData = async () => {
         try {
-            const data = activeSection === 'received'
-                ? await getReceivedInterests(activeFilter)
-                : await getSentInterests(activeFilter);
-            setInterests(data);
+            const list = await getChatList();
+            setChatList(list || []);
+        } catch (err) {
+            console.error('Failed to load chat list', err);
+        }
+    };
+
+    const loadAllInterests = async () => {
+        if (!globalCache.interests?.received || !globalCache.interests?.sent) {
+            setLoading(true);
+        }
+        try {
+            const [received, sent] = await Promise.all([
+                getReceivedInterests('all'),
+                getSentInterests('all')
+            ]);
+            globalCache.interests = { received, sent };
+            setReceivedInterests(received);
+            setSentInterests(sent);
         } catch (err) {
             console.error('Failed to load interests', err);
         } finally {
@@ -38,22 +62,22 @@ const Interests = () => {
     const handleRespond = async (e, id, status) => {
         e.stopPropagation();
         // Optimistic UI update for immediate feedback
-        setInterests(prev => {
-            if (activeFilter === 'all') {
-                // In 'all', just update the status badge
-                return prev.map(item => item.id === id ? { ...item, status } : item);
-            } else {
-                // In specific tabs like 'pending', remove the item since it's no longer pending
-                return prev.filter(item => item.id !== id);
-            }
-        });
+        const updateFn = prev => {
+            return prev.map(item => item.id === id ? { ...item, status } : item);
+        };
+        
+        if (activeSection === 'received') {
+            setReceivedInterests(updateFn);
+        } else {
+            setSentInterests(updateFn);
+        }
 
         try {
             await respondToInterest(id, status);
         } catch (err) {
             console.error(err);
             showAlert('Failed to respond to interest. Please try again.', 'Error');
-            loadInterests(); // revert on failure
+            loadAllInterests(); // revert on failure
         }
     };
 
@@ -75,7 +99,7 @@ const Interests = () => {
                 await ignoreProfile(uniqueId);
                 showAlert('You have ignored this profile.', 'Success');
                 // After ignore, we should refresh the interest list
-                loadInterests();
+                loadAllInterests();
             } catch (err) {
                 showAlert(err.message || 'Failed to ignore profile', 'Error');
             }
@@ -84,7 +108,7 @@ const Interests = () => {
 
     const handleChatAction = (e, uniqueId) => {
         e.stopPropagation();
-        alert('Chat feature coming soon!');
+        navigate(`/chat/${uniqueId}`);
     };
 
     const tabs = [
@@ -207,9 +231,9 @@ const Interests = () => {
                                     <Loader2 className="animate-spin" size={40} />
                                     <p>Loading interests...</p>
                                 </div>
-                            ) : interests.length > 0 ? (
+                            ) : filteredInterests.length > 0 ? (
                                 <div className="match-results-list">
-                                    {interests.map(item => {
+                                    {filteredInterests.map(item => {
                                         const profile = activeSection === 'received' ? item.sender : item.receiver;
                                         return (
                                             <div key={item.id} className="match-card" onClick={() => navigate(`/profile/${profile.uniqueId}`)}>
@@ -280,6 +304,12 @@ const Interests = () => {
                                                                 <X size={18} />
                                                                 Ignore
                                                             </button>
+                                                            {!chatList.some(c => c.unique_id === profile.uniqueId) && (
+                                                                <button className="card-action-btn" onClick={(e) => handleChatAction(e, profile.uniqueId)}>
+                                                                    <MessageCircle size={18} />
+                                                                    Chat
+                                                                </button>
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>

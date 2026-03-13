@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = Router();
 
@@ -152,8 +153,7 @@ router.post('/', auth, async (req, res) => {
             limit: 50
         });
     } catch (error) {
-        console.error('Search error:', error);
-        res.status(500).json({ error: 'Search failed' });
+        return dbErrorResponse(res, 'Search error', error, 'Search failed');
     }
 });
 
@@ -205,8 +205,7 @@ router.get('/id/:uniqueId', auth, async (req, res) => {
             profileFor: row.profile_for || ''
         });
     } catch (error) {
-        console.error('Search by ID error:', error);
-        res.status(500).json({ error: 'Search failed' });
+        return dbErrorResponse(res, 'Search by ID error', error, 'Search failed');
     }
 });
 
@@ -223,8 +222,7 @@ router.post('/save', auth, async (req, res) => {
 
         res.json({ message: 'Search saved', id: result[0].id });
     } catch (error) {
-        console.error('Save search error:', error);
-        res.status(500).json({ error: 'Failed to save search' });
+        return dbErrorResponse(res, 'Save search error', error, 'Failed to save search');
     }
 });
 
@@ -244,8 +242,7 @@ router.get('/saved', auth, async (req, res) => {
             createdAt: r.created_at
         })));
     } catch (error) {
-        console.error('Get saved searches error:', error);
-        res.status(500).json({ error: 'Failed to get saved searches' });
+        return dbErrorResponse(res, 'Get saved searches error', error, 'Failed to get saved searches');
     }
 });
 
@@ -258,8 +255,7 @@ router.delete('/saved/:id', auth, async (req, res) => {
     `;
         res.json({ message: 'Saved search deleted' });
     } catch (error) {
-        console.error('Delete saved search error:', error);
-        res.status(500).json({ error: 'Failed to delete saved search' });
+        return dbErrorResponse(res, 'Delete saved search error', error, 'Failed to delete saved search');
     }
 });
 

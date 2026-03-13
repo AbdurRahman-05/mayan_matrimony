@@ -108,7 +108,7 @@ const Profile = () => {
         { key: 'destinations', label: 'Destinations' },
     ];
 
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!localStorage.getItem('userProfile'));
 
     const handleFavDone = async (key, selectedItems) => {
         try {
@@ -277,7 +277,9 @@ const Profile = () => {
 
     useEffect(() => {
         const loadInitialData = async () => {
-            setLoading(true);
+            if (!localStorage.getItem('userProfile')) {
+                setLoading(true);
+            }
             try {
                 // Single API call fetches profile + preferences + favourites
                 const { profile, preferences, favourites } = await getFullProfile();
@@ -396,8 +398,10 @@ const Profile = () => {
         setLoading(true);
         try {
             await syncPhotos(draftPhotos);
-            const updatedProfile = await getProfile();
-            setProfileData(updatedProfile);
+            const fullData = await getFullProfile();
+            setProfileData(prev => ({ ...prev, ...fullData.profile }));
+            setPreferenceData(prev => ({ ...prev, ...fullData.preferences }));
+            setFavouritesData(prev => ({ ...prev, ...fullData.favourites }));
             setShowPhotoManager(false);
             showAlert('Photos saved successfully!', 'Success');
         } catch (error) {
@@ -469,8 +473,13 @@ const Profile = () => {
         setAgeError('');
         setLoading(true);
         try {
-            await updateProfile(editForm);
-            setProfileData(editForm);
+            // Merge editForm into profileData so we send the complete profile, not partial data
+            const mergedData = { ...profileData, ...editForm };
+            await updateProfile(mergedData);
+            const fullData = await getFullProfile();
+            setProfileData(prev => ({ ...prev, ...fullData.profile }));
+            setPreferenceData(prev => ({ ...prev, ...fullData.preferences }));
+            setFavouritesData(prev => ({ ...prev, ...fullData.favourites }));
             setEditingSection(null);
             showAlert('Details updated successfully!', 'Success');
         } catch (err) {
@@ -502,7 +511,10 @@ const Profile = () => {
         setLoading(true);
         try {
             await updatePreferences(prefForm);
-            setPreferenceData(prefForm);
+            const fullData = await getFullProfile();
+            setProfileData(prev => ({ ...prev, ...fullData.profile }));
+            setPreferenceData(prev => ({ ...prev, ...fullData.preferences }));
+            setFavouritesData(prev => ({ ...prev, ...fullData.favourites }));
             setActivePrefEditor(null);
         } catch (err) {
             showAlert(err.message || 'Failed to update preferences', 'Error');
@@ -513,19 +525,33 @@ const Profile = () => {
 
     const calculateCompletion = () => {
         const fields = [
-            'fullName', 'gender', 'dob', 'mobile', 'email',
-            'religion', 'caste', 'country', 'state', 'city',
-            'education', 'occupation', 'income', 'height', 'motherTongue',
-            'photo', 'horoscope', 'about', 'employmentType'
+            'photo', 'fullName', 'gender', 'dob', 'height', 'maritalStatus', 'religion', 'motherTongue', 
+            'about', 'profileFor', 'education', 'occupation', 'employmentType', 'familyType', 'familyStatus', 
+            'fatherOccupation', 'motherOccupation', 'mobile', 'email', 'diet', 'smoking', 'drinking'
         ];
         let completed = 0;
+        let total = fields.length + 1; // +1 for interests
         fields.forEach(field => {
             const value = profileData[field];
             if (value && value !== 'Not Specified' && value !== '') {
                 completed++;
             }
         });
-        return Math.round((completed / fields.length) * 100);
+        
+        // custom check for interests
+        const favs = favouritesData || {};
+        if (
+            (favs.hobbies && favs.hobbies.length > 0) ||
+            (favs.sports && favs.sports.length > 0) ||
+            (favs.movies && favs.movies.length > 0) ||
+            (favs.read && favs.read.length > 0) ||
+            (favs.tvShows && favs.tvShows.length > 0) ||
+            (favs.destinations && favs.destinations.length > 0)
+        ) {
+            completed++;
+        }
+        
+        return Math.round((completed / total) * 100);
     };
 
     const completionPercentage = calculateCompletion();
@@ -583,7 +609,7 @@ const Profile = () => {
     const previewSisters = profileData.numberOfSisters ?? profileData.sisters ?? '';
     const previewMarriedBrothers = profileData.marriedBrothers ?? profileData.brothersMarried ?? '';
     const previewMarriedSisters = profileData.marriedSisters ?? profileData.sistersMarried ?? '';
-    const previewDiet = profileData.dietaryHabit || profileData.diet || 'Not specified';
+    const previewDiet = profileData.diet || 'Not specified';
     const previewHobbies = (favouritesData.hobbies && favouritesData.hobbies.length > 0) ? favouritesData.hobbies.join(', ') : (profileData.hobbies || 'Not specified');
     const previewEducationPreference = preferenceData.prefEducation || "Doesn't Matter";
     const previewOccupationPreference = preferenceData.prefOccupation || "Doesn't Matter";
@@ -1356,8 +1382,8 @@ const Profile = () => {
                                     {dietOptions.map(opt => (
                                         <button
                                             key={opt}
-                                            className={`bd-chip ${editForm.dietaryHabit === opt ? 'active' : ''}`}
-                                            onClick={() => setEditForm(prev => ({ ...prev, dietaryHabit: opt }))}
+                                            className={`bd-chip ${editForm.diet === opt ? 'active' : ''}`}
+                                            onClick={() => setEditForm(prev => ({ ...prev, diet: opt }))}
                                         >
                                             {opt}
                                         </button>
@@ -1830,9 +1856,9 @@ const Profile = () => {
                                             <Wine size={24} color={profileData.drinking ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.drinking ? 2 : 1.5} />
                                             <span style={{ fontSize: '0.9rem', color: profileData.drinking ? '#D4AF37' : '#64748b', fontWeight: profileData.drinking ? '600' : '500' }}>{profileData.drinking ? `Drinking: ${profileData.drinking}` : 'Add Drinking Habits'}</span>
                                         </div>
-                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.dietaryHabit ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.dietaryHabit ? '#fef9e7' : 'transparent' }}>
-                                            <Utensils size={24} color={profileData.dietaryHabit ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.dietaryHabit ? 2 : 1.5} />
-                                            <span style={{ fontSize: '0.9rem', color: profileData.dietaryHabit ? '#D4AF37' : '#64748b', fontWeight: profileData.dietaryHabit ? '600' : '500' }}>{profileData.dietaryHabit ? `Diet: ${profileData.dietaryHabit}` : 'Add Dietary Habits'}</span>
+                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.diet ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.diet ? '#fef9e7' : 'transparent' }}>
+                                            <Utensils size={24} color={profileData.diet ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.diet ? 2 : 1.5} />
+                                            <span style={{ fontSize: '0.9rem', color: profileData.diet ? '#D4AF37' : '#64748b', fontWeight: profileData.diet ? '600' : '500' }}>{profileData.diet ? `Diet: ${profileData.diet}` : 'Add Dietary Habits'}</span>
                                         </div>
                                         <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.smoking ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.smoking ? '#fef9e7' : 'transparent' }}>
                                             <Cigarette size={24} color={profileData.smoking ? "#D4AF37" : "#9ca3af"} strokeWidth={profileData.smoking ? 2 : 1.5} />
@@ -1860,7 +1886,7 @@ const Profile = () => {
                                         ))}
                                     </div>
 
-                                    {(!profileData.drinking || !profileData.dietaryHabit || !profileData.smoking || !profileData.hobbies) && (
+                                    {(!profileData.drinking || !profileData.diet || !profileData.smoking) && (
                                         <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                             <button className="ep-empty-add-action" onClick={() => handleEditSection('lifestyle')} style={{ margin: 0 }}>
                                                 <Plus size={16} /> Add Lifestyle Details

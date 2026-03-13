@@ -15,7 +15,7 @@ const plans = [
         period: '/3 mo',
         icon: <Shield size={28} />,
         features: [
-            { text: 'View up to 50 contact numbers', included: true },
+            { text: 'Chat with up to 50 matches', included: true },
             { text: 'Send up to 50 interests', included: true },
             { text: 'View profile photos', included: true },
             { text: 'Shortlist up to 100 profiles', included: true },
@@ -33,7 +33,7 @@ const plans = [
         period: '/6 mo',
         icon: <Award size={28} />,
         features: [
-            { text: 'View up to 150 contact numbers', included: true },
+            { text: 'Chat with up to 150 matches', included: true },
             { text: 'Send unlimited interests', included: true },
             { text: 'View profile photos', included: true },
             { text: 'Shortlist unlimited profiles', included: true },
@@ -52,7 +52,7 @@ const plans = [
         icon: <Crown size={28} />,
         popular: true,
         features: [
-            { text: 'View unlimited contact numbers', included: true },
+            { text: 'Unlimited Chat with matches', included: true },
             { text: 'Send unlimited interests', included: true },
             { text: 'View profile photos in HD', included: true },
             { text: 'Shortlist unlimited profiles', included: true },
@@ -70,7 +70,7 @@ const plans = [
         period: '/yr',
         icon: <Gem size={28} />,
         features: [
-            { text: 'View unlimited contact numbers', included: true },
+            { text: 'Unlimited Chat with matches', included: true },
             { text: 'Send unlimited interests', included: true },
             { text: 'View profile photos in HD', included: true },
             { text: 'Shortlist unlimited profiles', included: true },
@@ -84,7 +84,7 @@ const plans = [
 ];
 
 const compareFeatures = [
-    { label: 'View contact numbers', bronze: '50', silver: '150', gold: 'Unlimited', diamond: 'Unlimited' },
+    { label: 'Chat with matches', bronze: '50', silver: '150', gold: 'Unlimited', diamond: 'Unlimited' },
     { label: 'Send interests', bronze: '50', silver: 'Unlimited', gold: 'Unlimited', diamond: 'Unlimited' },
     { label: 'Profile photo access', bronze: true, silver: true, gold: 'HD', diamond: 'HD' },
     { label: 'Shortlist profiles', bronze: '100', silver: 'Unlimited', gold: 'Unlimited', diamond: 'Unlimited' },

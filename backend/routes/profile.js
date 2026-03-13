@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = Router();
 
@@ -50,6 +51,7 @@ function formatProfile(row) {
         diet: row.diet || '',
         foodHabits: row.food_habits || '',
         about: row.about || '',
+        disability: row.disability || 'None',
         partnerPreference: row.partner_preference || '',
         familyType: row.family_type || '',
         familyStatus: row.family_status || '',
@@ -154,8 +156,7 @@ router.get('/full', auth, async (req, res) => {
 
         res.json({ profile, preferences, favourites });
     } catch (error) {
-        console.error('Get full profile error:', error);
-        res.status(500).json({ error: 'Failed to get full profile data' });
+        return dbErrorResponse(res, 'Get full profile error', error, 'Failed to get full profile data');
     }
 });
 
@@ -194,8 +195,7 @@ router.get('/', auth, async (req, res) => {
 
         res.json(profile);
     } catch (error) {
-        console.error('Get profile error:', error);
-        res.status(500).json({ error: 'Failed to get profile' });
+        return dbErrorResponse(res, 'Get profile error', error, 'Failed to get profile');
     }
 });
 
@@ -241,6 +241,7 @@ router.put('/', auth, async (req, res) => {
         diet = ${data.diet || null},
         food_habits = ${data.foodHabits || null},
         about = ${data.about || null},
+        disability = ${data.disability || null},
         partner_preference = ${data.partnerPreference || null},
         family_type = ${data.familyType || null},
         family_status = ${data.familyStatus || null},
@@ -272,8 +273,7 @@ router.put('/', auth, async (req, res) => {
 
         res.json({ message: 'Profile updated successfully' });
     } catch (error) {
-        console.error('Update profile error:', error);
-        res.status(500).json({ error: 'Failed to update profile' });
+        return dbErrorResponse(res, 'Update profile error', error, 'Failed to update profile');
     }
 });
 
@@ -315,8 +315,7 @@ router.get('/:uniqueId', auth, async (req, res) => {
 
         res.json(profile);
     } catch (error) {
-        console.error('Get profile by ID error:', error);
-        res.status(500).json({ error: 'Failed to get profile' });
+        return dbErrorResponse(res, 'Get profile by ID error', error, 'Failed to get profile');
     }
 });
 
@@ -349,8 +348,7 @@ router.post('/photo', auth, async (req, res) => {
 
         res.json({ message: 'Photo uploaded', photoId: result[0].id });
     } catch (error) {
-        console.error('Upload photo error:', error);
-        res.status(500).json({ error: 'Failed to upload photo' });
+        return dbErrorResponse(res, 'Upload photo error', error, 'Failed to upload photo');
     }
 });
 
@@ -385,8 +383,7 @@ router.delete('/photo/:photoId', auth, async (req, res) => {
 
         res.json({ message: 'Photo deleted' });
     } catch (error) {
-        console.error('Delete photo error:', error);
-        res.status(500).json({ error: 'Failed to delete photo' });
+        return dbErrorResponse(res, 'Delete photo error', error, 'Failed to delete photo');
     }
 });
 
@@ -408,8 +405,7 @@ router.put('/photo/:photoId/set-main', auth, async (req, res) => {
 
         res.json({ message: 'Main photo updated' });
     } catch (error) {
-        console.error('Set main photo error:', error);
-        res.status(500).json({ error: 'Failed to set main photo' });
+        return dbErrorResponse(res, 'Set main photo error', error, 'Failed to set main photo');
     }
 });
 
@@ -440,8 +436,7 @@ router.put('/photos/sync', auth, async (req, res) => {
 
         res.json({ message: 'Photos synced successfully' });
     } catch (error) {
-        console.error('Sync photos error:', error);
-        res.status(500).json({ error: 'Failed to sync photos' });
+        return dbErrorResponse(res, 'Sync photos error', error, 'Failed to sync photos');
     }
 });
 

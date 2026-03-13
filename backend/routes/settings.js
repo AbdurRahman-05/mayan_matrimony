@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = Router();
 
@@ -27,8 +28,7 @@ router.post('/verify-password', auth, async (req, res) => {
 
         res.json({ verified: true, message: 'Password verified successfully' });
     } catch (error) {
-        console.error('Verify password error:', error);
-        res.status(500).json({ error: 'Failed to verify password' });
+        return dbErrorResponse(res, 'Verify password error', error, 'Failed to verify password');
     }
 });
 
@@ -68,8 +68,7 @@ router.put('/change-password', auth, async (req, res) => {
 
         res.json({ message: 'Password changed successfully' });
     } catch (error) {
-        console.error('Change password error:', error);
-        res.status(500).json({ error: 'Failed to change password' });
+        return dbErrorResponse(res, 'Change password error', error, 'Failed to change password');
     }
 });
 
@@ -121,8 +120,7 @@ router.post('/deactivate', auth, async (req, res) => {
 
         res.json({ message: 'Profile deactivated successfully', reactivateAt: reactivateAt.toISOString() });
     } catch (error) {
-        console.error('Deactivate error:', error);
-        res.status(500).json({ error: 'Failed to deactivate profile' });
+        return dbErrorResponse(res, 'Deactivate error', error, 'Failed to deactivate profile');
     }
 });
 
@@ -137,8 +135,7 @@ router.post('/activate', auth, async (req, res) => {
 
         res.json({ message: 'Profile activated successfully' });
     } catch (error) {
-        console.error('Activate error:', error);
-        res.status(500).json({ error: 'Failed to activate profile' });
+        return dbErrorResponse(res, 'Activate error', error, 'Failed to activate profile');
     }
 });
 
@@ -170,8 +167,7 @@ router.get('/deactivation-status', auth, async (req, res) => {
             duration: record.duration
         });
     } catch (error) {
-        console.error('Deactivation status error:', error);
-        res.status(500).json({ error: 'Failed to check deactivation status' });
+        return dbErrorResponse(res, 'Deactivation status error', error, 'Failed to check deactivation status');
     }
 });
 
@@ -196,8 +192,7 @@ router.post('/delete-profile', auth, async (req, res) => {
 
         res.json({ message: 'Profile deleted permanently' });
     } catch (error) {
-        console.error('Delete profile error:', error);
-        res.status(500).json({ error: 'Failed to delete profile' });
+        return dbErrorResponse(res, 'Delete profile error', error, 'Failed to delete profile');
     }
 });
 
@@ -237,8 +232,7 @@ router.get('/ignored', auth, async (req, res) => {
 
         res.json(profiles);
     } catch (error) {
-        console.error('Get ignored profiles error:', error);
-        res.status(500).json({ error: 'Failed to get ignored profiles' });
+        return dbErrorResponse(res, 'Get ignored profiles error', error, 'Failed to get ignored profiles');
     }
 });
 
@@ -255,8 +249,7 @@ router.delete('/ignored/:uniqueId', auth, async (req, res) => {
 
         res.json({ message: 'Removed from ignored list' });
     } catch (error) {
-        console.error('Remove ignored error:', error);
-        res.status(500).json({ error: 'Failed to remove from ignored list' });
+        return dbErrorResponse(res, 'Remove ignored error', error, 'Failed to remove from ignored list');
     }
 });
 
@@ -296,8 +289,7 @@ router.get('/blocked', auth, async (req, res) => {
 
         res.json(profiles);
     } catch (error) {
-        console.error('Get blocked profiles error:', error);
-        res.status(500).json({ error: 'Failed to get blocked profiles' });
+        return dbErrorResponse(res, 'Get blocked profiles error', error, 'Failed to get blocked profiles');
     }
 });
 
@@ -322,8 +314,7 @@ router.post('/block/:uniqueId', auth, async (req, res) => {
 
         res.json({ message: 'Profile blocked' });
     } catch (error) {
-        console.error('Block error:', error);
-        res.status(500).json({ error: 'Failed to block profile' });
+        return dbErrorResponse(res, 'Block error', error, 'Failed to block profile');
     }
 });
 
@@ -340,8 +331,7 @@ router.delete('/blocked/:uniqueId', auth, async (req, res) => {
 
         res.json({ message: 'Removed from blocked list' });
     } catch (error) {
-        console.error('Remove blocked error:', error);
-        res.status(500).json({ error: 'Failed to remove from blocked list' });
+        return dbErrorResponse(res, 'Remove blocked error', error, 'Failed to remove from blocked list');
     }
 });
 

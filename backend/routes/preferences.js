@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
+import { dbErrorResponse } from '../utils/dbError.js';
 
 const router = Router();
 
@@ -43,8 +44,7 @@ router.get('/', auth, async (req, res) => {
             prefIncome: row.pref_income || ''
         });
     } catch (error) {
-        console.error('Get preferences error:', error);
-        res.status(500).json({ error: 'Failed to get preferences' });
+        return dbErrorResponse(res, 'Get preferences error', error, 'Failed to get preferences');
     }
 });
 
@@ -115,8 +115,7 @@ router.put('/', auth, async (req, res) => {
 
         res.json({ message: 'Preferences updated successfully' });
     } catch (error) {
-        console.error('Update preferences error:', error);
-        res.status(500).json({ error: 'Failed to update preferences' });
+        return dbErrorResponse(res, 'Update preferences error', error, 'Failed to update preferences');
     }
 });
 
