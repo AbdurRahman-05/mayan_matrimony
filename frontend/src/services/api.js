@@ -33,6 +33,11 @@ async function apiFetch(url, options = {}) {
         ...options.headers,
     };
 
+    // If body is FormData, let browser set the content-type with boundary
+    if (options.body instanceof FormData) {
+        delete headers['Content-Type'];
+    }
+
     let response;
     try {
         response = await fetch(`${API_BASE}${url}`, {
@@ -217,10 +222,14 @@ export async function getProfileById(uniqueId) {
     return apiFetch(`/profile/${uniqueId}`);
 }
 
-export async function uploadPhoto(photoData, isMain = false) {
+export async function uploadPhoto(photoFile, isMain = false) {
+    const formData = new FormData();
+    formData.append('photo', photoFile);
+    formData.append('isMain', isMain);
+
     return apiFetch('/profile/photo', {
         method: 'POST',
-        body: JSON.stringify({ photoData, isMain }),
+        body: formData,
     });
 }
 
@@ -237,9 +246,31 @@ export async function setMainPhoto(photoId) {
 }
 
 export async function syncPhotos(photos) {
+    const formData = new FormData();
+    const manifest = [];
+    
+    photos.forEach((photo, index) => {
+        if (photo.file) {
+            formData.append('photos', photo.file);
+            manifest.push({ 
+                isNew: true, 
+                fileIndex: manifest.filter(m => m.isNew).length, 
+                isMain: photo.isMain 
+            });
+        } else {
+            manifest.push({ 
+                isNew: false, 
+                src: photo.src, 
+                isMain: photo.isMain 
+            });
+        }
+    });
+
+    formData.append('photoManifest', JSON.stringify(manifest));
+
     return apiFetch('/profile/photos/sync', {
         method: 'PUT',
-        body: JSON.stringify({ photos }),
+        body: formData,
     });
 }
 

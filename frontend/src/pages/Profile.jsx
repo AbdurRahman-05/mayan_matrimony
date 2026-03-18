@@ -363,7 +363,7 @@ const Profile = () => {
             for (const file of filesToProcess) {
                 const base64 = await convertFileToBase64(file);
                 const isFirstPhoto = newDrafts.length === 0;
-                newDrafts.push({ src: base64, isMain: isFirstPhoto });
+                newDrafts.push({ src: base64, isMain: isFirstPhoto, file, isNew: true });
             }
             setDraftPhotos(newDrafts);
         } catch (error) {

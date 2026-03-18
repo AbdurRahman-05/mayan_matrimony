@@ -1,8 +1,41 @@
 import React from 'react';
 import { Heart, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { isAuthenticated } from '../services/api';
 import './Footer.css';
 
 const Footer = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavClick = (e, path) => {
+    e.preventDefault();
+    
+    // Membership is accessible without login
+    if (path === '/membership') {
+      navigate(path);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (!isAuthenticated()) {
+      if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Find existing button to open the form if needed
+        const registerBtn = document.querySelector('.ts-hero-btn, .landing-nav-register');
+        if (registerBtn) {
+          registerBtn.click();
+        }
+      } else {
+        navigate('/', { state: { showRegister: true } });
+      }
+    } else {
+      navigate(path);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <footer className="footer-section">
       <div className="container">
@@ -25,11 +58,12 @@ const Footer = () => {
           <div className="footer-links">
             <h3>Explore</h3>
             <ul>
-              <li><a href="/">Home</a></li>
-              <li><a href="/search">Search Matches</a></li>
-              <li><a href="/services">Membership Plans</a></li>
-              <li><a href="/success-stories">Success Stories</a></li>
-              <li><a href="/contact">Contact Us</a></li>
+              <li><a href="/home" onClick={(e) => handleNavClick(e, '/home')}>Home</a></li>
+              <li><a href="/search" onClick={(e) => handleNavClick(e, '/search')}>Search</a></li>
+              <li><a href="/matches" onClick={(e) => handleNavClick(e, '/matches')}>Matches</a></li>
+              <li><a href="/interests" onClick={(e) => handleNavClick(e, '/interests')}>Interest</a></li>
+              <li><a href="/chat" onClick={(e) => handleNavClick(e, '/chat')}>Chat</a></li>
+              <li><a href="/membership" onClick={(e) => handleNavClick(e, '/membership')}>Membership</a></li>
             </ul>
           </div>
 

@@ -11,7 +11,7 @@ const Navbar = () => {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const location = useLocation();
 
-  const isLandingPage = location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register';
+  const isLandingPage = !isAuthenticated() || location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register';
 
   useEffect(() => {
     let timeoutId;
