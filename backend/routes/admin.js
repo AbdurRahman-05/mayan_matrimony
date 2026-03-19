@@ -6,7 +6,10 @@ import sql from '../db.js';
 import bcrypt from 'bcryptjs';
 import { Resend } from 'resend';
 import { dbErrorResponse } from '../utils/dbError.js';
+import { exec } from 'child_process';
+import util from 'util';
 
+const execPromise = util.promisify(exec);
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -351,6 +354,62 @@ router.put('/stories', (req, res) => {
     } catch (error) {
         console.error('Error updating stories:', error);
         res.status(500).json({ error: 'Failed to update story data' });
+    }
+});
+
+// 8. Get complete storage details (VPS storage + User Database space)
+router.get('/storage', async (req, res) => {
+    try {
+        let vpsStorage = { total: 'N/A', used: 'N/A', available: 'N/A', usePercent: '0%' };
+        // Get VPS Hard Drive usage
+        if (process.platform === 'win32') {
+            vpsStorage = { total: 'Windows Dev', used: 'N/A', available: 'N/A', usePercent: '0%' };
+        } else {
+            try {
+                const { stdout } = await execPromise('df -h /');
+                const lines = stdout.trim().split('\n');
+                if (lines.length > 1) {
+                    const parts = lines[1].trim().split(/\s+/);
+                    vpsStorage = {
+                        total: parts[1],      // e.g., "48G"
+                        used: parts[2],       // e.g., "3.1G"
+                        available: parts[3],  // e.g., "45G"
+                        usePercent: parts[4], // e.g., "7%"
+                    };
+                }
+            } catch (fsError) {
+                console.error('Error fetching OS storage:', fsError);
+            }
+        }
+
+        // Get Database User Space usage (Profiles, images, info inside Postgres)
+        let databaseStorage = { totalUserSpaceMB: '0.00' };
+        let totalUsers = 0;
+        
+        try {
+            // Postgres function gives exact byte size of the whole database
+            const dbSizeResult = await sql`SELECT pg_database_size(current_database()) as size`;
+            const usersResult = await sql`SELECT count(*) as total FROM users`;
+            totalUsers = parseInt(usersResult[0].total) || 0;
+            
+            if (dbSizeResult && dbSizeResult[0]) {
+                const bytes = parseInt(dbSizeResult[0].size);
+                // Convert to MB with 2 decimal places
+                const mb = (bytes / (1024 * 1024)).toFixed(2);
+                databaseStorage.totalUserSpaceMB = mb;
+            }
+        } catch (dbError) {
+            console.error('Error fetching DB storage:', dbError);
+        }
+
+        res.json({
+            vpsStorage,
+            databaseStorage,
+            totalUsers
+        });
+    } catch (error) {
+        console.error('Master storage fetch error:', error);
+        res.status(500).json({ error: 'Failed to fetch storage report' });
     }
 });
 
