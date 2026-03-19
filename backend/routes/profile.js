@@ -2,12 +2,21 @@ import { Router } from 'express';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
 import { dbErrorResponse } from '../utils/dbError.js';
+import { upload } from '../utils/upload.js';
 
 const router = Router();
 
 // Helper: convert DB profile row to frontend-compatible object
-function formatProfile(row) {
+function formatProfile(row, req) {
     if (!row) return null;
+    const baseUrl = req ? `${req.protocol}://${req.get('host')}` : '';
+    
+    const processPhoto = (photo) => {
+        if (!photo) return '';
+        if (photo.startsWith('data:image') || photo.startsWith('http')) return photo;
+        return `${baseUrl}${photo}`;
+    };
+
     return {
         id: row.id,
         userId: row.user_id,
@@ -73,7 +82,7 @@ function formatProfile(row) {
         livingWithParents: row.living_with_parents || '',
         contactAddress: row.contact_address || '',
         settlingAbroad: row.settling_abroad || '',
-        photo: row.photo || '',
+        photo: processPhoto(row.photo),
         profileFor: row.profile_for || 'Self',
         additionalPhotos: [],
         createdAt: row.created_at
@@ -102,10 +111,24 @@ router.get('/full', auth, async (req, res) => {
         // Build profile
         let profile = {};
         if (profileResults.length > 0) {
-            profile = formatProfile(profileResults[0]);
-            profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => p.photo_data);
+            profile = formatProfile(profileResults[0], req);
+            profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => {
+                const photo = p.photo_data;
+                if (!photo) return '';
+                if (photo.startsWith('data:image') || photo.startsWith('http')) return photo;
+                const baseUrl = `${req.protocol}://${req.get('host')}`;
+                return `${baseUrl}${photo}`;
+            });
             const mainPhoto = photos.find(p => p.is_main);
-            if (mainPhoto) profile.photo = mainPhoto.photo_data;
+            if (mainPhoto) {
+                const photo = mainPhoto.photo_data;
+                if (photo.startsWith('data:image') || photo.startsWith('http')) {
+                    profile.photo = photo;
+                } else {
+                    const baseUrl = `${req.protocol}://${req.get('host')}`;
+                    profile.photo = `${baseUrl}${photo}`;
+                }
+            }
         }
 
         // Build preferences
@@ -174,7 +197,7 @@ router.get('/', auth, async (req, res) => {
             return res.status(404).json({ error: 'Profile not found' });
         }
 
-        const profile = formatProfile(results[0]);
+        const profile = formatProfile(results[0], req);
 
         // Get additional photos
         const photos = await sql`
@@ -183,14 +206,25 @@ router.get('/', auth, async (req, res) => {
       ORDER BY is_main DESC, created_at ASC
     `;
 
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
         profile.additionalPhotos = photos
             .filter(p => !p.is_main)
-            .map(p => p.photo_data);
+            .map(p => {
+                const photo = p.photo_data;
+                if (!photo) return '';
+                if (photo.startsWith('data:image') || photo.startsWith('http')) return photo;
+                return `${baseUrl}${photo}`;
+            });
 
         // If main photo from photos table, use it
         const mainPhoto = photos.find(p => p.is_main);
         if (mainPhoto) {
-            profile.photo = mainPhoto.photo_data;
+            const photo = mainPhoto.photo_data;
+            if (photo.startsWith('data:image') || photo.startsWith('http')) {
+                profile.photo = photo;
+            } else {
+                profile.photo = `${baseUrl}${photo}`;
+            }
         }
 
         res.json(profile);
@@ -300,9 +334,23 @@ router.get('/:uniqueId', auth, async (req, res) => {
       ORDER BY is_main DESC, created_at ASC
     `;
 
-        profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => p.photo_data);
+        profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => {
+            const photo = p.photo_data;
+            if (!photo) return '';
+            if (photo.startsWith('data:image') || photo.startsWith('http')) return photo;
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            return `${baseUrl}${photo}`;
+        });
         const mainPhoto = photos.find(p => p.is_main);
-        if (mainPhoto) profile.photo = mainPhoto.photo_data;
+        if (mainPhoto) {
+            const photo = mainPhoto.photo_data;
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            if (photo.startsWith('data:image') || photo.startsWith('http')) {
+                profile.photo = photo;
+            } else {
+                profile.photo = `${baseUrl}${photo}`;
+            }
+        }
 
         // Record profile view (only if viewing someone else)
         const viewedUserId = results[0].user_id;
@@ -320,12 +368,20 @@ router.get('/:uniqueId', auth, async (req, res) => {
 });
 
 // Upload photo
-router.post('/photo', auth, async (req, res) => {
+router.post('/photo', auth, upload.single('photo'), async (req, res) => {
     try {
-        const { photoData, isMain } = req.body;
+        const isMain = req.body.isMain === 'true';
+        let photoPath = null;
 
-        if (!photoData) {
-            return res.status(400).json({ error: 'Photo data is required' });
+        if (req.file) {
+            photoPath = `/uploads/profiles/${req.file.filename}`;
+        } else if (req.body.photoData) {
+            // Fallback for base64 if needed, but we prefer file upload
+            photoPath = req.body.photoData;
+        }
+
+        if (!photoPath) {
+            return res.status(400).json({ error: 'Photo is required' });
         }
 
         // Enforce max 3 photos limit
@@ -337,16 +393,16 @@ router.post('/photo', auth, async (req, res) => {
         // If setting as main, unset previous main
         if (isMain) {
             await sql`UPDATE profile_photos SET is_main = false WHERE user_id = ${req.user.id}`;
-            await sql`UPDATE profiles SET photo = ${photoData} WHERE user_id = ${req.user.id}`;
+            await sql`UPDATE profiles SET photo = ${photoPath} WHERE user_id = ${req.user.id}`;
         }
 
         const result = await sql`
       INSERT INTO profile_photos (user_id, photo_data, is_main)
-      VALUES (${req.user.id}, ${photoData}, ${isMain || false})
+      VALUES (${req.user.id}, ${photoPath}, ${isMain})
       RETURNING id
     `;
 
-        res.json({ message: 'Photo uploaded', photoId: result[0].id });
+        res.json({ message: 'Photo uploaded', photoId: result[0].id, photoPath });
     } catch (error) {
         return dbErrorResponse(res, 'Upload photo error', error, 'Failed to upload photo');
     }
@@ -410,26 +466,52 @@ router.put('/photo/:photoId/set-main', auth, async (req, res) => {
 });
 
 // Sync all photos
-router.put('/photos/sync', auth, async (req, res) => {
+router.put('/photos/sync', auth, upload.array('photos', 3), async (req, res) => {
     try {
-        const { photos } = req.body;
+        const files = req.files || [];
+        const { photoManifest } = req.body; // JSON string explaining which file is which
+        let manifest = [];
+        try {
+            manifest = JSON.parse(photoManifest || '[]');
+        } catch (e) {
+            console.error('Manifest parse error', e);
+        }
 
         // Enforce max 3 photos limit
-        if (photos && photos.length > 3) {
+        if (manifest.length > 3) {
             return res.status(400).json({ error: 'Maximum 3 photos allowed.' });
         }
 
         await sql`DELETE FROM profile_photos WHERE user_id = ${req.user.id}`;
 
         let mainPhoto = null;
-        if (photos && photos.length > 0) {
-            for (const photo of photos) {
-                await sql`
-                  INSERT INTO profile_photos (user_id, photo_data, is_main)
-                  VALUES (${req.user.id}, ${photo.src}, ${photo.isMain})
-                `;
-                if (photo.isMain) mainPhoto = photo.src;
+        
+        // Handle files from manifest
+        for (let i = 0; i < manifest.length; i++) {
+            const item = manifest[i];
+            let finalPhotoData = item.src;
+
+            // If it's a new file, find it in req.files
+            if (item.isNew && item.fileIndex !== undefined) {
+                const file = files[item.fileIndex];
+                if (file) {
+                    finalPhotoData = `/uploads/profiles/${file.filename}`;
+                }
+            } else if (item.src && item.src.includes('/uploads/')) {
+                // Keep existing path but strip protocol/host if present
+                try {
+                    const url = new URL(item.src);
+                    finalPhotoData = url.pathname;
+                } catch (e) {
+                    finalPhotoData = item.src;
+                }
             }
+
+            await sql`
+                INSERT INTO profile_photos (user_id, photo_data, is_main)
+                VALUES (${req.user.id}, ${finalPhotoData}, ${item.isMain})
+            `;
+            if (item.isMain) mainPhoto = finalPhotoData;
         }
 
         await sql`UPDATE profiles SET photo = ${mainPhoto} WHERE user_id = ${req.user.id}`;

@@ -14,7 +14,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.2",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
@@ -27,7 +26,6 @@
     "pg": "^8.20.0",
     "postgres": "^3.4.8",
     "resend": "^6.9.3",
-    "undici": "^7.22.0",
     "uuid": "^13.0.0"
   }
 }

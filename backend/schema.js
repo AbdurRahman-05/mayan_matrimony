@@ -312,9 +312,7 @@ async function setupDatabase() {
     console.log('\n🎉 Database setup complete!');
   } catch (error) {
     const msg = error.message || '';
-    if (msg.includes('HTTP status 402') || msg.includes('exceeded the data transfer quota')) {
-      console.warn('⚠️ Database setup skipped: NeonDB data transfer quota exceeded. Tables already exist from previous setup. Upgrade your plan or wait for quota reset.');
-    } else if (msg.includes('already exists')) {
+    if (msg.includes('already exists')) {
       // Table already exists, this is fine
     } else {
       console.error('⚠️ Database setup error:', msg);
