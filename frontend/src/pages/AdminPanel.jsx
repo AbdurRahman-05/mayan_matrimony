@@ -48,6 +48,31 @@ const AdminPanel = () => {
     const [storyStatus, setStoryStatus] = useState({ message: '', error: false });
     const [savingStories, setSavingStories] = useState(false);
 
+    const [showStorage, setShowStorage] = useState(false);
+    const [storageData, setStorageData] = useState(null);
+    const [loadingStorage, setLoadingStorage] = useState(false);
+
+    const fetchStorageDetails = async () => {
+        setShowStorage(true);
+        setLoadingStorage(true);
+        try {
+            const response = await fetch('/api/admin/storage');
+            if (response.ok) {
+                const data = await response.json();
+                setStorageData(data);
+            } else {
+                showAlert('Failed to fetch storage details', 'Error');
+                setShowStorage(false);
+            }
+        } catch (error) {
+            console.error('Error fetching storage:', error);
+            showAlert('Network error while fetching storage', 'Error');
+            setShowStorage(false);
+        } finally {
+            setLoadingStorage(false);
+        }
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoginError('');
@@ -608,9 +633,12 @@ const AdminPanel = () => {
     return (
         <div className="admin-page">
             <div className="admin-container">
-                <div className="admin-header-row">
+                <div className="admin-header-row" style={{ alignItems: 'flex-start' }}>
                     <h1 className="admin-title">Admin Dashboard</h1>
-                    <button className="admin-logout-btn" onClick={() => setIsAuthenticated(false)}>Logout</button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <button className="admin-logout-btn" onClick={() => setIsAuthenticated(false)}>Logout</button>
+                        <button className="admin-btn-show-users" style={{ background: '#4b5563', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem' }} onClick={fetchStorageDetails}>See Storage</button>
+                    </div>
                 </div>
 
                 {uploadStatus.message && (
@@ -818,6 +846,52 @@ const AdminPanel = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* Storage Modal */}
+                {showStorage && (
+                    <div className="admin-modal-overlay" style={{ zIndex: 1000 }} onClick={() => setShowStorage(false)}>
+                        <div className="admin-modal" style={{ maxWidth: '500px', width: '90%', padding: '30px' }} onClick={(e) => e.stopPropagation()}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                <h3 style={{ margin: 0, fontSize: '1.5rem', color: '#1f2937' }}>Server Storage Info</h3>
+                                <button onClick={() => setShowStorage(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#6b7280' }}>&times;</button>
+                            </div>
+                            
+                            {loadingStorage ? (
+                                <div style={{ textAlign: 'center', padding: '30px', color: '#6b7280' }}>Fetching live server details...</div>
+                            ) : storageData ? (
+                                <div>
+                                    <div style={{ background: '#f9fafb', padding: '15px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '20px' }}>
+                                        <h4 style={{ margin: '0 0 10px 0', color: '#374151', paddingBottom: '8px', borderBottom: '1px solid #e5e7eb' }}>VPS Storage Usage</h4>
+                                        <p style={{ margin: '8px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6b7280' }}>Total storage:</span> <strong style={{color: '#111827'}}>{storageData.vpsStorage.total}</strong></p>
+                                        <p style={{ margin: '8px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6b7280' }}>Used storage:</span> <strong style={{color: '#ef4444'}}>{storageData.vpsStorage.used}</strong></p>
+                                        <p style={{ margin: '8px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6b7280' }}>Remaining storage:</span> <strong style={{color: '#10b981'}}>{storageData.vpsStorage.available}</strong></p>
+                                        <div style={{ marginTop: '15px', height: '8px', width: '100%', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                                            <div style={{ height: '100%', backgroundColor: '#3b82f6', width: storageData.vpsStorage.usePercent }}></div>
+                                        </div>
+                                        <p style={{ margin: '5px 0 0 0', fontSize: '0.8rem', textAlign: 'right', color: '#6b7280' }}>{storageData.vpsStorage.usePercent} Occupied OS & Packages</p>
+                                    </div>
+
+                                    <div style={{ background: '#f0f9ff', padding: '15px', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+                                        <h4 style={{ margin: '0 0 10px 0', color: '#0369a1', paddingBottom: '8px', borderBottom: '1px solid #bae6fd' }}>User Storage (Profiles & Uploads)</h4>
+                                        <p style={{ margin: '8px 0', fontSize: '0.95rem', color: '#0c4a6e' }}>Total storage used by all users:</p>
+                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                                            <strong style={{ fontSize: '2rem', color: '#0284c7' }}>{storageData.databaseStorage.totalUserSpaceMB} MB</strong>
+                                        </div>
+                                        <p style={{ fontSize: '0.85rem', color: '#0ea5e9', marginTop: '5px', marginBottom: 0 }}>
+                                            Includes {storageData.totalUsers} registered users' details and images. Updates automatically.
+                                        </p>
+                                    </div>
+                                    
+                                    <div style={{ marginTop: '25px', textAlign: 'right' }}>
+                                        <button onClick={() => setShowStorage(false)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Close</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p style={{ color: '#ef4444' }}>Failed to load storage details.</p>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
