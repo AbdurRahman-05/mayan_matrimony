@@ -11,7 +11,7 @@ import {
 import {
     getMatches, getShortlistedProfiles, getViewedYou, getViewedByYou, getShortlistedYou,
     sendInterest, shortlistProfile, ignoreProfile, getNearbyMatches, getHoroscopeMatches, getMatchesWithPhotos,
-    getEducationPreferenceMatches, getProfile, globalCache
+    getEducationPreferenceMatches, getProfile, getSentInterests, globalCache
 } from '../services/api';
 import './Matches.css';
 
@@ -22,6 +22,8 @@ const Matches = () => {
     const [cache, setCache] = useState(globalCache.matches);
     const [loading, setLoading] = useState(!globalCache.matches['your-matches']);
     const [userReligion, setUserReligion] = useState('');
+    const [sentInterests, setSentInterests] = useState(globalCache.interests?.sent || []);
+    const [shortlistedProfiles, setShortlistedProfiles] = useState(globalCache.matches['shortlisted-by-you'] || []);
 
     // Load user's religion from localStorage or API
     useEffect(() => {
@@ -67,6 +69,9 @@ const Matches = () => {
                         globalCache.matches = newCache;
                         return newCache;
                     });
+                    if (key === 'shortlisted-by-you') {
+                        setShortlistedProfiles(data);
+                    }
                 };
                 
                 getShortlistedProfiles().then(d => updateCache('shortlisted-by-you', d));
@@ -77,6 +82,13 @@ const Matches = () => {
                 getHoroscopeMatches().then(d => updateCache('matches-with-horoscope', d));
                 getMatchesWithPhotos().then(d => updateCache('matches-with-photos', d));
                 getEducationPreferenceMatches().then(d => updateCache('education-preference', d));
+                
+                getSentInterests('all').then(d => {
+                    if (!globalCache.interests) globalCache.interests = {};
+                    globalCache.interests.sent = d;
+                    setSentInterests(d);
+                }).catch(err => console.error('Failed to load sent interests', err));
+                
             } catch (err) {
                 console.error('Initial fetch error', err);
             } finally {
@@ -130,6 +142,8 @@ const Matches = () => {
         try {
             await sendInterest(uniqueId);
             showAlert('Interest sent successfully.', 'Success');
+            // Optimistic update
+            setSentInterests(prev => [...prev, { receiver: { uniqueId } }]);
         } catch (err) {
             showAlert(err.message || 'Failed to send interest', 'Error');
         }
@@ -140,6 +154,9 @@ const Matches = () => {
         try {
             await shortlistProfile(uniqueId);
             showAlert('You have shortlisted this profile successfully.', 'Success');
+            // Optimistic update
+            setShortlistedProfiles(prev => [...prev, { uniqueId }]);
+            
             // Only reload if we are on a list that might have changed
             if (activeCategory === 'your-matches' || activeCategory === 'nearby-matches') {
                 // leave as is
@@ -263,7 +280,9 @@ const Matches = () => {
             return (
                 <div className="edu-pref-section">
                     <div className="edu-pref-scroll">
-                        {profiles.map(p => (
+                        {profiles.map(p => {
+                            const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId);
+                            return (
                             <div key={p.uniqueId} className="edu-pref-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
                                 <div className="edu-photo-container">
                                     {p.photo ? (
@@ -282,12 +301,15 @@ const Matches = () => {
                                     <span className="edu-detail"><MapPin size={14} /> {p.city || 'Location N/A'}</span>
                                 </div>
                                 <div className="edu-actions">
-                                    <button className="edu-btn edu-interest" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
-                                        <Heart size={16} /> Interest
-                                    </button>
+                                    {!isInterested && (
+                                        <button className="edu-btn edu-interest" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
+                                            <Heart size={16} /> Interest
+                                        </button>
+                                    )}
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             );
@@ -295,7 +317,10 @@ const Matches = () => {
 
         return (
             <div className="match-results-list">
-                {profiles.map(p => (
+                {profiles.map(p => {
+                    const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId) || p.hasInterested;
+                    const isShortlisted = shortlistedProfiles.some(s => s.uniqueId === p.uniqueId) || p.hasShortlisted || activeCategory === 'shortlisted-by-you';
+                    return (
                     <div key={p.uniqueId} className="match-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
                         <div className="match-card-top">
                             <div className="match-card-sidebar">
@@ -336,14 +361,23 @@ const Matches = () => {
                             </div>
                         </div>
                         <div className="match-card-footer">
-                            <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
-                                <Sparkles size={18} />
-                                Interest
-                            </button>
-                            <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, p.uniqueId)}>
-                                <Star size={18} />
-                                Shortlist
-                            </button>
+                            {!isInterested && (
+                                <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
+                                    <Sparkles size={18} />
+                                    Interest
+                                </button>
+                            )}
+                            {isShortlisted ? (
+                                <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                    <Star size={18} fill="currentColor" />
+                                    Shortlisted
+                                </button>
+                            ) : (
+                                <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, p.uniqueId)}>
+                                    <Star size={18} />
+                                    Shortlist
+                                </button>
+                            )}
                             <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, p.uniqueId)}>
                                 <X size={18} />
                                 Ignore
@@ -351,7 +385,8 @@ const Matches = () => {
 
                         </div>
                     </div>
-                ))}
+                );
+                })}
             </div>
         );
     };

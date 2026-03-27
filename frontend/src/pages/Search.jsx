@@ -6,13 +6,30 @@ import { Search as SearchIcon, User, Heart, Bookmark, Loader2, MapPin, Briefcase
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import { showAlert, showConfirm } from '../components/GlobalModal';
 import { countryStateCityMap } from '../data/locationData';
-import { searchProfiles, searchProfileById, sendInterest, shortlistProfile, ignoreProfile } from '../services/api';
+import { searchProfiles, searchProfileById, sendInterest, shortlistProfile, ignoreProfile, getSentInterests, getShortlistedProfiles, globalCache } from '../services/api';
 import './Search.css';
 import './Matches.css';
 
 const Search = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('criteria');
+    const [sentInterests, setSentInterests] = useState(globalCache.interests?.sent || []);
+    const [shortlistedProfiles, setShortlistedProfiles] = useState(globalCache.matches?.['shortlisted-by-you'] || []);
+
+    useEffect(() => {
+        // Fetch sent interests and shortlists to check button status
+        getSentInterests('all').then(d => {
+            if (!globalCache.interests) globalCache.interests = {};
+            globalCache.interests.sent = d;
+            setSentInterests(d);
+        }).catch(err => console.error('Failed to load sent interests', err));
+
+        getShortlistedProfiles().then(d => {
+            if (!globalCache.matches) globalCache.matches = {};
+            globalCache.matches['shortlisted-by-you'] = d;
+            setShortlistedProfiles(d);
+        }).catch(err => console.error('Failed to load shortlists', err));
+    }, []);
 
     // Multi-select state (arrays) — empty = "Doesn't Matter"
     const [criteria, setCriteria] = useState({
@@ -231,6 +248,7 @@ const Search = () => {
         try {
             await sendInterest(uniqueId, "I'm interested in your profile.");
             showAlert('Interest sent successfully.', 'Success');
+            setSentInterests(prev => [...prev, { receiver: { uniqueId } }]);
         } catch (err) {
             showAlert(err.message || 'Failed to send interest', 'Error');
         }
@@ -241,6 +259,7 @@ const Search = () => {
         try {
             await shortlistProfile(uniqueId);
             showAlert('You have shortlisted this profile successfully.', 'Success');
+            setShortlistedProfiles(prev => [...prev, { uniqueId }]);
         } catch (err) {
             showAlert(err.message || 'Failed to shortlist', 'Error');
         }
@@ -442,7 +461,10 @@ const Search = () => {
                                 {showResults && searchResults.length > 0 && (
                                     <div className="match-results-list">
                                         <h3>Search Results ({searchResults.length})</h3>
-                                        {searchResults.map(p => (
+                                        {searchResults.map(p => {
+                                            const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId);
+                                            const isShortlisted = shortlistedProfiles.some(s => s.uniqueId === p.uniqueId);
+                                            return (
                                             <div key={p.uniqueId} className="match-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
                                                 <div className="match-card-top">
                                                     <div className="match-card-sidebar">
@@ -483,21 +505,31 @@ const Search = () => {
                                                     </div>
                                                 </div>
                                                 <div className="match-card-footer">
-                                                    <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
-                                                        <Sparkles size={18} />
-                                                        Interest
-                                                    </button>
-                                                    <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, p.uniqueId)}>
-                                                        <Star size={18} />
-                                                        Shortlist
-                                                    </button>
+                                                    {!isInterested && (
+                                                        <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
+                                                            <Sparkles size={18} />
+                                                            Interest
+                                                        </button>
+                                                    )}
+                                                    {isShortlisted ? (
+                                                        <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                            <Star size={18} fill="currentColor" />
+                                                            Shortlisted
+                                                        </button>
+                                                    ) : (
+                                                        <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, p.uniqueId)}>
+                                                            <Star size={18} />
+                                                            Shortlist
+                                                        </button>
+                                                    )}
                                                     <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, p.uniqueId)}>
                                                         <X size={18} />
                                                         Ignore
                                                     </button>
                                                 </div>
                                             </div>
-                                        ))}
+                                        );
+                                        })}
                                     </div>
                                 )}
                                 {showResults && searchResults.length === 0 && !loading && (
@@ -563,14 +595,23 @@ const Search = () => {
                                                 </div>
                                             </div>
                                             <div className="match-card-footer">
-                                                <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, foundProfile.uniqueId)}>
-                                                    <Sparkles size={18} />
-                                                    Interest
-                                                </button>
-                                                <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, foundProfile.uniqueId)}>
-                                                    <Star size={18} />
-                                                    Shortlist
-                                                </button>
+                                                {!sentInterests.some(i => i.receiver?.uniqueId === foundProfile.uniqueId) && (
+                                                    <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, foundProfile.uniqueId)}>
+                                                        <Sparkles size={18} />
+                                                        Interest
+                                                    </button>
+                                                )}
+                                                {shortlistedProfiles.some(s => s.uniqueId === foundProfile.uniqueId) ? (
+                                                    <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                        <Star size={18} fill="currentColor" />
+                                                        Shortlisted
+                                                    </button>
+                                                ) : (
+                                                    <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, foundProfile.uniqueId)}>
+                                                        <Star size={18} />
+                                                        Shortlist
+                                                    </button>
+                                                )}
                                                 <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, foundProfile.uniqueId)}>
                                                     <X size={18} />
                                                     Ignore
