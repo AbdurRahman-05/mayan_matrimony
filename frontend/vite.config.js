@@ -12,5 +12,8 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  preview: {
+    allowedHosts: ['srimayanmatrimony.com', 'www.srimayanmatrimony.com', 'localhost', '127.0.0.1']
   }
 })
