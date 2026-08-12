@@ -1477,15 +1477,16 @@ const Profile = () => {
 
     const renderDropdownModal = () => {
         if (!activeDropdown) return null;
-        const searchEnabled = activeDropdown.options.length > 8;
-        const visibleOptions = activeDropdown.options.filter(opt => {
+        const optionsList = activeDropdown.options || [];
+        const searchEnabled = optionsList.length > 8;
+        const visibleOptions = optionsList.filter(opt => {
             if (!searchEnabled || !dropdownSearchTerm) return true;
             const optStr = typeof opt === 'string' ? opt : (opt.label || opt.toString());
             return optStr.toLowerCase().includes(dropdownSearchTerm.toLowerCase());
         });
 
         return (
-            <div className="bd-income-modal" style={{ zIndex: 1400 }}>
+            <div className="bd-income-modal" style={{ zIndex: 20000 }}>
                 <div className="bd-income-modal-inner">
                     <h3 className="bd-income-modal-title">
                         <button className="bd-income-modal-close" onClick={() => { setActiveDropdown(null); setDropdownSearchTerm(''); }}>
@@ -2653,6 +2654,7 @@ const Profile = () => {
                         />
                     )}
 
+                    {renderDropdownModal()}
                     <Footer />
                 </>
             )}

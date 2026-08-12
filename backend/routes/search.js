@@ -11,144 +11,151 @@ router.post('/', auth, async (req, res) => {
         const criteria = req.body;
         const currentUserId = req.user.id;
 
-        // Build dynamic query conditions
-        let conditions = [`p.user_id != ${currentUserId}`];
+        // Fetch current user's gender for opposite gender filtering
+        const currentUserRows = await sql`SELECT gender FROM profiles WHERE user_id = ${currentUserId}`;
+        const userGender = currentUserRows.length > 0 ? currentUserRows[0].gender : null;
 
-        // Exclude ignored profiles
-        conditions.push(`p.user_id NOT IN (SELECT ignored_user_id FROM ignores WHERE user_id = ${currentUserId})`);
+        // Hard Base Exclusion Conditions
+        let baseConditions = [`p.user_id != ${currentUserId}`];
+        baseConditions.push(`p.user_id NOT IN (SELECT ignored_user_id FROM ignores WHERE user_id = ${currentUserId})`);
+        baseConditions.push(`p.user_id NOT IN (SELECT blocked_user_id FROM blocks WHERE user_id = ${currentUserId})`);
+        baseConditions.push(`p.user_id NOT IN (SELECT user_id FROM blocks WHERE blocked_user_id = ${currentUserId})`);
+        baseConditions.push(`p.user_id NOT IN (SELECT user_id FROM deactivations WHERE is_active = false AND (reactivate_at IS NULL OR reactivate_at > NOW()))`);
 
-        // Exclude blocked profiles
-        conditions.push(`p.user_id NOT IN (SELECT blocked_user_id FROM blocks WHERE user_id = ${currentUserId})`);
-        conditions.push(`p.user_id NOT IN (SELECT user_id FROM blocks WHERE blocked_user_id = ${currentUserId})`);
-
-        // Exclude deactivated profiles
-        conditions.push(`p.user_id NOT IN (SELECT user_id FROM deactivations WHERE is_active = false AND (reactivate_at IS NULL OR reactivate_at > NOW()))`);
-
-        let params = [];
-
-        // Age filter (calculate from DOB)
-        if (criteria.ageFrom && criteria.ageTo) {
-            const today = new Date();
-            const maxDob = new Date(today.getFullYear() - parseInt(criteria.ageFrom), today.getMonth(), today.getDate());
-            const minDob = new Date(today.getFullYear() - parseInt(criteria.ageTo) - 1, today.getMonth(), today.getDate());
-            conditions.push(`p.dob IS NOT NULL AND p.dob BETWEEN '${minDob.toISOString().split('T')[0]}' AND '${maxDob.toISOString().split('T')[0]}'`);
-        }
-
-        // Height filter
-        if (criteria.heightFrom && criteria.heightTo) {
-            conditions.push(`p.height IS NOT NULL`);
-        }
-
-        // Multi-select filters (arrays)
-        const multiSelectFields = {
-            maritalStatus: 'marital_status',
-            motherTongue: 'mother_tongue',
-            physicalStatus: 'physical_status',
-            education: 'education',
-            occupation: 'occupation',
-            employmentType: 'employment_type',
-            country: 'country',
-            state: 'state',
-            city: 'city',
-            residentialStatus: 'residential_status',
-            smoking: 'smoking',
-            drinking: 'drinking',
-            foodHabits: 'food_habits',
-            caste: 'caste',
-            profileCreatedBy: null, // maps to users.profile_for
-        };
-
-        for (const [frontendKey, dbColumn] of Object.entries(multiSelectFields)) {
-            const values = criteria[frontendKey];
-            if (Array.isArray(values) && values.length > 0) {
-                if (frontendKey === 'profileCreatedBy') {
-                    const escaped = values.map(v => `'${v.replace(/'/g, "''")}'`).join(',');
-                    conditions.push(`u.profile_for IN (${escaped})`);
-                } else if (dbColumn) {
-                    const escaped = values.map(v => `'${v.replace(/'/g, "''")}'`).join(',');
-                    conditions.push(`p.${dbColumn} IN (${escaped})`);
-                }
+        if (userGender) {
+            const oppositeGender = userGender === 'Male' ? 'Female' : (userGender === 'Female' ? 'Male' : null);
+            if (oppositeGender) {
+                baseConditions.push(`p.gender = '${oppositeGender}'`);
             }
         }
 
-        // Religion (single select)
-        if (criteria.religion && criteria.religion !== '') {
-            conditions.push(`p.religion = '${criteria.religion.replace(/'/g, "''")}'`);
+        // Collect specified criteria items for percentage calculation
+        const criteriaItems = [];
+
+        if (criteria.ageFrom && criteria.ageTo) {
+            criteriaItems.push({ key: 'age', type: 'age_range', min: parseInt(criteria.ageFrom), max: parseInt(criteria.ageTo) });
+        }
+        if (criteria.religion && criteria.religion.trim() !== '') {
+            criteriaItems.push({ key: 'religion', dbCol: 'religion', type: 'single', value: criteria.religion });
         }
 
-        // Section filter
-        if (Array.isArray(criteria.section) && criteria.section.length > 0) {
-            const escaped = criteria.section.map(v => `'${v.replace(/'/g, "''")}'`).join(',');
-            conditions.push(`p.sect IN (${escaped})`);
+        const multiFields = [
+            { key: 'maritalStatus', dbCol: 'marital_status' },
+            { key: 'motherTongue', dbCol: 'mother_tongue' },
+            { key: 'physicalStatus', dbCol: 'physical_status' },
+            { key: 'education', dbCol: 'education' },
+            { key: 'occupation', dbCol: 'occupation' },
+            { key: 'employmentType', dbCol: 'employment_type' },
+            { key: 'income', dbCol: 'income' },
+            { key: 'country', dbCol: 'country' },
+            { key: 'state', dbCol: 'state' },
+            { key: 'city', dbCol: 'city' },
+            { key: 'residentialStatus', dbCol: 'residential_status' },
+            { key: 'smoking', dbCol: 'smoking' },
+            { key: 'drinking', dbCol: 'drinking' },
+            { key: 'foodHabits', dbCol: 'food_habits' },
+            { key: 'caste', dbCol: 'caste' },
+            { key: 'section', dbCol: 'sect' },
+            { key: 'raasi', dbCol: 'horoscope' },
+            { key: 'havingChildren', dbCol: 'having_children' },
+            { key: 'profileCreatedBy', dbCol: 'profile_for', isUserTable: true }
+        ];
+
+        for (const item of multiFields) {
+            const vals = criteria[item.key];
+            if (Array.isArray(vals) && vals.length > 0) {
+                criteriaItems.push({
+                    key: item.key,
+                    dbCol: item.dbCol,
+                    type: 'multi',
+                    values: vals.map(v => String(v).trim().toLowerCase()),
+                    isUserTable: item.isUserTable || false
+                });
+            }
         }
 
-        // Raasi/Horoscope filter
-        if (Array.isArray(criteria.raasi) && criteria.raasi.length > 0) {
-            const escaped = criteria.raasi.map(v => `'${v.replace(/'/g, "''")}'`).join(',');
-            conditions.push(`p.horoscope IN (${escaped})`);
-        }
-
-        // Income filter
-        if (Array.isArray(criteria.income) && criteria.income.length > 0) {
-            const escaped = criteria.income.map(v => `'${v.replace(/'/g, "''")}'`).join(',');
-            conditions.push(`p.income IN (${escaped})`);
-        }
-
-        // Having children
-        if (Array.isArray(criteria.havingChildren) && criteria.havingChildren.length > 0) {
-            const escaped = criteria.havingChildren.map(v => `'${v.replace(/'/g, "''")}'`).join(',');
-            conditions.push(`p.having_children IN (${escaped})`);
-        }
-
-        const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '1=1';
-
+        const whereClause = baseConditions.join(' AND ');
         const query = `
-      SELECT p.*, u.unique_id, u.email, u.mobile, u.profile_for
-      FROM profiles p
-      JOIN users u ON u.id = p.user_id
-      WHERE ${whereClause}
-      ORDER BY p.created_at DESC
-      LIMIT 50
-    `;
+            SELECT p.*, u.unique_id, u.email, u.mobile, u.profile_for
+            FROM profiles p
+            JOIN users u ON u.id = p.user_id
+            WHERE ${whereClause}
+            ORDER BY p.created_at DESC
+            LIMIT 200
+        `;
 
         const results = await sql`${sql.unsafe(query)}`;
-        // Count total matches
-        const countQuery = `
-      SELECT COUNT(*) as total
-      FROM profiles p
-      JOIN users u ON u.id = p.user_id
-      WHERE ${whereClause}
-    `;
-        const countResult = await sql`${sql.unsafe(countQuery)}`;
+        const totalSpecified = criteriaItems.length;
 
-        const profiles = results.map(row => ({
-            id: row.id,
-            uniqueId: row.unique_id,
-            fullName: row.full_name || '',
-            age: row.dob ? Math.floor((new Date() - new Date(row.dob)) / (365.25 * 24 * 60 * 60 * 1000)) : null,
-            height: row.height || '',
-            religion: row.religion || '',
-            caste: row.caste || '',
-            country: row.country || '',
-            state: row.state || '',
-            city: row.city || '',
-            education: row.education || '',
-            occupation: row.occupation || '',
-            income: row.income || '',
-            motherTongue: row.mother_tongue || '',
-            mobile: row.mobile || '',
-            email: row.email || '',
-            photo: row.photo || '',
-            image: row.photo || '',
-            maritalStatus: row.marital_status || '',
-            gender: row.gender || '',
-            smoking: row.smoking || '',
-            drinking: row.drinking || ''
-        }));
+        // Process each candidate and calculate match percentage
+        const mappedProfiles = results.map(row => {
+            let matchedCount = 0;
+            const rowAge = row.dob ? Math.floor((new Date() - new Date(row.dob)) / (365.25 * 24 * 60 * 60 * 1000)) : null;
+
+            if (totalSpecified > 0) {
+                for (const cItem of criteriaItems) {
+                    if (cItem.type === 'age_range') {
+                        if (rowAge !== null && rowAge >= cItem.min && rowAge <= cItem.max) {
+                            matchedCount++;
+                        }
+                    } else if (cItem.type === 'single') {
+                        const val = String(row[cItem.dbCol] || '').trim().toLowerCase();
+                        if (val && val === String(cItem.value).trim().toLowerCase()) {
+                            matchedCount++;
+                        }
+                    } else if (cItem.type === 'multi') {
+                        const fieldVal = cItem.isUserTable ? String(row.profile_for || '') : String(row[cItem.dbCol] || '');
+                        const valLower = fieldVal.trim().toLowerCase();
+                        if (valLower && cItem.values.includes(valLower)) {
+                            matchedCount++;
+                        }
+                    }
+                }
+            }
+
+            const matchPercentage = totalSpecified > 0 ? Math.round((matchedCount / totalSpecified) * 100) : 100;
+
+            return {
+                id: row.id,
+                uniqueId: row.unique_id,
+                fullName: row.full_name || '',
+                age: rowAge,
+                height: row.height || '',
+                religion: row.religion || '',
+                caste: row.caste || '',
+                sect: row.sect || '',
+                country: row.country || '',
+                state: row.state || '',
+                city: row.city || '',
+                education: row.education || '',
+                occupation: row.occupation || '',
+                income: row.income || '',
+                motherTongue: row.mother_tongue || '',
+                mobile: row.mobile || '',
+                email: row.email || '',
+                photo: row.photo || '',
+                image: row.photo || '',
+                maritalStatus: row.marital_status || '',
+                gender: row.gender || '',
+                smoking: row.smoking || '',
+                drinking: row.drinking || '',
+                matchPercentage
+            };
+        });
+
+        // Filter out profiles matching less than 60% (when search criteria are specified)
+        let filtered = mappedProfiles;
+        if (totalSpecified > 0) {
+            filtered = mappedProfiles.filter(p => p.matchPercentage >= 60);
+        }
+
+        // Sort from highest percentage (100%) to lowest (60%)
+        filtered.sort((a, b) => b.matchPercentage - a.matchPercentage);
 
         res.json({
-            profiles,
-            total: parseInt(countResult[0]?.total || 0),
+            profiles: filtered,
+            total: filtered.length,
+            totalCriteria: totalSpecified,
             page: 1,
             limit: 50
         });

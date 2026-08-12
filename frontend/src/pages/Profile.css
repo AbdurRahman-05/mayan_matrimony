@@ -642,6 +642,19 @@
     border-bottom: 1px solid #e5e7eb;
 }
 
+button.bd-field, .bd-field-btn {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font: inherit;
+    cursor: pointer;
+    display: block;
+    -webkit-tap-highlight-color: rgba(212, 175, 55, 0.1);
+}
+
 .bd-field-no-border {
     border-bottom: none;
 }

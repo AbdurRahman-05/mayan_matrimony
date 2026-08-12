@@ -444,12 +444,10 @@ const Search = () => {
                                         {renderMultiRow('Drinking Habits', 'drinking')}
                                         {renderMultiRow('Food Habits', 'foodHabits')}
                                     </div>
-                                </div>
-
-                                {/* Bottom bar */}
+                                </div>                                 {/* Bottom bar */}
                                 <div className="criteria-bottom-bar">
                                     <span className="match-count">
-                                        <strong>{loading ? 'Searching...' : `${totalMatches} match`}</strong> based on your criteria
+                                        <strong>{loading ? 'Searching...' : `${totalMatches} match${totalMatches !== 1 ? 'es' : ''}`}</strong> (60% to 100% Compatibility)
                                     </span>
                                     <div className="search-actions-group">
                                         <button className="criteria-search-btn" onClick={handleSearch} disabled={loading}>
@@ -460,7 +458,7 @@ const Search = () => {
 
                                 {showResults && searchResults.length > 0 && (
                                     <div className="match-results-list">
-                                        <h3>Search Results ({searchResults.length})</h3>
+                                        <h3>Search Results ({searchResults.length} profiles sorted by match % highest to lowest)</h3>
                                         {searchResults.map(p => {
                                             const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId);
                                             const isShortlisted = shortlistedProfiles.some(s => s.uniqueId === p.uniqueId);
@@ -477,7 +475,15 @@ const Search = () => {
                                                         )}
                                                     </div>
                                                     <div className="match-card-main">
-                                                        <span className="active-today-label">Active Today</span>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                                            <span className="active-today-label">Active Today</span>
+                                                            {p.matchPercentage !== undefined && (
+                                                                <span className={`search-match-badge ${p.matchPercentage >= 90 ? 'high-match' : (p.matchPercentage >= 75 ? 'mid-match' : 'base-match')}`}>
+                                                                    <Sparkles size={13} style={{ marginRight: '3px' }} />
+                                                                    {p.matchPercentage}% Match
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <h3 className="match-card-name">{p.fullName}, {p.age}</h3>
                                                         <div className="match-card-basics">
                                                             {p.height} • {p.city || 'Location N/A'} • {p.religion}-{p.caste || p.sect || p.section || 'Community N/A'}

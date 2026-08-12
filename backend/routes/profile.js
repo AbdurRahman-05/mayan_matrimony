@@ -255,7 +255,7 @@ router.put('/', auth, async (req, res) => {
             rawPhoto = val(rawPhoto);
         }
 
-        let dobVal = null;
+        let dobVal = curr.dob ? new Date(curr.dob).toISOString().split('T')[0] : null;
         const rawDob = data.dob !== undefined ? data.dob : curr.dob;
         if (rawDob && rawDob !== 'Not Specified' && String(rawDob).trim() !== '' && String(rawDob).trim() !== 'null') {
             const d = new Date(rawDob);
@@ -268,13 +268,22 @@ router.put('/', auth, async (req, res) => {
         let dobMonthVal = data.dobMonth !== undefined ? data.dobMonth : curr.dob_month;
         let dobYearVal = data.dobYear !== undefined ? data.dobYear : curr.dob_year;
 
-        if (dobVal) {
+        if (data.dobDay && data.dobMonth && data.dobYear && data.dobDay !== 'Not Specified') {
+            const monthsMap = {
+                'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
+                'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12
+            };
+            const mNum = monthsMap[String(data.dobMonth).toLowerCase()] || parseInt(data.dobMonth) || 1;
+            const dayNum = String(data.dobDay).padStart(2, '0');
+            const monthStr = String(mNum).padStart(2, '0');
+            dobVal = `${data.dobYear}-${monthStr}-${dayNum}`;
+        } else if (dobVal) {
             const d = new Date(dobVal);
             if (!isNaN(d.getTime())) {
                 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                dobDayVal = String(d.getDate());
-                dobMonthVal = months[d.getMonth()];
-                dobYearVal = String(d.getFullYear());
+                if (data.dobDay === undefined) dobDayVal = String(d.getDate());
+                if (data.dobMonth === undefined) dobMonthVal = months[d.getMonth()];
+                if (data.dobYear === undefined) dobYearVal = String(d.getFullYear());
             }
         }
 
@@ -540,12 +549,25 @@ router.put('/photos/sync', auth, upload.array('photos', 3), async (req, res) => 
                 INSERT INTO profile_photos (user_id, photo_data, is_main)
                 VALUES (${req.user.id}, ${finalPhotoData}, ${item.isMain})
             `;
-            if (item.isMain) mainPhoto = finalPhotoData;
+            if (item.isMain || !mainPhoto) mainPhoto = finalPhotoData;
         }
 
         await sql`UPDATE profiles SET photo = ${mainPhoto} WHERE user_id = ${req.user.id}`;
 
-        res.json({ message: 'Photos synced successfully' });
+        const allPhotos = await sql`
+            SELECT photo_data, is_main FROM profile_photos
+            WHERE user_id = ${req.user.id}
+            ORDER BY is_main DESC, created_at ASC
+        `;
+        const updatedMain = allPhotos.find(p => p.is_main);
+        const mainPhotoUrl = updatedMain ? processPhoto(updatedMain.photo_data) : (mainPhoto ? processPhoto(mainPhoto) : null);
+        const additionalPhotos = allPhotos.filter(p => !p.is_main).map(p => processPhoto(p.photo_data));
+
+        res.json({
+            message: 'Photos synced successfully',
+            photo: mainPhotoUrl,
+            additionalPhotos
+        });
     } catch (error) {
         return dbErrorResponse(res, 'Sync photos error', error, 'Failed to sync photos');
     }
