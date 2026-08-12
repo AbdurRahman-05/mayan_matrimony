@@ -120,23 +120,10 @@ router.get('/full', auth, async (req, res) => {
         let profile = {};
         if (profileResults.length > 0) {
             profile = formatProfile(profileResults[0], req);
-            profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => {
-                const photo = p.photo_data;
-                if (!photo) return '';
-                if (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://')) return photo;
-                if (photo.startsWith('/')) return photo;
-                return `/${photo}`;
-            });
+            profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => processPhoto(p.photo_data));
             const mainPhoto = photos.find(p => p.is_main);
             if (mainPhoto) {
-                const photo = mainPhoto.photo_data;
-                if (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://')) {
-                    profile.photo = photo;
-                } else if (photo.startsWith('/')) {
-                    profile.photo = photo;
-                } else {
-                    profile.photo = `/${photo}`;
-                }
+                profile.photo = processPhoto(mainPhoto.photo_data);
             }
         }
 
@@ -215,27 +202,12 @@ router.get('/', auth, async (req, res) => {
       ORDER BY is_main DESC, created_at ASC
     `;
 
-        profile.additionalPhotos = photos
-            .filter(p => !p.is_main)
-            .map(p => {
-                const photo = p.photo_data;
-                if (!photo) return '';
-                if (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://')) return photo;
-                if (photo.startsWith('/')) return photo;
-                return `/${photo}`;
-            });
+        profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => processPhoto(p.photo_data));
 
         // If main photo from photos table, use it
         const mainPhoto = photos.find(p => p.is_main);
         if (mainPhoto) {
-            const photo = mainPhoto.photo_data;
-            if (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://')) {
-                profile.photo = photo;
-            } else if (photo.startsWith('/')) {
-                profile.photo = photo;
-            } else {
-                profile.photo = `/${photo}`;
-            }
+            profile.photo = processPhoto(mainPhoto.photo_data);
         }
 
         res.json(profile);
@@ -403,22 +375,10 @@ router.get('/:uniqueId', auth, async (req, res) => {
       ORDER BY is_main DESC, created_at ASC
     `;
 
-        profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => {
-            const photo = p.photo_data;
-            if (!photo) return '';
-            if (photo.startsWith('data:image') || photo.startsWith('http')) return photo;
-            const baseUrl = `${req.protocol}://${req.get('host')}`;
-            return `${baseUrl}${photo}`;
-        });
+        profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => processPhoto(p.photo_data));
         const mainPhoto = photos.find(p => p.is_main);
         if (mainPhoto) {
-            const photo = mainPhoto.photo_data;
-            const baseUrl = `${req.protocol}://${req.get('host')}`;
-            if (photo.startsWith('data:image') || photo.startsWith('http')) {
-                profile.photo = photo;
-            } else {
-                profile.photo = `${baseUrl}${photo}`;
-            }
+            profile.photo = processPhoto(mainPhoto.photo_data);
         }
 
         // Record profile view (only if viewing someone else)
