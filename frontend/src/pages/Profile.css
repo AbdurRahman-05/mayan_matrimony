@@ -2030,3 +2030,34 @@ button.bd-field, .bd-field-btn {
         font-size: 16px !important;
     }
 }
+
+.pm-profile-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: #D4AF37;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.pm-set-main-hint {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+}
+
+.pm-photo-card:hover .pm-set-main-hint {
+    background: #D4AF37;
+}

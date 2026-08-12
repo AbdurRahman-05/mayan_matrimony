@@ -11,7 +11,7 @@ import PartnerLifestyleEditor from '../components/PartnerLifestyleEditor';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { showAlert } from '../components/GlobalModal';
-import { getProfile, updateProfile, getFullProfile, updatePreferences, updateFavourites, syncPhotos, uploadPhoto, deletePhoto as apiDeletePhoto, setMainPhoto, logout as apiLogout } from '../services/api';
+import { getProfile, updateProfile, getFullProfile, updatePreferences, updateFavourites, syncPhotos, uploadPhoto, deletePhoto as apiDeletePhoto, setMainPhoto, logout as apiLogout, getMediaUrl } from '../services/api';
 import './Profile.css';
 import { getCountries, getStates, getCities, getCastes, getSects } from '../data/locationData';
 import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions, getMarriedCounts } from '../data/sharedOptions';
@@ -186,6 +186,13 @@ const Profile = () => {
         cachedProfileStr ? { ...profileDefaults, ...cachedProfile } : profileDefaults
     );
 
+    const [editForm, setEditForm] = useState(() => {
+        if (location.state?.openSection && cachedProfileStr) {
+            try { return { ...profileDefaults, ...JSON.parse(cachedProfileStr) }; } catch (e) { }
+        }
+        return {};
+    });
+
     const prefDefaults = {
         prefAgeFrom: '',
         prefAgeTo: '',
@@ -215,7 +222,6 @@ const Profile = () => {
         cachedPrefsStr ? { ...prefDefaults, ...cachedPrefs } : prefDefaults
     );
 
-    const [editForm, setEditForm] = useState({});
     const [prefForm, setPrefForm] = useState({});
     const [activePrefEditor, setActivePrefEditor] = useState(null); // e.g. 'basic', 'education', etc.
 
@@ -241,9 +247,9 @@ const Profile = () => {
     useEffect(() => {
         if (showPhotoManager && profileData) {
             const photos = [];
-            if (profileData.photo) photos.push({ src: profileData.photo, isMain: true });
+            if (profileData.photo) photos.push({ src: getMediaUrl(profileData.photo), isMain: true });
             if (profileData.additionalPhotos) {
-                profileData.additionalPhotos.filter(p => p).forEach(p => photos.push({ src: p, isMain: false }));
+                profileData.additionalPhotos.filter(p => p).forEach(p => photos.push({ src: getMediaUrl(p), isMain: false }));
             }
             setDraftPhotos(photos);
         }
@@ -256,22 +262,18 @@ const Profile = () => {
         if (location.state?.openPhotos) {
             setShowPhotoManager(true);
         }
+        if (location.state?.openFavourites) {
+            setActiveFavModal('hobbies');
+        }
         if (location.state?.openSection) {
-            // Need to wait for profile data to load first
-            const timer = setTimeout(() => {
-                const section = location.state.openSection;
-                setEditForm(prev => {
-                    const savedProfile = localStorage.getItem('userProfile');
-                    if (savedProfile) {
-                        try {
-                            return { ...JSON.parse(savedProfile) };
-                        } catch (e) { }
-                    }
-                    return prev;
-                });
-                setEditingSection(section);
-            }, 100);
-            return () => clearTimeout(timer);
+            const section = location.state.openSection;
+            const savedProfile = localStorage.getItem('userProfile');
+            if (savedProfile) {
+                try {
+                    setEditForm(prev => ({ ...JSON.parse(savedProfile), ...prev }));
+                } catch (e) { }
+            }
+            setEditingSection(section);
         }
     }, [location]);
 
@@ -409,16 +411,42 @@ const Profile = () => {
     const handleSaveDraftPhotos = async () => {
         setLoading(true);
         try {
-            await syncPhotos(draftPhotos);
-            const fullData = await getFullProfile();
-            setProfileData(prev => ({ ...prev, ...fullData.profile }));
-            setPreferenceData(prev => ({ ...prev, ...fullData.preferences }));
-            setFavouritesData(prev => ({ ...prev, ...fullData.favourites }));
+            const res = await syncPhotos(draftPhotos);
+            
+            const mainDraft = draftPhotos.find(p => p.isMain) || draftPhotos[0];
+            const newPhoto = res.photo || mainDraft?.src || '';
+            const newAdditional = res.additionalPhotos || draftPhotos.filter(p => p !== mainDraft).map(p => p.src);
+
+            // Update in-memory profile state & localStorage instantly (0 delay)
+            setProfileData(prev => {
+                const updated = { 
+                    ...prev, 
+                    photo: newPhoto, 
+                    additionalPhotos: newAdditional,
+                    updatedAt: new Date().toISOString()
+                };
+
+                localStorage.setItem('userProfile', JSON.stringify(updated));
+                window.dispatchEvent(new CustomEvent('userProfileUpdated', { detail: updated }));
+                window.dispatchEvent(new Event('storage'));
+                return updated;
+            });
+
             setShowPhotoManager(false);
             showAlert('Photos saved successfully!', 'Success');
+
+            // Background async sync to ensure database constraints stay fully updated
+            getFullProfile().then(fullData => {
+                if (fullData?.profile) {
+                    setProfileData(prev => ({ ...prev, ...fullData.profile }));
+                    localStorage.setItem('userProfile', JSON.stringify(fullData.profile));
+                    window.dispatchEvent(new CustomEvent('userProfileUpdated', { detail: fullData.profile }));
+                }
+            }).catch(err => console.error("Background profile sync error", err));
+
         } catch (error) {
-            console.error(error);
-            showAlert('Failed to save photos.', 'Error');
+            console.error("Photo sync error", error);
+            showAlert('Failed to save photos. Please try again.', 'Error');
         } finally {
             setLoading(false);
         }
@@ -676,7 +704,7 @@ const Profile = () => {
                 <div className="bd-overlay">
                     <div className="bd-container">
                         <div className="bd-header">
-                            <button className="bd-back-btn" onClick={() => setEditingSection(null)}>
+                            <button className="bd-back-btn" onClick={closeSectionModal}>
                                 <ArrowLeft size={22} />
                             </button>
                             <div className="bd-header-text">
@@ -927,7 +955,7 @@ const Profile = () => {
                 <div className="bd-overlay">
                     <div className="bd-container">
                         <div className="bd-header">
-                            <button className="bd-back-btn" onClick={() => setEditingSection(null)}>
+                            <button className="bd-back-btn" onClick={closeSectionModal}>
                                 <ArrowLeft size={22} />
                             </button>
                             <div className="bd-header-text">
@@ -1005,7 +1033,7 @@ const Profile = () => {
                 <div className="bd-overlay">
                     <div className="bd-container">
                         <div className="bd-header">
-                            <button className="bd-back-btn" onClick={() => setEditingSection(null)}>
+                            <button className="bd-back-btn" onClick={closeSectionModal}>
                                 <ArrowLeft size={22} />
                             </button>
                             <div className="bd-header-text">
@@ -1053,7 +1081,7 @@ const Profile = () => {
                 <div className="bd-overlay">
                     <div className="bd-container">
                         <div className="bd-header">
-                            <button className="bd-back-btn" onClick={() => setEditingSection(null)}>
+                            <button className="bd-back-btn" onClick={closeSectionModal}>
                                 <ArrowLeft size={22} />
                             </button>
                             <div className="bd-header-text">
@@ -1133,7 +1161,7 @@ const Profile = () => {
                 <div className="bd-overlay">
                     <div className="bd-container">
                         <div className="bd-header">
-                            <button className="bd-back-btn" onClick={() => setEditingSection(null)}>
+                            <button className="bd-back-btn" onClick={closeSectionModal}>
                                 <ArrowLeft size={22} />
                             </button>
                             <div className="bd-header-text">
@@ -1338,7 +1366,7 @@ const Profile = () => {
                 <div className="bd-overlay">
                     <div className="bd-container">
                         <div className="bd-header">
-                            <button className="bd-back-btn" onClick={() => setEditingSection(null)}>
+                            <button className="bd-back-btn" onClick={closeSectionModal}>
                                 <ArrowLeft size={22} />
                             </button>
                             <div className="bd-header-text">
@@ -1550,6 +1578,22 @@ const Profile = () => {
         );
     };
 
+    const closeSectionModal = () => {
+        setEditingSection(null);
+        if (location.state?.openSection) {
+            navigate(-1);
+        }
+    };
+
+    if (editingSection) {
+        return (
+            <div className="profile-page-standalone-edit">
+                {renderSectionModal()}
+                {renderDropdownModal()}
+            </div>
+        );
+    }
+
     return (
         <div className="profile-page">
             <Navbar />
@@ -1572,7 +1616,7 @@ const Profile = () => {
                         <div className="ep-hero-inner">
                             <div className="ep-hero-photo">
                                 <img
-                                    src={profileData.photo || ''}
+                                    src={getMediaUrl(profileData.photo) || ''}
                                     alt={profileData.fullName}
                                     style={{ display: profileData.photo ? 'block' : 'none' }}
                                     onError={(e) => {
@@ -2501,11 +2545,13 @@ const Profile = () => {
                                     /* Photo Grid - Has photos */
                                     <div className="pm-photo-grid" onClick={() => setPhotoMenuIndex(null)}>
                                         {draftPhotos.map((photo, index) => (
-                                            <div className="pm-photo-card" key={index} onClick={e => e.stopPropagation()}>
-                                                <div className="pm-photo-wrapper" onClick={() => setFullViewPhoto(photo.src)}>
-                                                    <img src={photo.src} alt={`Photo ${index + 1}`} />
-                                                    {photo.isMain && (
+                                            <div className="pm-photo-card" key={index} onClick={() => handleSetAsProfile(index)}>
+                                                <div className="pm-photo-wrapper">
+                                                    <img src={getMediaUrl(photo.src)} alt={`Photo ${index + 1}`} />
+                                                    {photo.isMain ? (
                                                         <div className="pm-profile-badge">Profile Photo</div>
+                                                    ) : (
+                                                        <div className="pm-set-main-hint">Set as Profile</div>
                                                     )}
                                                 </div>
                                                 <button className="pm-menu-btn" onClick={(e) => { e.stopPropagation(); togglePhotoMenu(index); }}>
@@ -2535,7 +2581,7 @@ const Profile = () => {
                     {fullViewPhoto && (
                         <div className="pm-fullview-overlay" onClick={() => setFullViewPhoto(null)}>
                             <button className="pm-fullview-close" onClick={() => setFullViewPhoto(null)}><X size={28} /></button>
-                            <img src={fullViewPhoto} alt="Full size" className="pm-fullview-img" onClick={e => e.stopPropagation()} />
+                            <img src={getMediaUrl(fullViewPhoto)} alt="Full size" className="pm-fullview-img" onClick={e => e.stopPropagation()} />
                         </div>
                     )}
 

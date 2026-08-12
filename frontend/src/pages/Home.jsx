@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { User, Camera, Star, Users, Pencil, Phone, MessageSquare, TrendingUp, Eye, FileText, Briefcase, GraduationCap, Utensils, Loader2 } from 'lucide-react';
-import { getFullProfile } from '../services/api';
+import { getFullProfile, getMediaUrl } from '../services/api';
 import './Home.css';
 
 const Home = () => {
@@ -101,7 +101,7 @@ const Home = () => {
           (favs.destinations && favs.destinations.length > 0)
         );
       },
-      navState: { openSection: 'about' }
+      navState: { openFavourites: true }
     }
   ];
 
@@ -185,6 +185,23 @@ const Home = () => {
       }
     };
     loadProfile();
+
+    const handleProfileUpdate = (e) => {
+      try {
+        const updated = e?.detail || (localStorage.getItem('userProfile') ? JSON.parse(localStorage.getItem('userProfile')) : null);
+        if (updated) {
+          processProfileData(updated);
+        }
+      } catch (err) {}
+    };
+
+    window.addEventListener('userProfileUpdated', handleProfileUpdate);
+    window.addEventListener('storage', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('userProfileUpdated', handleProfileUpdate);
+      window.removeEventListener('storage', handleProfileUpdate);
+    };
   }, [navigate]);
 
   const handleQuickAction = (section) => {
@@ -201,11 +218,20 @@ const Home = () => {
           <div className="sidebar-profile-card">
             <div className="sidebar-avatar-wrapper">
               <div className="sidebar-avatar">
-                {profileData.photo ? (
-                  <img src={profileData.photo} alt={profileData.fullName} />
-                ) : (
+                <img 
+                  src={getMediaUrl(profileData.photo) || ''} 
+                  alt={profileData.fullName}
+                  style={{ display: profileData.photo ? 'block' : 'none' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    if (e.target.nextElementSibling) {
+                      e.target.nextElementSibling.style.display = 'flex';
+                    }
+                  }}
+                />
+                <div style={{ display: profileData.photo ? 'none' : 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
                   <User size={50} color="#9ca3af" />
-                )}
+                </div>
               </div>
               <button
                 className="sidebar-avatar-edit-btn"

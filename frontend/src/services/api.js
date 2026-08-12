@@ -1,6 +1,9 @@
-// API Service Layer - centralizes all backend API calls
+let workingApiBase = null;
+
 const getApiBaseUrl = () => {
+    if (workingApiBase) return workingApiBase;
     if (localStorage.getItem('API_URL_OVERRIDE')) return localStorage.getItem('API_URL_OVERRIDE');
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
     
     // Check if running inside Capacitor native app (Android / iOS)
     const isCapacitorNative = 
@@ -11,14 +14,50 @@ const getApiBaseUrl = () => {
         );
 
     if (isCapacitorNative) {
-        // Android Emulator maps host PC localhost:5000 to http://10.0.2.2:5000
-        return 'http://10.0.2.2:5000/api';
+        // Physical mobile phones & native APKs default to production live server https://srimayanmatrimony.com/api
+        return 'https://srimayanmatrimony.com/api';
     }
 
     // Web Browser (Dev or Production)
-    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-
     return '/api';
+};
+
+// Convert media/photo paths to full URLs when running in Capacitor native app
+export const getMediaUrl = (photoPath) => {
+    if (!photoPath) return '';
+    if (typeof photoPath !== 'string') return '';
+    let cleaned = photoPath.trim();
+    if (!cleaned) return '';
+    if (cleaned.startsWith('data:image')) return cleaned;
+    
+    // Check if running inside Capacitor native app (Android / iOS)
+    const isCapacitorNative = 
+        typeof window !== 'undefined' && (
+            (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
+            (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web') ||
+            window.location.protocol === 'capacitor:'
+        );
+
+    const apiBase = getApiBaseUrl();
+    
+    if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) {
+        if (!isCapacitorNative && cleaned.startsWith('http://srimayanmatrimony.com')) {
+            return cleaned.replace(/^http:\/\//i, 'https://');
+        }
+        return cleaned;
+    }
+
+    const relativePath = cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+
+    if (isCapacitorNative) {
+        let origin = 'http://10.0.2.2:5000';
+        if (apiBase.startsWith('http')) {
+            origin = apiBase.replace(/\/api\/?$/, '');
+        }
+        return `${origin}${relativePath}`;
+    }
+
+    return relativePath;
 };
 
 // Global memory cache to provide instantaneous load times across page navigations
@@ -60,15 +99,44 @@ async function apiFetch(url, options = {}) {
     }
 
     let response;
+    let targetBase = apiBase;
     try {
-        response = await fetch(`${apiBase}${url}`, {
+        response = await fetch(`${targetBase}${url}`, {
             cache: 'no-store', // Prevent browser from retrieving old payloads without asking server
             ...options,
             headers,
         });
+        workingApiBase = targetBase;
     } catch (fetchError) {
-        console.error('Fetch error:', fetchError, 'Target URL:', `${apiBase}${url}`);
-        throw new Error(`Network error connecting to ${apiBase}${url}. Please ensure backend is running.`);
+        console.warn(`Primary connection to ${targetBase}${url} failed. Attempting fallback...`);
+        
+        const isCapacitorNative = typeof window !== 'undefined' && (
+            (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
+            window.location.protocol === 'capacitor:'
+        );
+
+        if (isCapacitorNative) {
+            const fallbackBases = ['https://srimayanmatrimony.com/api', 'http://localhost:5000/api', 'http://10.0.2.2:5000/api'];
+            for (const fallbackBase of fallbackBases) {
+                if (fallbackBase === targetBase) continue;
+                try {
+                    response = await fetch(`${fallbackBase}${url}`, {
+                        cache: 'no-store',
+                        ...options,
+                        headers,
+                    });
+                    if (response) {
+                        workingApiBase = fallbackBase;
+                        break;
+                    }
+                } catch (fallbackErr) {}
+            }
+        }
+
+        if (!response) {
+            console.error('Fetch error:', fetchError, 'Target URL:', `${apiBase}${url}`);
+            throw new Error(`Network error connecting to ${apiBase}${url}. Please ensure backend is running.`);
+        }
     }
 
     const contentType = response.headers.get('content-type');
