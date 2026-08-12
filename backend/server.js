@@ -49,6 +49,11 @@ app.use('/uploads', (req, res, next) => {
     next();
 }, express.static(path.join(__dirname, 'uploads')));
 
+app.use('/api/uploads', (req, res, next) => {
+    res.setHeader('Cache-Control', 'public, max-age=86400, must-revalidate');
+    next();
+}, express.static(path.join(__dirname, 'uploads')));
+
 // Prevent aggressive caching for dynamic API responses
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
