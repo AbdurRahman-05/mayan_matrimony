@@ -1,14 +1,25 @@
 // API Service Layer - centralizes all backend API calls
 const getApiBaseUrl = () => {
-    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-    // On native mobile APK or Capacitor container, point to the computer's local IP address
-    if (window.Capacitor || window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost') {
-        return 'http://192.168.1.11:5000/api';
+    if (localStorage.getItem('API_URL_OVERRIDE')) return localStorage.getItem('API_URL_OVERRIDE');
+    
+    // Detect Capacitor native app or Android WebView
+    const isNativeApp = 
+        typeof window !== 'undefined' && (
+            window.Capacitor !== undefined || 
+            window.location.protocol === 'capacitor:' || 
+            (window.location.hostname === 'localhost' && (!window.location.port || window.location.port === '80')) ||
+            (window.location.hostname === '10.0.2.2')
+        );
+
+    if (isNativeApp) {
+        // Android Emulator maps host PC localhost:5000 to http://10.0.2.2:5000
+        return 'http://10.0.2.2:5000/api';
     }
+
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+
     return '/api';
 };
-
-const API_BASE = getApiBaseUrl();
 
 // Global memory cache to provide instantaneous load times across page navigations
 export const globalCache = {
@@ -35,6 +46,7 @@ export function removeToken() {
 
 // Generic fetch wrapper with auth
 async function apiFetch(url, options = {}) {
+    const apiBase = getApiBaseUrl();
     const token = getToken();
     const headers = {
         'Content-Type': 'application/json',
@@ -49,14 +61,14 @@ async function apiFetch(url, options = {}) {
 
     let response;
     try {
-        response = await fetch(`${API_BASE}${url}`, {
+        response = await fetch(`${apiBase}${url}`, {
             cache: 'no-store', // Prevent browser from retrieving old payloads without asking server
             ...options,
             headers,
         });
     } catch (fetchError) {
-        console.error('Fetch error:', fetchError);
-        throw new Error('Network error: Could not connect to server');
+        console.error('Fetch error:', fetchError, 'Target URL:', `${apiBase}${url}`);
+        throw new Error(`Network error connecting to ${apiBase}${url}. Please ensure backend is running.`);
     }
 
     const contentType = response.headers.get('content-type');
@@ -116,15 +128,14 @@ export async function login(username, password) {
     if (data.token) {
         setToken(data.token);
         localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('uniqueId', data.user.uniqueId);
-        localStorage.setItem('userProfile', JSON.stringify({
-            email: data.user.email,
-            mobile: data.user.mobile,
-            fullName: data.user.fullName,
-            uniqueId: data.user.uniqueId,
-            gender: data.user.gender,
-            profileFor: data.user.profileFor
-        }));
+        if (data.user) {
+            localStorage.setItem('uniqueId', data.user.uniqueId || '');
+            const prevProfile = (() => { try { return JSON.parse(localStorage.getItem('userProfile')) || {}; } catch (e) { return {}; } })();
+            localStorage.setItem('userProfile', JSON.stringify({
+                ...prevProfile,
+                ...data.user
+            }));
+        }
         // Store deactivation status
         if (data.isDeactivated) {
             localStorage.setItem('isDeactivated', 'true');
@@ -257,20 +268,20 @@ export async function setMainPhoto(photoId) {
 export async function syncPhotos(photos) {
     const formData = new FormData();
     const manifest = [];
-    
+
     photos.forEach((photo, index) => {
         if (photo.file) {
             formData.append('photos', photo.file);
-            manifest.push({ 
-                isNew: true, 
-                fileIndex: manifest.filter(m => m.isNew).length, 
-                isMain: photo.isMain 
+            manifest.push({
+                isNew: true,
+                fileIndex: manifest.filter(m => m.isNew).length,
+                isMain: photo.isMain
             });
         } else {
-            manifest.push({ 
-                isNew: false, 
-                src: photo.src, 
-                isMain: photo.isMain 
+            manifest.push({
+                isNew: false,
+                src: photo.src,
+                isMain: photo.isMain
             });
         }
     });

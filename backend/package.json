@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js",
+    "dev": "node --watch-path=server.js --watch-path=routes --watch-path=middleware --watch-path=utils --watch-path=schema.js --watch-path=db.js server.js",
     "setup-db": "node schema.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

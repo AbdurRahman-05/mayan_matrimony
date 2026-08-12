@@ -7,15 +7,23 @@ import { upload } from '../utils/upload.js';
 const router = Router();
 
 // Helper: convert DB profile row to frontend-compatible object
+const processPhoto = (photo) => {
+    if (!photo) return '';
+    if (typeof photo !== 'string') return '';
+    let cleaned = photo.trim();
+    if (cleaned.includes('srimayanmatrimony.com')) {
+        cleaned = cleaned.replace(/^https?:\/\/[^\/]+/, '');
+    }
+    if (cleaned.startsWith('data:image')) return cleaned;
+    if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) {
+        return cleaned.replace(/^http:\/\//i, 'https://');
+    }
+    if (!cleaned.startsWith('/')) cleaned = `/${cleaned}`;
+    return cleaned;
+};
+
 function formatProfile(row, req) {
     if (!row) return null;
-    const baseUrl = req ? `${req.protocol}://${req.get('host')}` : '';
-    
-    const processPhoto = (photo) => {
-        if (!photo) return '';
-        if (photo.startsWith('data:image') || photo.startsWith('http')) return photo;
-        return `${baseUrl}${photo}`;
-    };
 
     return {
         id: row.id,
@@ -115,18 +123,19 @@ router.get('/full', auth, async (req, res) => {
             profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => {
                 const photo = p.photo_data;
                 if (!photo) return '';
-                if (photo.startsWith('data:image') || photo.startsWith('http')) return photo;
-                const baseUrl = `${req.protocol}://${req.get('host')}`;
-                return `${baseUrl}${photo}`;
+                if (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://')) return photo;
+                if (photo.startsWith('/')) return photo;
+                return `/${photo}`;
             });
             const mainPhoto = photos.find(p => p.is_main);
             if (mainPhoto) {
                 const photo = mainPhoto.photo_data;
-                if (photo.startsWith('data:image') || photo.startsWith('http')) {
+                if (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://')) {
+                    profile.photo = photo;
+                } else if (photo.startsWith('/')) {
                     profile.photo = photo;
                 } else {
-                    const baseUrl = `${req.protocol}://${req.get('host')}`;
-                    profile.photo = `${baseUrl}${photo}`;
+                    profile.photo = `/${photo}`;
                 }
             }
         }
@@ -206,24 +215,26 @@ router.get('/', auth, async (req, res) => {
       ORDER BY is_main DESC, created_at ASC
     `;
 
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
         profile.additionalPhotos = photos
             .filter(p => !p.is_main)
             .map(p => {
                 const photo = p.photo_data;
                 if (!photo) return '';
-                if (photo.startsWith('data:image') || photo.startsWith('http')) return photo;
-                return `${baseUrl}${photo}`;
+                if (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://')) return photo;
+                if (photo.startsWith('/')) return photo;
+                return `/${photo}`;
             });
 
         // If main photo from photos table, use it
         const mainPhoto = photos.find(p => p.is_main);
         if (mainPhoto) {
             const photo = mainPhoto.photo_data;
-            if (photo.startsWith('data:image') || photo.startsWith('http')) {
+            if (photo.startsWith('data:image') || photo.startsWith('http://') || photo.startsWith('https://')) {
+                profile.photo = photo;
+            } else if (photo.startsWith('/')) {
                 profile.photo = photo;
             } else {
-                profile.photo = `${baseUrl}${photo}`;
+                profile.photo = `/${photo}`;
             }
         }
 
@@ -238,64 +249,121 @@ router.put('/', auth, async (req, res) => {
     try {
         const data = req.body;
 
+        const existing = await sql`SELECT * FROM profiles WHERE user_id = ${req.user.id}`;
+        let curr = {};
+        if (existing.length === 0) {
+            await sql`
+                INSERT INTO profiles (user_id, full_name, gender)
+                VALUES (${req.user.id}, ${data.fullName || null}, ${data.gender || null})
+            `;
+            const newExisting = await sql`SELECT * FROM profiles WHERE user_id = ${req.user.id}`;
+            curr = newExisting[0] || {};
+        } else {
+            curr = existing[0];
+        }
+
+        // Helper to convert undefined/null/objects/arrays safely for database columns
+        const val = (v) => {
+            if (v === undefined || v === null) return null;
+            if (typeof v === 'object') {
+                if (Array.isArray(v)) {
+                    return v.length > 0 ? (typeof v[0] === 'string' ? v[0] : JSON.stringify(v)) : null;
+                }
+                return JSON.stringify(v);
+            }
+            const str = String(v).trim();
+            if (str === '' || str === 'Not Specified' || str === 'undefined' || str === 'null') return null;
+            return str;
+        };
+
+        let rawPhoto = data.photo !== undefined ? data.photo : curr.photo;
+        if (typeof rawPhoto === 'string') {
+            rawPhoto = processPhoto(rawPhoto);
+        } else {
+            rawPhoto = val(rawPhoto);
+        }
+
+        let dobVal = null;
+        const rawDob = data.dob !== undefined ? data.dob : curr.dob;
+        if (rawDob && rawDob !== 'Not Specified' && String(rawDob).trim() !== '' && String(rawDob).trim() !== 'null') {
+            const d = new Date(rawDob);
+            if (!isNaN(d.getTime())) {
+                dobVal = d.toISOString().split('T')[0];
+            }
+        }
+
+        let dobDayVal = data.dobDay !== undefined ? data.dobDay : curr.dob_day;
+        let dobMonthVal = data.dobMonth !== undefined ? data.dobMonth : curr.dob_month;
+        let dobYearVal = data.dobYear !== undefined ? data.dobYear : curr.dob_year;
+
+        if (dobVal) {
+            const d = new Date(dobVal);
+            if (!isNaN(d.getTime())) {
+                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                dobDayVal = String(d.getDate());
+                dobMonthVal = months[d.getMonth()];
+                dobYearVal = String(d.getFullYear());
+            }
+        }
+
         await sql`
       UPDATE profiles SET
-        full_name = ${data.fullName || null},
-        gender = ${data.gender || null},
-        dob = ${data.dob || null},
-        dob_day = ${data.dobDay || null},
-        dob_month = ${data.dobMonth || null},
-        dob_year = ${data.dobYear || null},
-        mother_tongue = ${data.motherTongue || null},
-        height = ${data.height || null},
-        physical_status = ${data.physicalStatus || 'Normal'},
-        marital_status = ${data.maritalStatus || 'Never Married'},
-        having_children = ${data.havingChildren || null},
-        number_of_children = ${data.numberOfChildren || null},
-        religion = ${data.religion || null},
-        sect = ${data.sect || null},
-        caste = ${data.caste || null},
-        horoscope = ${data.horoscope || null},
-        time_of_birth = ${data.timeOfBirth || null},
-        place_of_birth = ${data.placeOfBirth || null},
-        dosham = ${data.dosham || null},
-        star = ${data.star || null},
-        country = ${data.country || null},
-        state = ${data.state || null},
-        city = ${data.city || null},
-        residential_status = ${data.residentialStatus || null},
-        education = ${data.education || null},
-        employment_type = ${data.employmentType || null},
-        occupation = ${data.occupation || null},
-        organization_name = ${data.organizationName || null},
-        currency = ${data.currency || 'INR'},
-        income = ${data.income || null},
-        smoking = ${data.smoking || null},
-        drinking = ${data.drinking || null},
-        diet = ${data.diet || null},
-        food_habits = ${data.foodHabits || null},
-        about = ${data.about || null},
-        disability = ${data.disability || null},
-        partner_preference = ${data.partnerPreference || null},
-        family_type = ${data.familyType || null},
-        family_status = ${data.familyStatus || null},
-        family_income = ${data.familyIncome || null},
-        father_occupation = ${data.fatherOccupation || null},
-        mother_occupation = ${data.motherOccupation || null},
-        brothers = ${data.numberOfBrothers || data.brothers || null},
-        brothers_married = ${data.marriedBrothers || data.brothersMarried || null},
-        sisters = ${data.numberOfSisters || data.sisters || null},
-        sisters_married = ${data.marriedSisters || data.sistersMarried || null},
-        family_living_in = ${data.familyLivingIn || null},
-        family_country = ${data.familyCountry || null},
-        family_state = ${data.familyState || null},
-        family_city = ${data.familyCity || null},
-        living_with_parents = ${data.livingWithParents || null},
-        contact_address = ${data.contactAddress || null},
-        settling_abroad = ${data.settlingAbroad || null},
-        contact_mobile = ${data.mobile || null},
-        alternate_mobile = ${data.alternateMobile || null},
-        photo = ${data.photo || null},
+        full_name = ${val(data.fullName !== undefined ? data.fullName : curr.full_name)},
+        gender = ${val(data.gender !== undefined ? data.gender : curr.gender)},
+        dob = ${val(dobVal)},
+        dob_day = ${val(dobDayVal)},
+        dob_month = ${val(dobMonthVal)},
+        dob_year = ${val(dobYearVal)},
+        mother_tongue = ${val(data.motherTongue !== undefined ? data.motherTongue : curr.mother_tongue)},
+        height = ${val(data.height !== undefined ? data.height : curr.height)},
+        physical_status = ${val(data.physicalStatus !== undefined ? data.physicalStatus : curr.physical_status)},
+        marital_status = ${val(data.maritalStatus !== undefined ? data.maritalStatus : curr.marital_status)},
+        having_children = ${val(data.havingChildren !== undefined ? data.havingChildren : curr.having_children)},
+        number_of_children = ${val(data.numberOfChildren !== undefined ? data.numberOfChildren : curr.number_of_children)},
+        religion = ${val(data.religion !== undefined ? data.religion : curr.religion)},
+        sect = ${val(data.sect !== undefined ? data.sect : curr.sect)},
+        caste = ${val(data.caste !== undefined ? data.caste : curr.caste)},
+        horoscope = ${val(data.horoscope !== undefined ? data.horoscope : curr.horoscope)},
+        time_of_birth = ${val(data.timeOfBirth !== undefined ? data.timeOfBirth : curr.time_of_birth)},
+        place_of_birth = ${val(data.placeOfBirth !== undefined ? data.placeOfBirth : curr.place_of_birth)},
+        dosham = ${val(data.dosham !== undefined ? data.dosham : curr.dosham)},
+        star = ${val(data.star !== undefined ? data.star : curr.star)},
+        country = ${val(data.country !== undefined ? data.country : curr.country)},
+        state = ${val(data.state !== undefined ? data.state : curr.state)},
+        city = ${val(data.city !== undefined ? data.city : curr.city)},
+        residential_status = ${val(data.residentialStatus !== undefined ? data.residentialStatus : curr.residential_status)},
+        education = ${val(data.education !== undefined ? data.education : curr.education)},
+        employment_type = ${val(data.employmentType !== undefined ? data.employmentType : curr.employment_type)},
+        occupation = ${val(data.occupation !== undefined ? data.occupation : curr.occupation)},
+        organization_name = ${val(data.organizationName !== undefined ? data.organizationName : curr.organization_name)},
+        currency = ${val(data.currency !== undefined ? data.currency : curr.currency)},
+        income = ${val(data.income !== undefined ? data.income : curr.income)},
+        smoking = ${val(data.smoking !== undefined ? data.smoking : curr.smoking)},
+        drinking = ${val(data.drinking !== undefined ? data.drinking : curr.drinking)},
+        diet = ${val(data.diet !== undefined ? data.diet : curr.diet)},
+        food_habits = ${val(data.foodHabits !== undefined ? data.foodHabits : curr.food_habits)},
+        about = ${val(data.about !== undefined ? data.about : curr.about)},
+        disability = ${val(data.disability !== undefined ? data.disability : curr.disability)},
+        partner_preference = ${val(data.partnerPreference !== undefined ? data.partnerPreference : curr.partner_preference)},
+        family_type = ${val(data.familyType !== undefined ? data.familyType : curr.family_type)},
+        family_status = ${val(data.familyStatus !== undefined ? data.familyStatus : curr.family_status)},
+        family_income = ${val(data.familyIncome !== undefined ? data.familyIncome : curr.family_income)},
+        father_occupation = ${val(data.fatherOccupation !== undefined ? data.fatherOccupation : curr.father_occupation)},
+        mother_occupation = ${val(data.motherOccupation !== undefined ? data.motherOccupation : curr.mother_occupation)},
+        brothers = ${val(data.numberOfBrothers !== undefined ? data.numberOfBrothers : (data.brothers !== undefined ? data.brothers : curr.brothers))},
+        brothers_married = ${val(data.marriedBrothers !== undefined ? data.marriedBrothers : (data.brothersMarried !== undefined ? data.brothersMarried : curr.brothers_married))},
+        sisters = ${val(data.numberOfSisters !== undefined ? data.numberOfSisters : (data.sisters !== undefined ? data.sisters : curr.sisters))},
+        sisters_married = ${val(data.marriedSisters !== undefined ? data.marriedSisters : (data.sistersMarried !== undefined ? data.sistersMarried : curr.sisters_married))},
+        family_living_in = ${val(data.familyLivingIn !== undefined ? data.familyLivingIn : curr.family_living_in)},
+        family_country = ${val(data.familyCountry !== undefined ? data.familyCountry : curr.family_country)},
+        family_state = ${val(data.familyState !== undefined ? data.familyState : curr.family_state)},
+        family_city = ${val(data.familyCity !== undefined ? data.familyCity : curr.family_city)},
+        living_with_parents = ${val(data.livingWithParents !== undefined ? data.livingWithParents : curr.living_with_parents)},
+        contact_address = ${val(data.contactAddress !== undefined ? data.contactAddress : curr.contact_address)},
+        settling_abroad = ${val(data.settlingAbroad !== undefined ? data.settlingAbroad : curr.settling_abroad)},
+        contact_mobile = ${val(data.mobile !== undefined ? data.mobile : curr.contact_mobile)},
+        alternate_mobile = ${val(data.alternateMobile !== undefined ? data.alternateMobile : curr.alternate_mobile)},
+        photo = ${val(rawPhoto)},
         updated_at = CURRENT_TIMESTAMP
       WHERE user_id = ${req.user.id}
     `;
@@ -307,6 +375,7 @@ router.put('/', auth, async (req, res) => {
 
         res.json({ message: 'Profile updated successfully' });
     } catch (error) {
+        console.error('Update profile error details:', error);
         return dbErrorResponse(res, 'Update profile error', error, 'Failed to update profile');
     }
 });
@@ -485,7 +554,7 @@ router.put('/photos/sync', auth, upload.array('photos', 3), async (req, res) => 
         await sql`DELETE FROM profile_photos WHERE user_id = ${req.user.id}`;
 
         let mainPhoto = null;
-        
+
         // Handle files from manifest
         for (let i = 0; i < manifest.length; i++) {
             const item = manifest[i];

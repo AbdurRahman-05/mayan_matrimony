@@ -610,7 +610,8 @@ router.post('/login', async (req, res) => {
 
         // Find user by email or mobile
         const users = await sql`
-      SELECT u.*, p.full_name FROM users u
+      SELECT u.*, p.full_name, p.dob, p.dob_day, p.dob_month, p.dob_year, p.photo, p.about, p.religion, p.mother_tongue, p.height, p.education, p.occupation, p.city, p.state, p.country, p.family_type, p.father_occupation, p.mother_occupation, p.brothers, p.sisters
+      FROM users u
       LEFT JOIN profiles p ON p.user_id = u.id
       WHERE u.email = ${username} OR u.mobile = ${username} OR u.unique_id = ${username}
     `;
@@ -652,6 +653,8 @@ router.post('/login', async (req, res) => {
             // deactivations table might not exist yet, ignore
         }
 
+        const dobFormatted = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
+
         res.json({
             message: 'Login successful',
             token,
@@ -664,7 +667,26 @@ router.post('/login', async (req, res) => {
                 mobile: user.mobile,
                 gender: user.gender,
                 profileFor: user.profile_for,
-                fullName: user.full_name || ''
+                fullName: user.full_name || '',
+                dob: dobFormatted,
+                dobDay: user.dob_day || '',
+                dobMonth: user.dob_month || '',
+                dobYear: user.dob_year || '',
+                photo: user.photo || '',
+                about: user.about || '',
+                religion: user.religion || '',
+                motherTongue: user.mother_tongue || '',
+                height: user.height || '',
+                education: user.education || '',
+                occupation: user.occupation || '',
+                city: user.city || '',
+                state: user.state || '',
+                country: user.country || '',
+                familyType: user.family_type || '',
+                fatherOccupation: user.father_occupation || '',
+                motherOccupation: user.mother_occupation || '',
+                brothers: user.brothers || '',
+                sisters: user.sisters || ''
             }
         });
     } catch (error) {
