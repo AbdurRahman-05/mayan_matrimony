@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import {
     Settings as SettingsIcon, Lock, UserX, Trash2, EyeOff, ShieldOff,
     ArrowLeft, Eye, EyeOff as EyeOffIcon, CheckCircle, XCircle, AlertTriangle,
-    Loader2, User, ChevronRight, Info, X
+    Loader2, User, ChevronRight, Info, X, SlidersHorizontal, LogOut, HelpCircle, Crown
 } from 'lucide-react';
 import {
     verifyPassword, changePassword as apiChangePassword,
@@ -19,7 +19,8 @@ import './Settings.css';
 
 const Settings = () => {
     const navigate = useNavigate();
-    const [activeSection, setActiveSection] = useState(null);
+    const { section } = useParams();
+    const activeSection = section || null;
 
     // Change password state
     const [currentPassword, setCurrentPassword] = useState('');
@@ -76,12 +77,9 @@ const Settings = () => {
         setTimeout(() => setStatusMsg({ type: '', text: '' }), 5000);
     };
 
-    // Section handlers
-    const handleSectionChange = async (section) => {
-        setActiveSection(section);
+    // Clean up states and load profiles on activeSection change
+    useEffect(() => {
         setStatusMsg({ type: '', text: '' });
-
-        // Reset states
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -90,10 +88,19 @@ const Settings = () => {
         setDeleteReason('');
         setOtherReason('');
 
-        if (section === 'ignored') {
+        if (activeSection === 'ignored') {
             loadIgnoredProfiles();
-        } else if (section === 'blocked') {
+        } else if (activeSection === 'blocked') {
             loadBlockedProfiles();
+        }
+    }, [activeSection]);
+
+    // Section handlers
+    const handleSectionChange = (section) => {
+        if (section) {
+            navigate(`/settings/${section}`);
+        } else {
+            navigate('/settings');
         }
     };
 
@@ -284,11 +291,12 @@ const Settings = () => {
     const passwordStrength = getPasswordStrength(newPassword);
 
     const navItems = [
-        { id: 'password', label: 'Change Password', icon: <Lock size={18} color="#D4AF37" /> },
-        { id: 'delete', label: 'Delete Profile', icon: <Trash2 size={18} color="#ef4444" /> },
-        { id: 'deactivate', label: 'Deactivate Profile', icon: <EyeOff size={18} color="#ec4899" /> },
-        { id: 'ignored', label: 'Ignored Profiles', icon: <UserX size={18} color="#3b82f6" /> },
-        { id: 'blocked', label: 'Blocked Profiles', icon: <ShieldOff size={18} color="#8b5cf6" /> },
+        { id: 'preferences', label: 'Edit Preferences', icon: <SlidersHorizontal size={18} color="#D4AF37" />, desc: 'Update match preferences', external: '/profile', externalState: { openPreferences: true } },
+        { id: 'password', label: 'Change Password', icon: <Lock size={18} color="#D4AF37" />, desc: 'Secure your account' },
+        { id: 'deactivate', label: 'Deactivate Profile', icon: <EyeOff size={18} color="#ec4899" />, desc: 'Hide profile temporarily' },
+        { id: 'delete', label: 'Delete Profile', icon: <Trash2 size={18} color="#ef4444" />, desc: 'Permanently erase account' },
+        { id: 'ignored', label: 'Ignored Profiles', icon: <UserX size={18} color="#3b82f6" />, desc: 'Manage ignored members' },
+        { id: 'blocked', label: 'Blocked Profiles', icon: <ShieldOff size={18} color="#8b5cf6" />, desc: 'Manage blocked members' },
     ];
 
     const durationOptions = [
@@ -349,7 +357,7 @@ const Settings = () => {
         <div className="settings-page">
             <Navbar />
 
-            <div className="settings-container">
+            <div className={`settings-container ${activeSection ? 'section-active' : 'menu-active'}`}>
                 {/* Settings Sidebar */}
                 <aside className="settings-sidebar">
                     <div className="settings-sidebar-card">
@@ -363,12 +371,36 @@ const Settings = () => {
                                 <div
                                     key={item.id}
                                     className={`settings-nav-item ${activeSection === item.id ? 'active' : ''}`}
-                                    onClick={() => handleSectionChange(item.id)}
+                                    onClick={() => item.external ? navigate(item.external, { state: item.externalState }) : handleSectionChange(item.id)}
                                 >
                                     <div className="nav-icon">{item.icon}</div>
-                                    {item.label}
+                                    <div className="settings-nav-details">
+                                        <span className="settings-nav-label">{item.label}</span>
+                                        <span className="settings-nav-desc">{item.desc}</span>
+                                    </div>
+                                    <ChevronRight className="settings-nav-chevron" size={16} />
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Upgrade Banner */}
+                        <div className="settings-upgrade-banner">
+                            <Crown size={16} />
+                            <p>Upgrade membership to chat with matches</p>
+                            <Link to="/membership" className="settings-upgrade-btn">Upgrade now</Link>
+                        </div>
+
+                        {/* Logout */}
+                        <div className="settings-logout-btn" onClick={() => { apiLogout(); navigate('/'); }}>
+                            <LogOut size={16} /> Logout
+                        </div>
+
+                        {/* Support */}
+                        <div className="settings-support">
+                            <h4>Support &amp; feedback</h4>
+                            <div className="settings-support-item">
+                                <HelpCircle size={15} /> Help &amp; FAQ
+                            </div>
                         </div>
 
                         <div className="settings-back-btn" onClick={() => navigate('/home')}>
@@ -404,6 +436,9 @@ const Settings = () => {
                         {activeSection === 'password' && (
                             <>
                                 <div className="settings-content-header">
+                                    <button className="settings-mobile-back" onClick={() => navigate('/settings')} title="Back">
+                                        <ArrowLeft size={18} />
+                                    </button>
                                     <div className="header-icon" style={{ background: '#fef3c7' }}>
                                         <Lock size={22} color="#D4AF37" />
                                     </div>
@@ -539,6 +574,9 @@ const Settings = () => {
                         {activeSection === 'deactivate' && (
                             <>
                                 <div className="settings-content-header">
+                                    <button className="settings-mobile-back" onClick={() => navigate('/settings')} title="Back">
+                                        <ArrowLeft size={18} />
+                                    </button>
                                     <div className="header-icon" style={{ background: '#fce7f3' }}>
                                         <EyeOff size={22} color="#ec4899" />
                                     </div>
@@ -595,6 +633,9 @@ const Settings = () => {
                         {activeSection === 'delete' && (
                             <>
                                 <div className="settings-content-header">
+                                    <button className="settings-mobile-back" onClick={() => navigate('/settings')} title="Back">
+                                        <ArrowLeft size={18} />
+                                    </button>
                                     <div className="header-icon" style={{ background: '#fee2e2' }}>
                                         <Trash2 size={22} color="#ef4444" />
                                     </div>
@@ -660,6 +701,9 @@ const Settings = () => {
                         {activeSection === 'ignored' && (
                             <>
                                 <div className="settings-content-header">
+                                    <button className="settings-mobile-back" onClick={() => navigate('/settings')} title="Back">
+                                        <ArrowLeft size={18} />
+                                    </button>
                                     <div className="header-icon" style={{ background: '#e0f2fe' }}>
                                         <UserX size={22} color="#3b82f6" />
                                     </div>
@@ -691,6 +735,9 @@ const Settings = () => {
                         {activeSection === 'blocked' && (
                             <>
                                 <div className="settings-content-header">
+                                    <button className="settings-mobile-back" onClick={() => navigate('/settings')} title="Back">
+                                        <ArrowLeft size={18} />
+                                    </button>
                                     <div className="header-icon" style={{ background: '#ede9fe' }}>
                                         <ShieldOff size={22} color="#8b5cf6" />
                                     </div>

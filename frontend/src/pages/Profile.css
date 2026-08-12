@@ -175,7 +175,7 @@
     width: 100%;
     max-width: 500px;
     margin: 0 auto;
-    padding: 0 0 2rem;
+    padding: 0 0 100px;
     flex: 1;
 }
 
@@ -574,7 +574,7 @@
     right: 0;
     bottom: 0;
     background: #fff;
-    z-index: 1200;
+    z-index: 10010;
     overflow-y: auto;
     animation: epFadeIn 0.25s;
 }
@@ -685,7 +685,7 @@
     right: 0;
     bottom: 0;
     background: #fff;
-    z-index: 1300;
+    z-index: 10020;
     overflow-y: auto;
     animation: epFadeIn 0.2s ease-out;
 }
@@ -946,10 +946,10 @@
 
 /* Save button */
 .bd-save-area {
-    padding: 1.5rem 0 1rem;
-    position: sticky;
-    bottom: 0;
+    padding: 1.5rem 0 calc(20px + env(safe-area-inset-bottom, 20px));
+    position: relative;
     background: #fff;
+    margin-top: 1.5rem;
 }
 
 .bd-save-btn {
@@ -1024,7 +1024,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1100;
+    z-index: 10005;
     animation: epFadeIn 0.3s;
 }
 
@@ -1165,7 +1165,7 @@
     }
 
     .ep-container {
-        padding: 0 1rem 2rem;
+        padding: 0 1rem 120px;
     }
 
     .ep-hero-actions {
@@ -1191,7 +1191,7 @@
     position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.62);
-    z-index: 1350;
+    z-index: 10030;
     overflow-y: auto;
     padding: 16px;
     animation: epFadeIn 0.25s;
@@ -2001,5 +2001,19 @@
     .ep-habits-grid {
         grid-template-columns: 1fr 1fr;
         gap: 6px;
+    }
+}
+
+/* Mobile Keypad & Input Overflow Protection */
+.ep-modal-content, .profile-edit-modal, .fav-modal-content, .partner-editor-container {
+    max-height: 88vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(30px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 768px) {
+    input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select, textarea {
+        font-size: 16px !important;
     }
 }

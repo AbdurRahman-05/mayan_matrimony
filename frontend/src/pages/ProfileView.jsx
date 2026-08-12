@@ -67,8 +67,21 @@ const ProfileView = () => {
     };
 
     const formatDate = (dateStr) => {
-        if (!dateStr) return 'Not specified';
-        const date = new Date(dateStr);
+        let date = null;
+        if (dateStr) {
+            const matches = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (matches) {
+                date = new Date(Number(matches[1]), Number(matches[2]) - 1, Number(matches[3]));
+            } else {
+                date = new Date(dateStr);
+            }
+        }
+
+        if (!date || isNaN(date.getTime())) {
+            date = getDateFromProfile();
+        }
+
+        if (!date || isNaN(date.getTime())) return 'Not specified';
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
     };

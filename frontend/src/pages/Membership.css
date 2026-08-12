@@ -410,10 +410,20 @@
     margin-bottom: 1.5rem;
 }
 
+.compare-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
 .compare-table {
     width: 100%;
+    min-width: 650px;
     border-collapse: collapse;
     font-size: 0.9rem;
+    background: #fff;
 }
 
 .compare-table th,
@@ -432,7 +442,6 @@
 .compare-table th:first-child {
     text-align: left;
     background: #1e293b;
-    border-radius: 8px 0 0 0;
 }
 
 .compare-table th:nth-child(2) {

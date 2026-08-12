@@ -636,3 +636,22 @@
 .edu-btn:hover {
     background: #d1fae5;
 }
+
+.matches-mobile-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #ca9d42;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0 0 1rem 0;
+    cursor: pointer;
+    transition: color 0.2s;
+    width: fit-content;
+}
+
+.matches-mobile-back-btn:hover {
+    color: #8c6a26;
+}

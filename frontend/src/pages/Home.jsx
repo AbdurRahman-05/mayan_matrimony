@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { User, Camera, Star, Users, Edit2, Settings, HelpCircle, ChevronDown, Phone, MessageSquare, TrendingUp, Eye, LogOut, FileText, Briefcase, Heart, MapPin, GraduationCap, Utensils, Loader2 } from 'lucide-react';
-import { getFullProfile, logout as apiLogout } from '../services/api';
+import { User, Camera, Star, Users, Pencil, Phone, MessageSquare, TrendingUp, Eye, FileText, Briefcase, GraduationCap, Utensils, Loader2 } from 'lucide-react';
+import { getFullProfile } from '../services/api';
 import './Home.css';
 
 const Home = () => {
@@ -109,69 +109,69 @@ const Home = () => {
 
   useEffect(() => {
     const processProfileData = (data) => {
-        setProfileData(prev => ({ ...prev, ...data }));
-        
-        const allFields = [];
+      setProfileData(prev => ({ ...prev, ...data }));
+
+      const allFields = [];
+      profileSections.forEach(sec => {
+        if (sec.id === 'horoscope' && data.religion && data.religion.toLowerCase() !== 'hindu') return;
+        sec.fields.forEach(f => {
+          if (!allFields.includes(f)) allFields.push(f);
+        });
+      });
+
+      const calculateCompletion = (d) => {
+        let completed = 0;
+        let total = allFields.length;
+
+        allFields.forEach(field => {
+          const value = d[field];
+          if (value && value !== 'Not Specified' && value !== '') completed++;
+        });
+
+        // Custom Checks
         profileSections.forEach(sec => {
-          if (sec.id === 'horoscope' && data.religion && data.religion.toLowerCase() !== 'hindu') return;
-          sec.fields.forEach(f => {
-            if (!allFields.includes(f)) allFields.push(f);
-          });
-        });
-
-        const calculateCompletion = (d) => {
-          let completed = 0;
-          let total = allFields.length;
-          
-          allFields.forEach(field => {
-            const value = d[field];
-            if (value && value !== 'Not Specified' && value !== '') completed++;
-          });
-
-          // Custom Checks
-          profileSections.forEach(sec => {
-            if (sec.customCheck) {
-              total++;
-              if (sec.customCheck(d)) {
-                completed++;
-              }
-            }
-          });
-
-          return Math.round((completed / (total || 1)) * 100);
-        };
-        setCompletionPercentage(calculateCompletion(data));
-
-        const incomplete = profileSections.filter(sec => {
-          if (sec.id === 'horoscope' && data.religion && data.religion.toLowerCase() !== 'hindu') return false;
-          
           if (sec.customCheck) {
-              return !sec.customCheck(data);
+            total++;
+            if (sec.customCheck(d)) {
+              completed++;
+            }
           }
-          
-          if (sec.fields.length === 0) return false;
-          
-          return sec.fields.some(field => {
-            const value = data[field];
-            return !value || value === 'Not Specified' || value === '';
-          });
         });
-        setIncompleteItems(incomplete);
+
+        return Math.round((completed / (total || 1)) * 100);
+      };
+      setCompletionPercentage(calculateCompletion(data));
+
+      const incomplete = profileSections.filter(sec => {
+        if (sec.id === 'horoscope' && data.religion && data.religion.toLowerCase() !== 'hindu') return false;
+
+        if (sec.customCheck) {
+          return !sec.customCheck(data);
+        }
+
+        if (sec.fields.length === 0) return false;
+
+        return sec.fields.some(field => {
+          const value = data[field];
+          return !value || value === 'Not Specified' || value === '';
+        });
+      });
+      setIncompleteItems(incomplete);
     };
 
     const loadProfile = async () => {
       // Seed initially from cache for instantaneous load
       const cachedProf = localStorage.getItem('userProfile');
       const cachedFav = localStorage.getItem('userFavourites');
-      
+
       if (cachedProf) {
-          try {
-              const profData = JSON.parse(cachedProf);
-              const favData = cachedFav ? JSON.parse(cachedFav) : {};
-              processProfileData({ ...profData, favourites: favData });
-          } catch(e) {}
+        try {
+          const profData = JSON.parse(cachedProf);
+          const favData = cachedFav ? JSON.parse(cachedFav) : {};
+          processProfileData({ ...profData, favourites: favData });
+        } catch (e) { }
       } else {
-          setLoading(true);
+        setLoading(true);
       }
 
       try {
@@ -187,11 +187,6 @@ const Home = () => {
     loadProfile();
   }, [navigate]);
 
-  const handleLogout = () => {
-    apiLogout();
-    navigate('/');
-  };
-
   const handleQuickAction = (section) => {
     navigate('/profile', { state: section.navState });
   };
@@ -204,12 +199,21 @@ const Home = () => {
         {/* Left Sidebar */}
         <aside className="dashboard-sidebar">
           <div className="sidebar-profile-card">
-            <div className="sidebar-avatar">
-              {profileData.photo ? (
-                <img src={profileData.photo} alt={profileData.fullName} />
-              ) : (
-                <User size={50} color="#9ca3af" />
-              )}
+            <div className="sidebar-avatar-wrapper">
+              <div className="sidebar-avatar">
+                {profileData.photo ? (
+                  <img src={profileData.photo} alt={profileData.fullName} />
+                ) : (
+                  <User size={50} color="#9ca3af" />
+                )}
+              </div>
+              <button
+                className="sidebar-avatar-edit-btn"
+                onClick={() => navigate('/profile')}
+                title="Edit Profile"
+              >
+                <Pencil size={13} />
+              </button>
             </div>
             <h3 className="sidebar-name">{profileData.fullName}</h3>
 
@@ -217,32 +221,7 @@ const Home = () => {
             <div className="sidebar-membership">Free member</div>
           </div>
 
-          <div className="sidebar-upgrade-banner">
-            <p>Upgrade membership to chat with matches</p>
-            <Link to="/membership" className="upgrade-btn">Upgrade now</Link>
-          </div>
 
-          <div className="sidebar-menu">
-            <div className="sidebar-menu-item" onClick={() => navigate('/profile')}>
-              <Edit2 size={16} /> Edit profile
-            </div>
-            <div className="sidebar-menu-item" onClick={() => navigate('/profile', { state: { openPreferences: true } })}>
-              <Settings size={16} /> Edit preferences
-            </div>
-            <div className="sidebar-menu-item" onClick={() => navigate('/settings')}>
-              <Settings size={16} /> Settings
-            </div>
-            <div className="sidebar-menu-item" style={{ color: '#D4AF37' }} onClick={handleLogout}>
-              <LogOut size={16} /> Logout
-            </div>
-          </div>
-
-          <div className="sidebar-support">
-            <h4>Support & feedback</h4>
-            <div className="sidebar-menu-item">
-              <HelpCircle size={16} /> Help & FAQ
-            </div>
-          </div>
         </aside>
 
         {/* Main Content */}

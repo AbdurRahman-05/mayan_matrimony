@@ -322,7 +322,19 @@ const Profile = () => {
     };
 
     const handleEditSection = (section) => {
-        setEditForm({ ...profileData });
+        let birthDateVal = '';
+        if (profileData.dob) {
+            const d = new Date(profileData.dob);
+            if (!isNaN(d.getTime())) {
+                birthDateVal = d.toISOString().split('T')[0];
+            }
+        } else {
+            const d = getDateFromProfile();
+            if (d && !isNaN(d.getTime())) {
+                birthDateVal = d.toISOString().split('T')[0];
+            }
+        }
+        setEditForm({ ...profileData, dob: birthDateVal });
         setEditingSection(section);
     };
 
@@ -525,8 +537,8 @@ const Profile = () => {
 
     const calculateCompletion = () => {
         const fields = [
-            'photo', 'fullName', 'gender', 'dob', 'height', 'maritalStatus', 'religion', 'motherTongue', 
-            'about', 'profileFor', 'education', 'occupation', 'employmentType', 'familyType', 'familyStatus', 
+            'photo', 'fullName', 'gender', 'dob', 'height', 'maritalStatus', 'religion', 'motherTongue',
+            'about', 'profileFor', 'education', 'occupation', 'employmentType', 'familyType', 'familyStatus',
             'fatherOccupation', 'motherOccupation', 'mobile', 'email', 'diet', 'smoking', 'drinking'
         ];
         let completed = 0;
@@ -537,7 +549,7 @@ const Profile = () => {
                 completed++;
             }
         });
-        
+
         // custom check for interests
         const favs = favouritesData || {};
         if (
@@ -550,15 +562,28 @@ const Profile = () => {
         ) {
             completed++;
         }
-        
+
         return Math.round((completed / total) * 100);
     };
 
     const completionPercentage = calculateCompletion();
 
     const formatDate = (dateStr) => {
-        if (!dateStr) return 'Not specified';
-        const date = new Date(dateStr);
+        let date = null;
+        if (dateStr) {
+            const matches = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (matches) {
+                date = new Date(Number(matches[1]), Number(matches[2]) - 1, Number(matches[3]));
+            } else {
+                date = new Date(dateStr);
+            }
+        }
+
+        if (!date || isNaN(date.getTime())) {
+            date = getDateFromProfile();
+        }
+
+        if (!date || isNaN(date.getTime())) return 'Not specified';
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
     };
@@ -1545,13 +1570,21 @@ const Profile = () => {
                     <div className="ep-hero">
                         <div className="ep-hero-inner">
                             <div className="ep-hero-photo">
-                                {profileData.photo ? (
-                                    <img src={profileData.photo} alt={profileData.fullName} />
-                                ) : (
-                                    <div className="ep-hero-photo-placeholder">
-                                        <User size={80} color="#9ca3af" />
-                                    </div>
-                                )}
+                                <img
+                                    src={profileData.photo || ''}
+                                    alt={profileData.fullName}
+                                    style={{ display: profileData.photo ? 'block' : 'none' }}
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.style.display = 'none';
+                                        if (e.target.nextElementSibling) {
+                                            e.target.nextElementSibling.style.display = 'flex';
+                                        }
+                                    }}
+                                />
+                                <div className="ep-hero-photo-placeholder" style={{ display: profileData.photo ? 'none' : 'flex' }}>
+                                    <User size={80} color="#9ca3af" />
+                                </div>
                             </div>
                             <div className="ep-hero-actions">
                                 <button className="ep-add-photos-btn" onClick={() => setShowPhotoManager(true)}>
@@ -1895,12 +1928,7 @@ const Profile = () => {
                                     )}
                                 </div>
 
-                                {/* Update Profile */}
-                                <div style={{ textAlign: 'center', padding: '1rem 0 2rem' }}>
-                                    <button className="btn btn-outline" onClick={handleLogout} style={{ color: '#D4AF37', borderColor: '#D4AF37' }}>
-                                        <LogOut size={16} /> Logout
-                                    </button>
-                                </div>
+
                             </div>
                         )}
 

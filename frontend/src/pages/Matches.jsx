@@ -6,7 +6,7 @@ import { showAlert, showConfirm } from '../components/GlobalModal';
 import {
     Users, Star, Eye, UserPlus, ChevronRight, Contact, UserSearch, Search,
     Image, Sparkles, Loader2, Heart, GraduationCap, Briefcase,
-    MessageCircle, X, Languages, MapPin
+    MessageCircle, X, Languages, MapPin, ArrowLeft
 } from 'lucide-react';
 import {
     getMatches, getShortlistedProfiles, getViewedYou, getViewedByYou, getShortlistedYou,
@@ -18,6 +18,16 @@ import './Matches.css';
 const Matches = () => {
     const navigate = useNavigate();
     const [activeCategory, setActiveCategory] = useState('your-matches');
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+    const [showListOnMobile, setShowListOnMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 900);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     const [profiles, setProfiles] = useState(globalCache.matches['your-matches'] || []);
     const [cache, setCache] = useState(globalCache.matches);
     const [loading, setLoading] = useState(!globalCache.matches['your-matches']);
@@ -73,7 +83,7 @@ const Matches = () => {
                         setShortlistedProfiles(data);
                     }
                 };
-                
+
                 getShortlistedProfiles().then(d => updateCache('shortlisted-by-you', d));
                 getViewedYou().then(d => updateCache('viewed-you', d));
                 getShortlistedYou().then(d => updateCache('shortlisted-you', d));
@@ -82,13 +92,13 @@ const Matches = () => {
                 getHoroscopeMatches().then(d => updateCache('matches-with-horoscope', d));
                 getMatchesWithPhotos().then(d => updateCache('matches-with-photos', d));
                 getEducationPreferenceMatches().then(d => updateCache('education-preference', d));
-                
+
                 getSentInterests('all').then(d => {
                     if (!globalCache.interests) globalCache.interests = {};
                     globalCache.interests.sent = d;
                     setSentInterests(d);
                 }).catch(err => console.error('Failed to load sent interests', err));
-                
+
             } catch (err) {
                 console.error('Initial fetch error', err);
             } finally {
@@ -107,6 +117,7 @@ const Matches = () => {
             setLoading(true);
             refreshCategoryData();
         }
+        window.scrollTo(0, 0);
     }, [activeCategory, cache]);
 
     const refreshCategoryData = async () => {
@@ -156,7 +167,7 @@ const Matches = () => {
             showAlert('You have shortlisted this profile successfully.', 'Success');
             // Optimistic update
             setShortlistedProfiles(prev => [...prev, { uniqueId }]);
-            
+
             // Only reload if we are on a list that might have changed
             if (activeCategory === 'your-matches' || activeCategory === 'nearby-matches') {
                 // leave as is
@@ -283,31 +294,30 @@ const Matches = () => {
                         {profiles.map(p => {
                             const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId);
                             return (
-                            <div key={p.uniqueId} className="edu-pref-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
-                                <div className="edu-photo-container">
-                                    {p.photo ? (
-                                        <img src={p.photo} alt={p.fullName} />
-                                    ) : (
-                                        <div className="edu-no-photo">
+                                <div key={p.uniqueId} className="edu-pref-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
+                                    <div className="edu-photo-container">
+                                        {p.photo ? (
+                                            <img src={p.photo} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
+                                        ) : null}
+                                        <div className="edu-no-photo" style={{ display: p.photo ? 'none' : 'flex' }}>
                                             <Image size={24} />
                                             <span>No Photo</span>
                                         </div>
-                                    )}
+                                    </div>
+                                    <div className="edu-info">
+                                        <h4 className="edu-name">{p.fullName}</h4>
+                                        <span className="edu-age">{p.age} Yrs, {p.height}</span>
+                                        <span className="edu-detail"><GraduationCap size={14} /> {p.education || 'Education N/A'}</span>
+                                        <span className="edu-detail"><MapPin size={14} /> {p.city || 'Location N/A'}</span>
+                                    </div>
+                                    <div className="edu-actions">
+                                        {!isInterested && (
+                                            <button className="edu-btn edu-interest" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
+                                                <Heart size={16} /> Interest
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="edu-info">
-                                    <h4 className="edu-name">{p.fullName}</h4>
-                                    <span className="edu-age">{p.age} Yrs, {p.height}</span>
-                                    <span className="edu-detail"><GraduationCap size={14} /> {p.education || 'Education N/A'}</span>
-                                    <span className="edu-detail"><MapPin size={14} /> {p.city || 'Location N/A'}</span>
-                                </div>
-                                <div className="edu-actions">
-                                    {!isInterested && (
-                                        <button className="edu-btn edu-interest" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
-                                            <Heart size={16} /> Interest
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
                             );
                         })}
                     </div>
@@ -321,71 +331,70 @@ const Matches = () => {
                     const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId) || p.hasInterested;
                     const isShortlisted = shortlistedProfiles.some(s => s.uniqueId === p.uniqueId) || p.hasShortlisted || activeCategory === 'shortlisted-by-you';
                     return (
-                    <div key={p.uniqueId} className="match-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
-                        <div className="match-card-top">
-                            <div className="match-card-sidebar">
-                                {p.photo ? (
-                                    <img src={p.photo} alt={p.fullName} />
-                                ) : (
-                                    <div className="request-photo-overlay">
+                        <div key={p.uniqueId} className="match-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
+                            <div className="match-card-top">
+                                <div className="match-card-sidebar">
+                                    {p.photo ? (
+                                        <img src={p.photo} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
+                                    ) : null}
+                                    <div className="request-photo-overlay" style={{ display: p.photo ? 'none' : 'flex' }}>
                                         <button className="request-photo-btn">Request photo</button>
                                     </div>
-                                )}
-                            </div>
-                            <div className="match-card-main">
-                                <span className="active-today-label">Active Today</span>
-                                <h3 className="match-card-name">{p.fullName}, {p.age}</h3>
-                                <div className="match-card-basics">
-                                    {p.height} • {p.city || 'Location N/A'} • {p.religion}-{p.caste || p.sect || 'Community N/A'}
                                 </div>
-                                <div className="match-card-details-grid">
-                                    <div className="detail-item">
-                                        <Briefcase size={16} />
-                                        <span>{p.occupation || 'Profession N/A'}</span> • <span>{p.income || 'No Income'}</span>
+                                <div className="match-card-main">
+                                    <span className="active-today-label">Active Today</span>
+                                    <h3 className="match-card-name">{p.fullName}, {p.age}</h3>
+                                    <div className="match-card-basics">
+                                        {p.height} • {p.city || 'Location N/A'} • {p.religion}-{p.caste || p.sect || 'Community N/A'}
                                     </div>
-                                    <div className="detail-item">
-                                        <GraduationCap size={16} />
-                                        <span>{p.education || 'Education N/A'}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <Heart size={16} />
-                                        <span>{p.maritalStatus || 'Never Married'}</span>
-                                    </div>
-                                    {p.motherTongue && (
+                                    <div className="match-card-details-grid">
                                         <div className="detail-item">
-                                            <Languages size={16} />
-                                            <span>{p.motherTongue}</span>
+                                            <Briefcase size={16} />
+                                            <span>{p.occupation || 'Profession N/A'}</span> • <span>{p.income || 'No Income'}</span>
                                         </div>
-                                    )}
+                                        <div className="detail-item">
+                                            <GraduationCap size={16} />
+                                            <span>{p.education || 'Education N/A'}</span>
+                                        </div>
+                                        <div className="detail-item">
+                                            <Heart size={16} />
+                                            <span>{p.maritalStatus || 'Never Married'}</span>
+                                        </div>
+                                        {p.motherTongue && (
+                                            <div className="detail-item">
+                                                <Languages size={16} />
+                                                <span>{p.motherTongue}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="match-card-footer">
-                            {!isInterested && (
-                                <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
-                                    <Sparkles size={18} />
-                                    Interest
+                            <div className="match-card-footer">
+                                {!isInterested && (
+                                    <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
+                                        <Sparkles size={18} />
+                                        Interest
+                                    </button>
+                                )}
+                                {isShortlisted ? (
+                                    <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                        <Star size={18} fill="currentColor" />
+                                        Shortlisted
+                                    </button>
+                                ) : (
+                                    <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, p.uniqueId)}>
+                                        <Star size={18} />
+                                        Shortlist
+                                    </button>
+                                )}
+                                <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, p.uniqueId)}>
+                                    <X size={18} />
+                                    Ignore
                                 </button>
-                            )}
-                            {isShortlisted ? (
-                                <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
-                                    <Star size={18} fill="currentColor" />
-                                    Shortlisted
-                                </button>
-                            ) : (
-                                <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, p.uniqueId)}>
-                                    <Star size={18} />
-                                    Shortlist
-                                </button>
-                            )}
-                            <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, p.uniqueId)}>
-                                <X size={18} />
-                                Ignore
-                            </button>
 
+                            </div>
                         </div>
-                    </div>
-                );
+                    );
                 })}
             </div>
         );
@@ -398,42 +407,57 @@ const Matches = () => {
                 <div className="matches-layout glass-panel">
 
                     {/* Sidebar */}
-                    <aside className="matches-sidebar">
-                        {filteredMatchGroups.map((group, groupIndex) => (
-                            <div key={groupIndex} className="match-group">
-                                {group.title && <h4 className="group-title">{group.title}</h4>}
-                                <ul className="group-list">
-                                    {group.items.map(item => (
-                                        <li key={item.id}>
-                                            <button
-                                                className={`match-link ${activeCategory === item.id ? 'active' : ''}`}
-                                                onClick={() => setActiveCategory(item.id)}
-                                            >
-                                                <div className="link-icon">{item.icon}</div>
-                                                <div className="link-content">
-                                                    <span className="link-label">{item.label}</span>
-                                                    <span className="link-desc">{item.desc}</span>
-                                                </div>
-                                                <ChevronRight size={16} className="chevron" />
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </aside>
+                    {(!isMobile || !showListOnMobile) && (
+                        <aside className="matches-sidebar">
+                            {filteredMatchGroups.map((group, groupIndex) => (
+                                <div key={groupIndex} className="match-group">
+                                    {group.title && <h4 className="group-title">{group.title}</h4>}
+                                    <ul className="group-list">
+                                        {group.items.map(item => (
+                                            <li key={item.id}>
+                                                <button
+                                                    className={`match-link ${activeCategory === item.id ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        setActiveCategory(item.id);
+                                                        if (isMobile) {
+                                                            setShowListOnMobile(true);
+                                                        }
+                                                    }}
+                                                >
+                                                    <div className="link-icon">{item.icon}</div>
+                                                    <div className="link-content">
+                                                        <span className="link-label">{item.label}</span>
+                                                        <span className="link-desc">{item.desc}</span>
+                                                    </div>
+                                                    <ChevronRight size={16} className="chevron" />
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </aside>
+                    )}
 
                     {/* Main Content */}
-                    <main className="matches-content">
-                        <div className="content-header">
-                            <h2>{activeItem.label}</h2>
-                            <p>{activeItem.desc}</p>
-                        </div>
+                    {(!isMobile || showListOnMobile) && (
+                        <main className="matches-content">
+                            {isMobile && (
+                                <button className="matches-mobile-back-btn" onClick={() => setShowListOnMobile(false)}>
+                                    <ArrowLeft size={18} />
+                                    <span>Back to Categories</span>
+                                </button>
+                            )}
+                            <div className="content-header">
+                                <h2>{activeItem.label}</h2>
+                                <p>{activeItem.desc}</p>
+                            </div>
 
-                        <div className="matches-body">
-                            {renderList()}
-                        </div>
-                    </main>
+                            <div className="matches-body">
+                                {renderList()}
+                            </div>
+                        </main>
+                    )}
                 </div>
             </div>
             <Footer />

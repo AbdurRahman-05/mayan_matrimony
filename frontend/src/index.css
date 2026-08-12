@@ -62,8 +62,11 @@
     font-size: 0.95rem;
   }
 
-  input, select, textarea {
-    font-size: 16px !important; /* Prevents auto-zoom on iOS/Android */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    /* Prevents auto-zoom on iOS/Android */
     min-height: 44px;
   }
 
@@ -73,7 +76,9 @@
 }
 
 @media (min-width: 769px) {
-  .hide-on-desktop, .mobile-only {
+
+  .hide-on-desktop,
+  .mobile-only {
     display: none !important;
   }
 }
@@ -197,20 +202,4 @@ h6 {
   -webkit-text-fill-color: transparent;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-dark);
-}
+/* Clean custom scrollbar removed to default to native, premium system scrollbar navigation */

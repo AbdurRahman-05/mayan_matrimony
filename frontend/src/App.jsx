@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 import Register from './pages/Register';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -15,11 +17,40 @@ import Chat from './pages/Chat';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalModal from './components/GlobalModal';
 import BottomNav from './components/BottomNav';
+import ScrollToTop from './components/ScrollToTop';
 import './index.css';
 
 function App() {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let listenerPromise;
+    try {
+      listenerPromise = CapApp.addListener('backButton', (data) => {
+        // If there is history to go back to (internal route states or our custom state steps)
+        if (data.canGoBack || (window.history.state && window.history.state.registrationOpen)) {
+          window.history.back();
+        } else {
+          CapApp.exitApp();
+        }
+      });
+    } catch (e) {
+      console.error("Capacitor App listener failed to attach:", e);
+    }
+
+    return () => {
+      if (listenerPromise) {
+        listenerPromise.then(listener => {
+          if (listener && typeof listener.remove === 'function') {
+            listener.remove();
+          }
+        }).catch(err => console.error("Error removing backButton listener:", err));
+      }
+    };
+  }, []);
   return (
     <Router>
+      <ScrollToTop />
       <div className="App">
         <GlobalModal />
         <BottomNav />
@@ -40,6 +71,7 @@ function App() {
 
           <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/settings/:section" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path="/chat/:uniqueId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminPanel />} />

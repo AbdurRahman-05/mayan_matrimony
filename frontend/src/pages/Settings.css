@@ -20,7 +20,7 @@
    SETTINGS SIDEBAR
    ============================================ */
 .settings-sidebar {
-    width: 300px;
+    width: 330px;
     flex-shrink: 0;
 }
 
@@ -58,27 +58,67 @@
 .settings-nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 24px;
+    gap: 14px;
+    padding: 16px 20px;
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 0.9rem;
     font-weight: 500;
     color: #4b5563;
-    border-left: 3px solid transparent;
+    border-left: 4px solid transparent;
     position: relative;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.settings-nav-item:last-child {
+    border-bottom: none;
 }
 
 .settings-nav-item:hover {
     background: #fdf8e8;
-    color: #D4AF37;
 }
 
 .settings-nav-item.active {
     background: linear-gradient(90deg, #fdf8e8 0%, #fff 100%);
-    color: #D4AF37;
     border-left-color: #D4AF37;
+}
+
+.settings-nav-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-nav-label {
+    font-size: 0.94rem;
     font-weight: 600;
+    color: #1f2937;
+    transition: color 0.2s;
+}
+
+.settings-nav-item:hover .settings-nav-label,
+.settings-nav-item.active .settings-nav-label {
+    color: #D4AF37;
+}
+
+.settings-nav-desc {
+    font-size: 0.76rem;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
+.settings-nav-chevron {
+    color: #9ca3af;
+    margin-left: auto;
+    transition: transform 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.settings-nav-item:hover .settings-nav-chevron,
+.settings-nav-item.active .settings-nav-chevron {
+    color: #D4AF37;
+    transform: translateX(3px);
 }
 
 .settings-nav-item svg {
@@ -100,11 +140,11 @@
 }
 
 .settings-nav-item:nth-child(2) .nav-icon {
-    background: #fee2e2;
+    background: #fce7f3;
 }
 
 .settings-nav-item:nth-child(3) .nav-icon {
-    background: #fce7f3;
+    background: #fee2e2;
 }
 
 .settings-nav-item:nth-child(4) .nav-icon {
@@ -133,6 +173,98 @@
     background: #fdf8e8;
 }
 
+/* Upgrade banner inside Settings sidebar */
+.settings-upgrade-banner {
+    margin: 12px 16px 8px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-radius: 10px;
+    border: 1px solid #fcd34d;
+    text-align: center;
+}
+
+.settings-upgrade-banner svg {
+    color: #92400e;
+    margin-bottom: 6px;
+}
+
+.settings-upgrade-banner p {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #78350f;
+    margin: 0 0 10px;
+    line-height: 1.4;
+}
+
+.settings-upgrade-btn {
+    display: inline-block;
+    padding: 8px 18px;
+    background: linear-gradient(135deg, #D4AF37, #b8942a);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border-radius: 7px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(212, 175, 55, 0.35);
+}
+
+.settings-upgrade-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.45);
+}
+
+/* Logout button inside Settings sidebar */
+.settings-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #D4AF37;
+    border-top: 1px solid #f3f4f6;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.2s, color 0.2s;
+}
+
+.settings-logout-btn:hover {
+    background: #fdf8e8;
+    color: #b8942a;
+}
+
+/* Support section inside Settings sidebar */
+.settings-support {
+    padding: 14px 24px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.settings-support h4 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 8px;
+}
+
+.settings-support-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #4b5563;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: color 0.2s;
+}
+
+.settings-support-item:hover {
+    color: #D4AF37;
+}
+
 /* ============================================
    SETTINGS CONTENT
    ============================================ */
@@ -155,6 +287,25 @@
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+.settings-mobile-back {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #4b5563;
+    padding: 6px;
+    margin-right: 4px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s, color 0.2s;
+}
+
+.settings-mobile-back:hover {
+    background: #f3f4f6;
+    color: #D4AF37;
 }
 
 .settings-content-header h2 {
@@ -1025,39 +1176,24 @@
     .settings-container {
         flex-direction: column;
         padding: 15px;
-        margin-top: 90px;
+        margin-top: 80px;
     }
 
     .settings-sidebar {
         width: 100%;
     }
 
-    .settings-nav {
+    /* Hide/show sections based on active view state */
+    .settings-container.menu-active .settings-content {
+        display: none;
+    }
+
+    .settings-container.section-active .settings-sidebar {
+        display: none;
+    }
+
+    .settings-mobile-back {
         display: flex;
-        overflow-x: auto;
-        gap: 4px;
-        padding: 8px 12px;
-    }
-
-    .settings-nav-item {
-        flex-direction: column;
-        gap: 6px;
-        padding: 10px 16px;
-        font-size: 0.8rem;
-        border-left: none;
-        border-bottom: 2px solid transparent;
-        white-space: nowrap;
-        min-width: max-content;
-    }
-
-    .settings-nav-item.active {
-        border-left: none;
-        border-bottom-color: #D4AF37;
-    }
-
-    .settings-nav-item .nav-icon {
-        width: 32px;
-        height: 32px;
     }
 }
 

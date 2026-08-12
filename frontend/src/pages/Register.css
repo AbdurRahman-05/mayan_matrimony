@@ -21,6 +21,7 @@
     .register-container {
         padding: 5rem 0.75rem 2rem;
     }
+
     .register-card {
         padding: 1.5rem 1rem;
     }
@@ -1066,6 +1067,192 @@
     color: #888888;
 }
 
+/* Custom Login Modal */
+.custom-login-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.custom-login-modal {
+    background: #fff;
+    width: 420px;
+    border-radius: 24px;
+    padding: 30px;
+    position: relative;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    font-family: 'Inter', sans-serif;
+}
+
+.custom-login-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.custom-login-title {
+    font-size: 1.4rem;
+    color: #444;
+    text-align: center;
+    font-weight: 400;
+    margin-bottom: 25px;
+}
+
+.custom-login-field {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.custom-login-field label {
+    display: block;
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.custom-login-field input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.custom-login-field input:focus {
+    border-color: #E1C174;
+}
+
+.custom-login-field input[type="password"]::-ms-reveal,
+.custom-login-field input[type="password"]::-ms-clear {
+    display: none;
+}
+
+.custom-login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.custom-login-stay {
+    display: flex;
+    align-items: center;
+    color: #555;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.custom-login-stay input {
+    margin-right: 8px;
+}
+
+.custom-login-forgot {
+    color: #00b5d8;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.custom-login-forgot:hover {
+    text-decoration: underline;
+}
+
+.custom-login-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: 0.3s ease;
+    border: none;
+}
+
+.custom-login-btn.primary {
+    background-color: #E1C174;
+    color: #ffffff;
+}
+
+.custom-login-btn.primary:hover {
+    background-color: #cca957;
+}
+
+.custom-login-btn.primary-outline {
+    background-color: #E1C174;
+    color: #ffffff;
+    margin-top: 10px;
+}
+
+.custom-login-btn.primary-outline:hover {
+    background-color: #cca957;
+}
+
+.custom-login-divider {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+}
+
+.custom-login-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e0e0e0;
+    z-index: 1;
+}
+
+.custom-login-divider span {
+    background: #fff;
+    padding: 0 10px;
+    color: #aaa;
+    font-size: 0.85rem;
+    position: relative;
+    z-index: 2;
+}
+
+.custom-login-footer {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.95rem;
+    color: #777;
+}
+
+.custom-login-footer a {
+    color: #555;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.custom-login-footer a:hover {
+    text-decoration: underline;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
 /* ============================================
    RESPONSIVE — TABLET (max-width: 768px)
    ============================================ */
@@ -1096,32 +1283,53 @@
 
     /* Hero */
     .ts-hero-section {
-        height: 65vh;
-        min-height: 400px;
-        background-position: center center;
+        height: 100vh;
+        height: 100dvh;
+        min-height: 480px;
+        background-position: 85% center;
         padding-top: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .ts-hero-content {
-        padding: 1.5rem 0;
-        margin-left: 1.2rem;
-        margin-right: 1.2rem;
-        align-items: flex-start;
-        text-align: left;
+        padding: 2rem 1.2rem;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
 
     .ts-hero-title {
-        font-size: 1.5rem;
+        font-size: 1.85rem;
+        text-align: center;
+        width: 100%;
+    }
+
+    .ts-hero-title-line {
+        text-align: center;
+    }
+
+    .ts-hero-title-focus {
+        text-align: center;
     }
 
     .ts-hero-subtitle {
-        font-size: 0.95rem;
+        font-size: 1rem;
+        text-align: center;
+        width: 100%;
     }
 
     .ts-hero-btn {
-        font-size: 0.8rem;
-        padding: 9px 24px;
-        margin-top: 16px;
+        font-size: 0.95rem;
+        padding: 10px 28px;
+        margin-top: 24px;
+        align-self: center;
     }
 
     /* Trust */
@@ -1198,11 +1406,21 @@
     }
 
     /* Login Modal */
+    .custom-login-modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
     .custom-login-modal {
-        width: calc(100vw - 32px);
-        max-width: 420px;
-        padding: 24px 20px;
-        margin: 0 16px;
+        width: 100%;
+        max-width: 100%;
+        padding: 30px 24px;
+        margin: 0;
+        border-radius: 24px 24px 0 0;
+        animation: slideUp 0.35s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
     }
 
     .custom-login-title {
@@ -1308,32 +1526,53 @@
 
     /* Hero */
     .ts-hero-section {
-        height: 55vh;
-        min-height: 350px;
-        background-position: center center;
+        height: 100vh;
+        height: 100dvh;
+        min-height: 400px;
+        background-position: 87% center;
         padding-top: 75px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .ts-hero-content {
-        padding: 1rem 0;
-        margin-left: 1rem;
-        margin-right: 1rem;
-        align-items: flex-start;
-        text-align: left;
+        padding: 2rem 1rem;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
 
     .ts-hero-title {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
+        text-align: center;
+        width: 100%;
+    }
+
+    .ts-hero-title-line {
+        text-align: center;
+    }
+
+    .ts-hero-title-focus {
+        text-align: center;
     }
 
     .ts-hero-subtitle {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
+        text-align: center;
+        width: 100%;
     }
 
     .ts-hero-btn {
-        font-size: 0.75rem;
-        padding: 8px 20px;
-        margin-top: 12px;
+        font-size: 0.9rem;
+        padding: 9px 24px;
+        margin-top: 18px;
+        align-self: center;
     }
 
     /* Stories */
@@ -1414,17 +1653,20 @@
 
     /* Login Modal */
     .custom-login-modal-overlay {
-        padding: 16px;
-        align-items: flex-start;
-        padding-top: 60px;
+        padding: 0;
+        align-items: flex-end;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.5);
     }
 
     .custom-login-modal {
         width: 100%;
-        max-width: none;
-        padding: 20px 16px;
+        max-width: 100%;
+        padding: 30px 24px 40px;
         margin: 0;
-        border-radius: 12px;
+        border-radius: 24px 24px 0 0;
+        animation: slideUp 0.35s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
     }
 
     .custom-login-title {
@@ -1541,31 +1783,53 @@
     }
 
     .ts-hero-section {
-        height: 50vh;
-        min-height: 300px;
-        background-position: center center;
+        height: 100vh;
+        height: 100dvh;
+        min-height: 350px;
+        background-position: 90% center;
         padding-top: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .ts-hero-content {
-        margin-left: 0.8rem;
-        margin-right: 0.8rem;
-        align-items: flex-start;
-        text-align: left;
+        padding: 2rem 0.8rem;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
 
     .ts-hero-title {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
+        text-align: center;
+        width: 100%;
+    }
+
+    .ts-hero-title-line {
+        text-align: center;
+    }
+
+    .ts-hero-title-focus {
+        text-align: center;
     }
 
     .ts-hero-subtitle {
-        font-size: 0.75rem;
+        font-size: 0.82rem;
+        text-align: center;
+        width: 100%;
     }
 
     .ts-hero-btn {
-        font-size: 0.7rem;
-        padding: 7px 16px;
-        margin-top: 10px;
+        font-size: 0.8rem;
+        padding: 8px 20px;
+        margin-top: 14px;
+        align-self: center;
     }
 
     .ts-section-title {
@@ -1581,7 +1845,7 @@
     }
 
     .custom-login-modal {
-        padding: 16px 12px;
+        padding: 24px 16px 36px;
     }
 
     .custom-login-title {
@@ -1643,181 +1907,7 @@
     }
 }
 
-/* Custom Login Modal */
-.custom-login-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.custom-login-modal {
-    background: #fff;
-    width: 420px;
-    border-radius: 8px;
-    padding: 30px;
-    position: relative;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-    font-family: 'Inter', sans-serif;
-}
-
-.custom-login-close {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-}
-
-.custom-login-title {
-    font-size: 1.4rem;
-    color: #444;
-    text-align: center;
-    font-weight: 400;
-    margin-bottom: 25px;
-}
-
-.custom-login-field {
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.custom-login-field label {
-    display: block;
-    color: #666;
-    font-size: 0.95rem;
-    margin-bottom: 8px;
-}
-
-.custom-login-field input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 0.95rem;
-    color: #333;
-    outline: none;
-    box-sizing: border-box;
-}
-
-.custom-login-field input:focus {
-    border-color: #E1C174;
-}
-
-.custom-login-field input[type="password"]::-ms-reveal,
-.custom-login-field input[type="password"]::-ms-clear {
-    display: none;
-}
-
-.custom-login-options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.custom-login-stay {
-    display: flex;
-    align-items: center;
-    color: #555;
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-
-.custom-login-stay input {
-    margin-right: 8px;
-}
-
-.custom-login-forgot {
-    color: #00b5d8;
-    font-size: 0.9rem;
-    text-decoration: none;
-}
-
-.custom-login-forgot:hover {
-    text-decoration: underline;
-}
-
-.custom-login-btn {
-    width: 100%;
-    padding: 12px;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
-    transition: 0.3s ease;
-    border: none;
-}
-
-.custom-login-btn.primary {
-    background-color: #E1C174;
-    color: #ffffff;
-}
-
-.custom-login-btn.primary:hover {
-    background-color: #cca957;
-}
-
-.custom-login-btn.primary-outline {
-    background-color: #E1C174;
-    color: #ffffff;
-    margin-top: 10px;
-}
-
-.custom-login-btn.primary-outline:hover {
-    background-color: #cca957;
-}
-
-.custom-login-divider {
-    text-align: center;
-    margin: 20px 0;
-    position: relative;
-}
-
-.custom-login-divider::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: #e0e0e0;
-    z-index: 1;
-}
-
-.custom-login-divider span {
-    background: #fff;
-    padding: 0 10px;
-    color: #aaa;
-    font-size: 0.85rem;
-    position: relative;
-    z-index: 2;
-}
-
-.custom-login-footer {
-    text-align: center;
-    margin-top: 25px;
-    font-size: 0.95rem;
-    color: #777;
-}
-
-.custom-login-footer a {
-    color: #555;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.custom-login-footer a:hover {
-    text-decoration: underline;
-}
+/* Custom Login Modal Styles Declared Above */
 
 /* Jeevansathi-style Registration Overlay */
 .jv-register-overlay {

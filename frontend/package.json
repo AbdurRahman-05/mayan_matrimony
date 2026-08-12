@@ -9,10 +9,13 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "cap:sync": "vite build && npx cap sync",
-    "cap:android": "npx cap open android"
+    "cap:android": "npx cap open android",
+    "apk:debug": "npm run cap:sync && cd android && gradlew.bat assembleDebug",
+    "apk:release": "npm run cap:sync && cd android && gradlew.bat assembleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
+    "@capacitor/app": "^6.0.3",
     "@capacitor/core": "^6.2.1",
     "axios": "^1.13.5",
     "framer-motion": "^12.34.0",

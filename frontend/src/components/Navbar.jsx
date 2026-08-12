@@ -33,12 +33,12 @@ const Navbar = () => {
     };
 
     if (!isLandingPage) {
-        fetchChatCount();
+      fetchChatCount();
     }
 
     return () => {
-        isMounted = false;
-        clearTimeout(timeoutId);
+      isMounted = false;
+      clearTimeout(timeoutId);
     };
   }, [isLandingPage]);
 
@@ -66,14 +66,14 @@ const Navbar = () => {
             <li><Link to="/search">Search</Link></li>
             <li><Link to="/interests">Interests</Link></li>
             <li>
-               <Link to="/chat" style={{ position: 'relative' }}>
-                  Chat
-                  {unreadChatCount > 0 && (
-                     <span style={{ position: 'absolute', top: '-8px', right: '-15px', background: 'red', color: 'white', fontSize: '0.7rem', padding: '2px 5px', borderRadius: '10px', minWidth: '16px', textAlign: 'center' }}>
-                        {unreadChatCount}
-                     </span>
-                  )}
-               </Link>
+              <Link to="/chat" style={{ position: 'relative' }}>
+                Chat
+                {unreadChatCount > 0 && (
+                  <span style={{ position: 'absolute', top: '-8px', right: '-15px', background: 'red', color: 'white', fontSize: '0.7rem', padding: '2px 5px', borderRadius: '10px', minWidth: '16px', textAlign: 'center' }}>
+                    {unreadChatCount}
+                  </span>
+                )}
+              </Link>
             </li>
             <li><Link to="/matches">Matches</Link></li>
             <li><Link to="/membership">Membership</Link></li>
@@ -94,14 +94,13 @@ const Navbar = () => {
               </Link>
             </div>
           )}
+          {/* Mobile Menu Toggle - Only if not landing page */}
+          {!isLandingPage && (
+            <button className="mobile-toggle" onClick={() => setIsOpen(!isOpen)}>
+              {isOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          )}
         </div>
-
-        {/* Mobile Menu Toggle - Only if not landing page */}
-        {!isLandingPage && (
-          <button className="mobile-toggle" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
-        )}
       </div>
 
       {/* Mobile Menu */}
@@ -112,12 +111,12 @@ const Navbar = () => {
           <Link to="/search" onClick={() => setIsOpen(false)}>Search</Link>
           <Link to="/interests" onClick={() => setIsOpen(false)}>Interests</Link>
           <Link to="/chat" onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-             Chat
-             {unreadChatCount > 0 && (
-                <span style={{ marginLeft: '6px', background: 'red', color: 'white', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '10px' }}>
-                   {unreadChatCount}
-                </span>
-             )}
+            Chat
+            {unreadChatCount > 0 && (
+              <span style={{ marginLeft: '6px', background: 'red', color: 'white', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '10px' }}>
+                {unreadChatCount}
+              </span>
+            )}
           </Link>
           <Link to="/matches" onClick={() => setIsOpen(false)}>Matches</Link>
           <Link to="/membership" onClick={() => setIsOpen(false)}>Membership</Link>

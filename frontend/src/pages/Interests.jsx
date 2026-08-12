@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import {
     Loader2, User, Clock, Check, X, MapPin, Briefcase, GraduationCap,
-    Heart, Languages, Sparkles, Star, MessageCircle
+    Heart, Languages, Sparkles, Star, MessageCircle, ArrowLeft
 } from 'lucide-react';
 import { getReceivedInterests, getSentInterests, respondToInterest, shortlistProfile, ignoreProfile, getChatList, globalCache } from '../services/api';
 import { showAlert, showConfirm } from '../components/GlobalModal';
@@ -14,6 +14,21 @@ const Interests = () => {
     const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState('received'); // 'received' or 'sent'
     const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'pending', 'accepted', 'declined'
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+    const [showListOnMobile, setShowListOnMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 900);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [activeSection, activeFilter]);
+
     const [receivedInterests, setReceivedInterests] = useState(globalCache.interests?.received || []);
     const [sentInterests, setSentInterests] = useState(globalCache.interests?.sent || []);
     const [chatList, setChatList] = useState([]);
@@ -65,7 +80,7 @@ const Interests = () => {
         const updateFn = prev => {
             return prev.map(item => item.id === id ? { ...item, status } : item);
         };
-        
+
         if (activeSection === 'received') {
             setReceivedInterests(updateFn);
         } else {
@@ -179,170 +194,187 @@ const Interests = () => {
         <div className="interests-page">
             <Navbar />
             <div className="interests-container">
-
                 <div className="interests-layout">
                     {/* Sidebar */}
-                    <aside className="interests-sidebar">
-                        <div className="sidebar-group">
-                            <h3 className="sidebar-title">Interests Received</h3>
-                            <ul className="sidebar-nav">
-                                {tabs.map(tab => (
-                                    <li key={`received-${tab.id}`}>
-                                        <button
-                                            className={`sidebar-link ${activeSection === 'received' && activeFilter === tab.id ? 'active' : ''}`}
-                                            onClick={() => { setActiveSection('received'); setActiveFilter(tab.id); }}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                    {(!isMobile || !showListOnMobile) && (
+                        <aside className="interests-sidebar">
+                            <div className="sidebar-group">
+                                <h3 className="sidebar-title">Interests Received</h3>
+                                <ul className="sidebar-nav">
+                                    {tabs.map(tab => (
+                                        <li key={`received-${tab.id}`}>
+                                            <button
+                                                className={`sidebar-link ${activeSection === 'received' && activeFilter === tab.id ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    setActiveSection('received');
+                                                    setActiveFilter(tab.id);
+                                                    if (isMobile) setShowListOnMobile(true);
+                                                }}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
 
-                        <div className="sidebar-divider"></div>
+                            <div className="sidebar-divider"></div>
 
-                        <div className="sidebar-group">
-                            <h3 className="sidebar-title">Interests Sent</h3>
-                            <ul className="sidebar-nav">
-                                {tabs.map(tab => (
-                                    <li key={`sent-${tab.id}`}>
-                                        <button
-                                            className={`sidebar-link ${activeSection === 'sent' && activeFilter === tab.id ? 'active' : ''}`}
-                                            onClick={() => { setActiveSection('sent'); setActiveFilter(tab.id); }}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </aside>
+                            <div className="sidebar-group">
+                                <h3 className="sidebar-title">Interests Sent</h3>
+                                <ul className="sidebar-nav">
+                                    {tabs.map(tab => (
+                                        <li key={`sent-${tab.id}`}>
+                                            <button
+                                                className={`sidebar-link ${activeSection === 'sent' && activeFilter === tab.id ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    setActiveSection('sent');
+                                                    setActiveFilter(tab.id);
+                                                    if (isMobile) setShowListOnMobile(true);
+                                                }}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </aside>
+                    )}
 
                     {/* Main Content */}
-                    <main className="interests-content">
-                        <div className="content-header">
-                            <h2>{getTitle()}</h2>
-                            {subtitle && <p className="content-subtitle">{subtitle}</p>}
-                        </div>
+                    {(!isMobile || showListOnMobile) && (
+                        <main className="interests-content">
+                            {isMobile && (
+                                <button className="interests-mobile-back-btn" onClick={() => setShowListOnMobile(false)}>
+                                    <ArrowLeft size={18} />
+                                    <span>Back to Categories</span>
+                                </button>
+                            )}
+                            <div className="content-header">
+                                <h2>{getTitle()}</h2>
+                                {subtitle && <p className="content-subtitle">{subtitle}</p>}
+                            </div>
 
-                        <div className="content-body">
-                            {loading ? (
-                                <div className="loading-state">
-                                    <Loader2 className="animate-spin" size={40} />
-                                    <p>Loading interests...</p>
-                                </div>
-                            ) : filteredInterests.length > 0 ? (
-                                <div className="match-results-list">
-                                    {filteredInterests.map(item => {
-                                        const profile = activeSection === 'received' ? item.sender : item.receiver;
-                                        return (
-                                            <div key={item.id} className="match-card" onClick={() => navigate(`/profile/${profile.uniqueId}`)}>
-                                                <div className="match-card-top">
-                                                    <div className="match-card-sidebar">
-                                                        {profile.photo ? (
-                                                            <img src={profile.photo} alt={profile.fullName} />
-                                                        ) : (
-                                                            <div className="request-photo-overlay">
-                                                                <button className="request-photo-btn" onClick={(e) => e.stopPropagation()}>Request photo</button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="match-card-main">
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                                            <span className="active-today-label">
-                                                                <Clock size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                                                {activeSection === 'received' ? 'Received' : 'Sent'} {new Date(item.createdAt).toLocaleDateString()}
-                                                            </span>
-                                                            <span className={`status-badge ${item.status}`}>{item.status}</span>
-                                                        </div>
-                                                        <h3 className="match-card-name">{profile.fullName}, {profile.age}</h3>
-                                                        <div className="match-card-basics">
-                                                            {profile.height} • {profile.city || 'Location N/A'} • {profile.religion}-{profile.caste || profile.sect || 'Community N/A'}
-                                                        </div>
-                                                        <div className="match-card-details-grid">
-                                                            <div className="detail-item">
-                                                                <Briefcase size={16} />
-                                                                <span>{profile.occupation || 'Profession N/A'}</span> • <span>{profile.income || 'No Income'}</span>
-                                                            </div>
-                                                            <div className="detail-item">
-                                                                <GraduationCap size={16} />
-                                                                <span>{profile.education || 'Education N/A'}</span>
-                                                            </div>
-                                                            <div className="detail-item">
-                                                                <Heart size={16} />
-                                                                <span>{profile.maritalStatus || 'Never Married'}</span>
-                                                            </div>
-                                                            {profile.motherTongue && (
-                                                                <div className="detail-item">
-                                                                    <Languages size={16} />
-                                                                    <span>{profile.motherTongue}</span>
+                            <div className="content-body">
+                                {loading ? (
+                                    <div className="loading-state">
+                                        <Loader2 className="animate-spin" size={40} />
+                                        <p>Loading interests...</p>
+                                    </div>
+                                ) : filteredInterests.length > 0 ? (
+                                    <div className="match-results-list">
+                                        {filteredInterests.map(item => {
+                                            const profile = activeSection === 'received' ? item.sender : item.receiver;
+                                            return (
+                                                <div key={item.id} className="match-card" onClick={() => navigate(`/profile/${profile.uniqueId}`)}>
+                                                    <div className="match-card-top">
+                                                        <div className="match-card-sidebar">
+                                                            {profile.photo ? (
+                                                                <img src={profile.photo} alt={profile.fullName} />
+                                                            ) : (
+                                                                <div className="request-photo-overlay">
+                                                                    <button className="request-photo-btn" onClick={(e) => e.stopPropagation()}>Request photo</button>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        {item.message && (
-                                                            <div style={{ marginTop: '12px', padding: '8px 12px', background: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid #cbd5e1', fontStyle: 'italic', fontSize: '0.9rem', color: '#475569' }}>
-                                                                "{item.message}"
+                                                        <div className="match-card-main">
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                                <span className="active-today-label">
+                                                                    <Clock size={12} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                                                    {activeSection === 'received' ? 'Received' : 'Sent'} {new Date(item.createdAt).toLocaleDateString()}
+                                                                </span>
+                                                                <span className={`status-badge ${item.status}`}>{item.status}</span>
                                                             </div>
+                                                            <h3 className="match-card-name">{profile.fullName}, {profile.age}</h3>
+                                                            <div className="match-card-basics">
+                                                                {profile.height} • {profile.city || 'Location N/A'} • {profile.religion}-{profile.caste || profile.sect || 'Community N/A'}
+                                                            </div>
+                                                            <div className="match-card-details-grid">
+                                                                <div className="detail-item">
+                                                                    <Briefcase size={16} />
+                                                                    <span>{profile.occupation || 'Profession N/A'}</span> • <span>{profile.income || 'No Income'}</span>
+                                                                </div>
+                                                                <div className="detail-item">
+                                                                    <GraduationCap size={16} />
+                                                                    <span>{profile.education || 'Education N/A'}</span>
+                                                                </div>
+                                                                <div className="detail-item">
+                                                                    <Heart size={16} />
+                                                                    <span>{profile.maritalStatus || 'Never Married'}</span>
+                                                                </div>
+                                                                {profile.motherTongue && (
+                                                                    <div className="detail-item">
+                                                                        <Languages size={16} />
+                                                                        <span>{profile.motherTongue}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            {item.message && (
+                                                                <div style={{ marginTop: '12px', padding: '8px 12px', background: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid #cbd5e1', fontStyle: 'italic', fontSize: '0.9rem', color: '#475569' }}>
+                                                                    "{item.message}"
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="match-card-footer">
+                                                        {activeSection === 'received' && item.status === 'pending' ? (
+                                                            <>
+                                                                <button className="card-action-btn" style={{ color: '#00a650', borderRight: '1px solid #fde68a' }} onClick={(e) => handleRespond(e, item.id, 'accepted')}>
+                                                                    <Check size={18} />
+                                                                    Accept Interest
+                                                                </button>
+                                                                <button className="card-action-btn" style={{ color: '#ef4444' }} onClick={(e) => handleRespond(e, item.id, 'declined')}>
+                                                                    <X size={18} />
+                                                                    Decline
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, profile.uniqueId)}>
+                                                                    <X size={18} />
+                                                                    Ignore
+                                                                </button>
+                                                                {!chatList.some(c => c.unique_id === profile.uniqueId) && (
+                                                                    <button className="card-action-btn" onClick={(e) => handleChatAction(e, profile.uniqueId)}>
+                                                                        <MessageCircle size={18} />
+                                                                        Chat
+                                                                    </button>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="match-card-footer">
-                                                    {activeSection === 'received' && item.status === 'pending' ? (
-                                                        <>
-                                                            <button className="card-action-btn" style={{ color: '#00a650', borderRight: '1px solid #fde68a' }} onClick={(e) => handleRespond(e, item.id, 'accepted')}>
-                                                                <Check size={18} />
-                                                                Accept Interest
-                                                            </button>
-                                                            <button className="card-action-btn" style={{ color: '#ef4444' }} onClick={(e) => handleRespond(e, item.id, 'declined')}>
-                                                                <X size={18} />
-                                                                Decline
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, profile.uniqueId)}>
-                                                                <X size={18} />
-                                                                Ignore
-                                                            </button>
-                                                            {!chatList.some(c => c.unique_id === profile.uniqueId) && (
-                                                                <button className="card-action-btn" onClick={(e) => handleChatAction(e, profile.uniqueId)}>
-                                                                    <MessageCircle size={18} />
-                                                                    Chat
-                                                                </button>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="empty-state">
-                                    <div className="illustration-wrapper">
-                                        <img
-                                            src="/interests_illustration.png"
-                                            alt="No interests illustration"
-                                            className="interests-illustration-img"
-                                        />
+                                            );
+                                        })}
                                     </div>
-                                    <h3 className="empty-message">{getEmptyMessage()}</h3>
-                                    {getEmptySubMessage() && (
-                                        <p className="empty-sub-message">{getEmptySubMessage()}</p>
-                                    )}
-                                    {showExploreBtn && (
-                                        <button className="explore-btn" onClick={() => navigate('/matches')}>
-                                            Explore matches
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </main>
+                                ) : (
+                                    <div className="empty-state">
+                                        <div className="illustration-wrapper">
+                                            <img
+                                                src="/interests_illustration.png"
+                                                alt="No interests illustration"
+                                                className="interests-illustration-img"
+                                            />
+                                        </div>
+                                        <h3 className="empty-message">{getEmptyMessage()}</h3>
+                                        {getEmptySubMessage() && (
+                                            <p className="empty-sub-message">{getEmptySubMessage()}</p>
+                                        )}
+                                        {showExploreBtn && (
+                                            <button className="explore-btn" onClick={() => navigate('/matches')}>
+                                                Explore matches
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </main>
+                    )}
                 </div>
             </div>
             <Footer />
-        </div>
+        </div >
     );
 };
 

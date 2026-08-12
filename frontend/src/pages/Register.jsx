@@ -22,6 +22,7 @@ const Register = () => {
     const location = useLocation();
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [jvStep, setJvStep] = useState(0);
+    const [showRegistrationForm, setShowRegistrationForm] = useState(false);
     const [loginForm, setLoginForm] = useState({ username: '', password: '' });
     const [loginOtpMode, setLoginOtpMode] = useState(false);
     const [loginOtp, setLoginOtp] = useState('');
@@ -32,6 +33,65 @@ const Register = () => {
     const [forgotPasswordData, setForgotPasswordData] = useState({ mobile: '', otp: '', newPassword: '', confirmPassword: '' });
     const [forgotPasswordError, setForgotPasswordError] = useState('');
     const [isForgotLoading, setIsForgotLoading] = useState(false);
+
+    const pushedStatesRef = useRef(0);
+
+    const updateJvStep = (newStep) => {
+        if (showRegistrationForm) {
+            window.history.pushState({ registrationOpen: true, step: newStep }, '');
+            pushedStatesRef.current++;
+        }
+        setJvStep(newStep);
+    };
+
+    // Intercept browser back button to navigate steps or close form
+    useEffect(() => {
+        if (!showRegistrationForm) {
+            pushedStatesRef.current = 0;
+            return;
+        }
+
+        // Push initial step 0 state to history if we just opened the form and haven't pushed yet
+        if (pushedStatesRef.current === 0) {
+            window.history.pushState({ registrationOpen: true, step: jvStep }, '');
+            pushedStatesRef.current = 1;
+        }
+
+        const handlePopState = (e) => {
+            if (e.state && e.state.registrationOpen) {
+                setJvStep(e.state.step);
+                pushedStatesRef.current = e.state.step + 1;
+            } else {
+                setShowRegistrationForm(false);
+                setJvStep(0);
+                pushedStatesRef.current = 0;
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [showRegistrationForm]);
+
+    const handleJvBackClick = () => {
+        if (pushedStatesRef.current > 1) {
+            window.history.back();
+        } else {
+            // Fallback if no history pushed
+            setJvStep(prev => Math.max(0, prev - 1));
+        }
+    };
+
+    const handleJvCloseClick = () => {
+        if (pushedStatesRef.current > 0) {
+            window.history.go(-pushedStatesRef.current);
+            pushedStatesRef.current = 0;
+        } else {
+            setShowRegistrationForm(false);
+            setJvStep(0);
+        }
+    };
 
     // Dynamic story data
     const [storyData, setStoryData] = useState({
@@ -241,7 +301,6 @@ const Register = () => {
     const [isRegistered, setIsRegistered] = useState(false);
     const [loading, setLoading] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
-    const [showRegistrationForm, setShowRegistrationForm] = useState(false);
     const [highestCompletedStep, setHighestCompletedStep] = useState(0);
     const [verificationOtp, setVerificationOtp] = useState('');
     const [verificationSent, setVerificationSent] = useState(false);
@@ -368,7 +427,7 @@ const Register = () => {
             if (targetStep > highestCompletedStep) {
                 setHighestCompletedStep(targetStep);
             }
-            setJvStep(targetStep);
+            updateJvStep(targetStep);
         }
     };
 
@@ -376,7 +435,7 @@ const Register = () => {
     const handleTabClick = (targetStep) => {
         if (targetStep <= highestCompletedStep) {
             setJvErrors({});
-            setJvStep(targetStep);
+            updateJvStep(targetStep);
         }
     };
     const videoRef = useRef(null);
@@ -930,8 +989,8 @@ const Register = () => {
                         <p style={{ color: '#606060', fontSize: '1.1rem', marginBottom: '40px', lineHeight: '1.6' }}>
                             Unlock exclusive features to find your perfect match faster. View contact details, send direct messages, and get priority visibility.
                         </p>
-                        <button 
-                            className="ts-steps-cta" 
+                        <button
+                            className="ts-steps-cta"
                             onClick={() => window.location.href = '/membership'}
                             style={{ backgroundColor: '#1a1a1a', color: '#fff', padding: '16px 40px', fontSize: '1.1rem', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 500, transition: 'all 0.3s' }}
                             onMouseOver={(e) => { e.target.style.backgroundColor = '#ca9d42'; e.target.style.transform = 'translateY(-2px)'; }}
@@ -949,11 +1008,11 @@ const Register = () => {
             {showLoginModal && (
                 <div className="custom-login-modal-overlay">
                     <div className="custom-login-modal">
-                        <button className="custom-login-close" onClick={() => { 
-                            setShowLoginModal(false); 
-                            setLoginOtpMode(false); 
-                            setLoginError(''); 
-                            setLoginOtp(''); 
+                        <button className="custom-login-close" onClick={() => {
+                            setShowLoginModal(false);
+                            setLoginOtpMode(false);
+                            setLoginError('');
+                            setLoginOtp('');
                             setIsForgotPasswordMode(false);
                             setForgotPasswordStep('request');
                             setForgotPasswordError('');
@@ -964,7 +1023,7 @@ const Register = () => {
                         {isForgotPasswordMode ? (
                             <>
                                 <h2 className="custom-login-title">Reset Your Password</h2>
-                                
+
                                 {forgotPasswordError && (
                                     <div style={{ color: '#e74c3c', fontSize: '0.85rem', marginBottom: '10px', padding: '8px 12px', background: '#fdf2f2', borderRadius: '6px', border: '1px solid #fecaca' }}>
                                         {forgotPasswordError}
@@ -980,15 +1039,15 @@ const Register = () => {
                                                 type="text"
                                                 placeholder="Enter 10-digit mobile number"
                                                 value={forgotPasswordData.mobile}
-                                                onChange={(e) => { 
-                                                    setForgotPasswordData(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) })); 
-                                                    setForgotPasswordError(''); 
+                                                onChange={(e) => {
+                                                    setForgotPasswordData(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) }));
+                                                    setForgotPasswordError('');
                                                 }}
                                                 maxLength={10}
                                             />
                                         </div>
-                                        <button 
-                                            className="custom-login-btn primary" 
+                                        <button
+                                            className="custom-login-btn primary"
                                             onClick={handleForgotPasswordRequest}
                                             disabled={isForgotLoading}
                                         >
@@ -1006,17 +1065,17 @@ const Register = () => {
                                                 type="text"
                                                 placeholder="Enter OTP"
                                                 value={forgotPasswordData.otp}
-                                                onChange={(e) => { 
-                                                    setForgotPasswordData(prev => ({ ...prev, otp: e.target.value.replace(/\D/g, '').slice(0, 6) })); 
-                                                    setForgotPasswordError(''); 
+                                                onChange={(e) => {
+                                                    setForgotPasswordData(prev => ({ ...prev, otp: e.target.value.replace(/\D/g, '').slice(0, 6) }));
+                                                    setForgotPasswordError('');
                                                 }}
                                                 maxLength={6}
                                             />
                                         </div>
                                         <button className="custom-login-btn primary" onClick={handleForgotPasswordVerify}>Verify OTP</button>
                                         <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                                            <button 
-                                                type="button" 
+                                            <button
+                                                type="button"
                                                 onClick={handleForgotPasswordRequest}
                                                 style={{ background: 'none', border: 'none', color: '#D4AF37', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}
                                             >
@@ -1047,8 +1106,8 @@ const Register = () => {
                                                 onChange={(e) => { setForgotPasswordData(prev => ({ ...prev, confirmPassword: e.target.value })); setForgotPasswordError(''); }}
                                             />
                                         </div>
-                                        <button 
-                                            className="custom-login-btn primary" 
+                                        <button
+                                            className="custom-login-btn primary"
                                             onClick={handleForgotPasswordReset}
                                             disabled={isForgotLoading}
                                         >
@@ -1058,8 +1117,8 @@ const Register = () => {
                                 )}
 
                                 <div style={{ textAlign: 'center', marginTop: '15px' }}>
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         onClick={() => { setIsForgotPasswordMode(false); setForgotPasswordStep('request'); }}
                                         style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.85rem' }}
                                     >
@@ -1129,9 +1188,9 @@ const Register = () => {
                                                 <span>Stay Logged in</span>
                                                 <HelpCircle size={15} color="#999" style={{ marginLeft: '4px', cursor: 'help' }} />
                                             </label>
-                                            <button 
-                                                type="button" 
-                                                className="custom-login-forgot" 
+                                            <button
+                                                type="button"
+                                                className="custom-login-forgot"
                                                 onClick={() => {
                                                     setIsForgotPasswordMode(true);
                                                     setForgotPasswordData(prev => ({ ...prev, mobile: /^\d+$/.test(loginForm.username) ? loginForm.username : '' }));
@@ -1203,9 +1262,17 @@ const Register = () => {
                     <div className="jv-register-overlay">
                         <div className="jv-register-header">
                             <div className="jv-register-header-top">
+                                {jvStep > 0 && (
+                                    <button className="jv-nav-back-btn" onClick={handleJvBackClick} aria-label="Back">
+                                        <ArrowLeft size={18} color="#E1C174" />
+                                    </button>
+                                )}
                                 <div className="jv-logo-box">
                                     <img src="/logo.png" alt="Sri Mayan" style={{ width: '120px', height: 'auto' }} />
                                 </div>
+                                <button className="jv-close-btn" onClick={handleJvCloseClick} aria-label="Close">
+                                    <X size={18} color="#D4AF37" />
+                                </button>
                             </div>
                             {jvStep > 0 && jvStep <= 3 && (
                                 <div className="jv-register-tabs">
@@ -1805,7 +1872,7 @@ const Register = () => {
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.preventDefault();
-                                                        setJvStep(4);
+                                                        updateJvStep(4);
                                                     }}
                                                 >
                                                     Complete Registration

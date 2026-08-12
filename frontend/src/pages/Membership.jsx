@@ -177,28 +177,30 @@ const Membership = () => {
                     {/* Compare Table */}
                     <div className="membership-compare">
                         <h2>Compare All Plans</h2>
-                        <table className="compare-table">
-                            <thead>
-                                <tr>
-                                    <th>Feature</th>
-                                    <th>Bronze</th>
-                                    <th>Silver</th>
-                                    <th>Gold</th>
-                                    <th>Diamond</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {compareFeatures.map((row, idx) => (
-                                    <tr key={idx}>
-                                        <td>{row.label}</td>
-                                        <td>{renderCompareCell(row.bronze)}</td>
-                                        <td>{renderCompareCell(row.silver)}</td>
-                                        <td>{renderCompareCell(row.gold)}</td>
-                                        <td>{renderCompareCell(row.diamond)}</td>
+                        <div className="compare-table-wrapper">
+                            <table className="compare-table">
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Bronze</th>
+                                        <th>Silver</th>
+                                        <th>Gold</th>
+                                        <th>Diamond</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {compareFeatures.map((row, idx) => (
+                                        <tr key={idx}>
+                                            <td>{row.label}</td>
+                                            <td>{renderCompareCell(row.bronze)}</td>
+                                            <td>{renderCompareCell(row.silver)}</td>
+                                            <td>{renderCompareCell(row.gold)}</td>
+                                            <td>{renderCompareCell(row.diamond)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
