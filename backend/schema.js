@@ -109,12 +109,39 @@ async function setupDatabase() {
     `;
     console.log('✅ profiles table created');
 
-    try {
-      await sql`ALTER TABLE profiles ADD COLUMN disability VARCHAR(100)`;
-      console.log('✅ Added disability column to profiles');
-    } catch (e) {
-      if (!e.message.includes('already exists')) {
-        console.log('Info: disability column might already exist or could not be added:', e.message);
+    // Ensure all optional columns exist on profiles table (for backward compatibility on existing DBs)
+    const extraColumns = [
+      ['disability', 'VARCHAR(100)'],
+      ['brothers', 'VARCHAR(10)'],
+      ['brothers_married', 'VARCHAR(10)'],
+      ['sisters', 'VARCHAR(10)'],
+      ['sisters_married', 'VARCHAR(10)'],
+      ['family_type', 'VARCHAR(100)'],
+      ['family_status', 'VARCHAR(100)'],
+      ['family_income', 'VARCHAR(100)'],
+      ['father_occupation', 'VARCHAR(255)'],
+      ['mother_occupation', 'VARCHAR(255)'],
+      ['family_living_in', 'VARCHAR(255)'],
+      ['family_country', 'VARCHAR(100)'],
+      ['family_state', 'VARCHAR(100)'],
+      ['family_city', 'VARCHAR(100)'],
+      ['living_with_parents', 'VARCHAR(50)'],
+      ['contact_address', 'TEXT'],
+      ['settling_abroad', 'VARCHAR(50)'],
+      ['contact_mobile', 'VARCHAR(20)'],
+      ['alternate_mobile', 'VARCHAR(20)'],
+      ['residential_status', 'VARCHAR(100)'],
+      ['organization_name', 'VARCHAR(255)'],
+      ['partner_preference', 'TEXT']
+    ];
+
+    for (const [col, colType] of extraColumns) {
+      try {
+        await sql`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ${sql(col)} ${sql.unsafe(colType)}`;
+      } catch (e) {
+        try {
+          await sql`ALTER TABLE profiles ADD COLUMN ${sql(col)} ${sql.unsafe(colType)}`;
+        } catch (err) {}
       }
     }
 

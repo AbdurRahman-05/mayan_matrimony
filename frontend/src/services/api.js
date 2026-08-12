@@ -2,20 +2,20 @@
 const getApiBaseUrl = () => {
     if (localStorage.getItem('API_URL_OVERRIDE')) return localStorage.getItem('API_URL_OVERRIDE');
     
-    // Detect Capacitor native app or Android WebView
-    const isNativeApp = 
+    // Check if running inside Capacitor native app (Android / iOS)
+    const isCapacitorNative = 
         typeof window !== 'undefined' && (
-            window.Capacitor !== undefined || 
-            window.location.protocol === 'capacitor:' || 
-            (window.location.hostname === 'localhost' && (!window.location.port || window.location.port === '80')) ||
-            (window.location.hostname === '10.0.2.2')
+            (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
+            (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web') ||
+            window.location.protocol === 'capacitor:'
         );
 
-    if (isNativeApp) {
+    if (isCapacitorNative) {
         // Android Emulator maps host PC localhost:5000 to http://10.0.2.2:5000
         return 'http://10.0.2.2:5000/api';
     }
 
+    // Web Browser (Dev or Production)
     if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
 
     return '/api';
