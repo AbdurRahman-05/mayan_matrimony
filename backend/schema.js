@@ -350,6 +350,8 @@ async function setupDatabase() {
     await sql`CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_photo_req_requester ON photo_requests(requester_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_photo_req_target ON photo_requests(target_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_messages_unread_pair ON messages(receiver_id, is_read)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_profile_photos_user_main ON profile_photos(user_id, is_main)`;
     console.log('✅ indexes created');
 
     console.log('\n🎉 Database setup complete!');
@@ -363,7 +365,7 @@ async function setupDatabase() {
   }
 }
 
-// Run if called directly (optional, but keep it exported)
-// setupDatabase().catch(console.error);
+// Run if called directly
+setupDatabase().then(() => process.exit(0)).catch(console.error);
 
 export default setupDatabase;
