@@ -71,10 +71,21 @@ const NotificationDropdown = () => {
     const activeNotifications = notifications.filter(n => !removedIds.includes(n.id));
     const unreadCount = activeNotifications.filter(n => !readIds.includes(n.id)).length;
 
+    const handleMarkAllRead = useCallback((e) => {
+        if (e) e.stopPropagation();
+        const allIds = activeNotifications.map(n => n.id);
+        const updatedReadIds = [...new Set([...readIds, ...allIds])];
+        setReadIds(updatedReadIds);
+        localStorage.setItem('readNotificationIds', JSON.stringify(updatedReadIds));
+    }, [activeNotifications, readIds]);
+
     const handleToggle = () => {
-        setIsOpen(prev => !prev);
-        if (!isOpen) {
+        const nextState = !isOpen;
+        setIsOpen(nextState);
+        if (nextState) {
             fetchNotifications();
+            // Mark visible notifications as read on opening
+            handleMarkAllRead();
         }
     };
 
@@ -87,11 +98,6 @@ const NotificationDropdown = () => {
         const updatedReadIds = [...new Set([...readIds, notification.id])];
         setReadIds(updatedReadIds);
         localStorage.setItem('readNotificationIds', JSON.stringify(updatedReadIds));
-
-        // Track daily profile reminder
-        if (notification.type === 'profile_incomplete') {
-            localStorage.setItem('lastProfileReminderDate', new Date().toDateString());
-        }
 
         setIsOpen(false);
 
@@ -128,14 +134,18 @@ const NotificationDropdown = () => {
                 <>
                     <div className="notification-overlay" onClick={handleClose} />
                     <div className="notification-dropdown" id="notification-dropdown">
-                        {/* Header with Close Button */}
+                        {/* Header with Close & Mark All Read Buttons */}
                         <div className="notification-header">
                             <h3>Notifications</h3>
                             <div className="notification-header-actions">
-                                {activeNotifications.length > 0 && (
-                                    <span className="notification-count-label">
-                                        {unreadCount} new
-                                    </span>
+                                {unreadCount > 0 && (
+                                    <button
+                                        type="button"
+                                        className="mark-all-read-btn"
+                                        onClick={handleMarkAllRead}
+                                    >
+                                        Mark all read
+                                    </button>
                                 )}
                                 <button
                                     className="notification-close-btn"

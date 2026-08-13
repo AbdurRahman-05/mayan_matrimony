@@ -22,6 +22,20 @@ const processPhoto = (photo) => {
     return cleaned;
 };
 
+const safeFormatDob = (dobRaw) => {
+    if (!dobRaw) return '';
+    if (typeof dobRaw === 'string') {
+        const match = dobRaw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+    const d = new Date(dobRaw);
+    if (isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+};
+
 function formatProfile(row, req) {
     if (!row) return null;
 
@@ -31,7 +45,7 @@ function formatProfile(row, req) {
         uniqueId: row.unique_id,
         fullName: row.full_name || '',
         gender: row.gender || '',
-        dob: row.dob ? new Date(row.dob).toISOString().split('T')[0] : '',
+        dob: safeFormatDob(row.dob),
         dobDay: row.dob_day || '',
         dobMonth: row.dob_month || '',
         dobYear: row.dob_year || '',
@@ -253,46 +267,81 @@ router.put('/', auth, async (req, res) => {
             rawPhoto = val(rawPhoto);
         }
 
-        let dobVal = curr.dob ? new Date(curr.dob).toISOString().split('T')[0] : null;
-        const rawDob = data.dob !== undefined ? data.dob : curr.dob;
-        if (rawDob && rawDob !== 'Not Specified' && String(rawDob).trim() !== '' && String(rawDob).trim() !== 'null') {
-            const d = new Date(rawDob);
-            if (!isNaN(d.getTime())) {
-                dobVal = d.toISOString().split('T')[0];
+const parseDobInput = (data, curr) => {
+    const monthsArray = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthsMap = {
+        jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
+        may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8, sep: 9, september: 9,
+        oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12
+    };
+
+    const rawDob = data.dob !== undefined ? data.dob : null;
+    if (rawDob && String(rawDob).trim() !== '' && String(rawDob).trim() !== 'null' && String(rawDob).trim() !== 'Not Specified') {
+        const str = String(rawDob).trim();
+        const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+        if (match) {
+            const y = parseInt(match[1], 10);
+            const m = parseInt(match[2], 10);
+            const d = parseInt(match[3], 10);
+            if (y > 1900 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                return {
+                    dob: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+                    dobDay: String(d),
+                    dobMonth: monthsArray[m - 1] || String(m),
+                    dobYear: String(y)
+                };
             }
         }
+    }
 
-        let dobDayVal = data.dobDay !== undefined ? data.dobDay : curr.dob_day;
-        let dobMonthVal = data.dobMonth !== undefined ? data.dobMonth : curr.dob_month;
-        let dobYearVal = data.dobYear !== undefined ? data.dobYear : curr.dob_year;
-
-        if (data.dobDay && data.dobMonth && data.dobYear && data.dobDay !== 'Not Specified') {
-            const monthsMap = {
-                'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
-                'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12
+    if (data.dobDay && data.dobMonth && data.dobYear && String(data.dobDay) !== 'Not Specified') {
+        const y = parseInt(data.dobYear, 10);
+        const m = monthsMap[String(data.dobMonth).trim().toLowerCase()] || parseInt(data.dobMonth, 10) || 1;
+        const d = parseInt(data.dobDay, 10);
+        if (y > 1900 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+            return {
+                dob: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+                dobDay: String(d),
+                dobMonth: monthsArray[m - 1] || String(m),
+                dobYear: String(y)
             };
-            const mNum = monthsMap[String(data.dobMonth).toLowerCase()] || parseInt(data.dobMonth) || 1;
-            const dayNum = String(data.dobDay).padStart(2, '0');
-            const monthStr = String(mNum).padStart(2, '0');
-            dobVal = `${data.dobYear}-${monthStr}-${dayNum}`;
-        } else if (dobVal) {
-            const d = new Date(dobVal);
-            if (!isNaN(d.getTime())) {
-                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                if (data.dobDay === undefined) dobDayVal = String(d.getDate());
-                if (data.dobMonth === undefined) dobMonthVal = months[d.getMonth()];
-                if (data.dobYear === undefined) dobYearVal = String(d.getFullYear());
-            }
         }
+    }
+
+    if (curr.dob) {
+        const str = safeFormatDob(curr.dob);
+        const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            const y = parseInt(match[1], 10);
+            const m = parseInt(match[2], 10);
+            const d = parseInt(match[3], 10);
+            return {
+                dob: str,
+                dobDay: curr.dob_day || String(d),
+                dobMonth: curr.dob_month || monthsArray[m - 1] || String(m),
+                dobYear: curr.dob_year || String(y)
+            };
+        }
+    }
+
+    return {
+        dob: safeFormatDob(curr.dob),
+        dobDay: curr.dob_day || null,
+        dobMonth: curr.dob_month || null,
+        dobYear: curr.dob_year || null
+    };
+};
+
+        const parsedDob = parseDobInput(data, curr);
 
         await sql`
       UPDATE profiles SET
         full_name = ${val(data.fullName !== undefined ? data.fullName : curr.full_name)},
         gender = ${val(data.gender !== undefined ? data.gender : curr.gender)},
-        dob = ${val(dobVal)},
-        dob_day = ${val(dobDayVal)},
-        dob_month = ${val(dobMonthVal)},
-        dob_year = ${val(dobYearVal)},
+        dob = ${val(parsedDob.dob)},
+        dob_day = ${val(parsedDob.dobDay)},
+        dob_month = ${val(parsedDob.dobMonth)},
+        dob_year = ${val(parsedDob.dobYear)},
         mother_tongue = ${val(data.motherTongue !== undefined ? data.motherTongue : curr.mother_tongue)},
         height = ${val(data.height !== undefined ? data.height : curr.height)},
         physical_status = ${val(data.physicalStatus !== undefined ? data.physicalStatus : curr.physical_status)},

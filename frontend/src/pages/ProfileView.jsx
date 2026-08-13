@@ -68,23 +68,31 @@ const ProfileView = () => {
     };
 
     const formatDate = (dateStr) => {
-        let date = null;
-        if (dateStr) {
-            const matches = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
-            if (matches) {
-                date = new Date(Number(matches[1]), Number(matches[2]) - 1, Number(matches[3]));
-            } else {
-                date = new Date(dateStr);
+        let target = dateStr || profileData.dob;
+        if (!target && profileData.dobYear && profileData.dobMonth && profileData.dobDay) {
+            const monthIndexMap = {
+                jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
+                may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8, sep: 9, september: 9,
+                oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12
+            };
+            const m = monthIndexMap[String(profileData.dobMonth).trim().toLowerCase()] || parseInt(profileData.dobMonth, 10);
+            if (m) {
+                target = `${profileData.dobYear}-${String(m).padStart(2, '0')}-${String(profileData.dobDay).padStart(2, '0')}`;
             }
         }
+        if (!target) return 'Not specified';
 
-        if (!date || isNaN(date.getTime())) {
-            date = getDateFromProfile();
+        const match = String(target).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            const year = Number(match[1]);
+            const monthIdx = Number(match[2]) - 1;
+            const day = Number(match[3]);
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            if (monthIdx >= 0 && monthIdx < 12 && day > 0 && day <= 31 && year > 1900) {
+                return `${day} ${months[monthIdx]} ${year}`;
+            }
         }
-
-        if (!date || isNaN(date.getTime())) return 'Not specified';
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+        return 'Not specified';
     };
 
     const getLocationString = () => {
@@ -92,31 +100,8 @@ const ProfileView = () => {
         return parts.length > 0 ? parts.join(', ') : 'Not specified';
     };
 
-    const getDateFromProfile = () => {
-        if (profileData.dob) {
-            const direct = new Date(profileData.dob);
-            if (!Number.isNaN(direct.getTime())) return direct;
-        }
-        if (profileData.dobDay && profileData.dobMonth && profileData.dobYear) {
-            const monthIndexMap = {
-                jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
-                apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
-                aug: 7, august: 7, sep: 8, sept: 8, september: 8,
-                oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11,
-            };
-            const normalizedMonth = String(profileData.dobMonth).trim().toLowerCase();
-            const monthIndex = monthIndexMap[normalizedMonth];
-            if (monthIndex !== undefined) {
-                const parsed = new Date(Number(profileData.dobYear), monthIndex, Number(profileData.dobDay));
-                if (!Number.isNaN(parsed.getTime())) return parsed;
-            }
-        }
-        return null;
-    };
-
-    const previewDate = getDateFromProfile();
-    const previewAge = previewDate ? calculateAge(previewDate.toISOString().slice(0, 10)) : '';
-    const previewDobText = previewDate ? formatDate(previewDate.toISOString().slice(0, 10)) : 'Not specified';
+    const previewDobText = formatDate(profileData.dob);
+    const previewAge = profileData.dob ? calculateAge(profileData.dob) : '';
     const previewReligionText = [profileData.religion, profileData.sect, profileData.caste, profileData.horoscope].filter(Boolean).join(' | ') || 'Religion not specified';
     const previewFamilyLocation = [profileData.familyCity, profileData.familyState, profileData.familyCountry].filter(Boolean).join(', ') || profileData.familyLivingIn || 'Not specified';
     const previewFamilyType = profileData.familyType || 'Not specified';

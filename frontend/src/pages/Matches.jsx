@@ -202,6 +202,20 @@ const Matches = () => {
         }
     };
 
+    const handleRequestPhotoAction = async (e, uniqueId) => {
+        e.stopPropagation();
+        try {
+            await requestPhoto(uniqueId);
+            showAlert('Photo request sent successfully!', 'Success');
+            setPhotoRequests(prev => ({
+                ...prev,
+                sent: [...(prev.sent || []), { target_unique_id: uniqueId, target_id: uniqueId, status: 'pending' }]
+            }));
+        } catch (err) {
+            showAlert(err.message || 'Failed to send photo request', 'Error');
+        }
+    };
+
 
 
     // Grouping the sidebar items as shown in the user's images

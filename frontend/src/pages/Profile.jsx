@@ -323,26 +323,92 @@ const Profile = () => {
         }
     };
 
+    const updateDobState = (day, month, year) => {
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthsMap = {
+            jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
+            may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8, sep: 9, september: 9,
+            oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12
+        };
+
+        const dNum = parseInt(day, 10);
+        const mNum = monthsMap[String(month).trim().toLowerCase()] || parseInt(month, 10);
+        const yNum = parseInt(year, 10);
+
+        let dobStr = '';
+        if (yNum && mNum && dNum) {
+            dobStr = `${yNum}-${String(mNum).padStart(2, '0')}-${String(dNum).padStart(2, '0')}`;
+        }
+
+        setEditForm(prev => ({
+            ...prev,
+            dob: dobStr || prev.dob || '',
+            dobDay: day ? String(dNum) : (prev.dobDay || ''),
+            dobMonth: month ? String(month) : (prev.dobMonth || ''),
+            dobYear: year ? String(yNum) : (prev.dobYear || '')
+        }));
+        setAgeError('');
+    };
+
     const handleEditSection = (section) => {
         let birthDateVal = '';
+        let dayVal = profileData.dobDay || '';
+        let monthVal = profileData.dobMonth || '';
+        let yearVal = profileData.dobYear || '';
+
         if (profileData.dob) {
-            const d = new Date(profileData.dob);
-            if (!isNaN(d.getTime())) {
-                birthDateVal = d.toISOString().split('T')[0];
-            }
-        } else {
-            const d = getDateFromProfile();
-            if (d && !isNaN(d.getTime())) {
-                birthDateVal = d.toISOString().split('T')[0];
+            const match = String(profileData.dob).match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) {
+                birthDateVal = `${match[1]}-${match[2]}-${match[3]}`;
+                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                yearVal = String(parseInt(match[1], 10));
+                monthVal = months[parseInt(match[2], 10) - 1] || monthVal;
+                dayVal = String(parseInt(match[3], 10));
             }
         }
-        setEditForm({ ...profileData, dob: birthDateVal });
+        if (!birthDateVal && dayVal && monthVal && yearVal) {
+            const monthsMap = {
+                jan: '01', january: '01', feb: '02', february: '02', mar: '03', march: '03',
+                apr: '04', april: '04', may: '05', jun: '06', june: '06', jul: '07', july: '07',
+                aug: '08', august: '08', sep: '09', september: '09', oct: '10', october: '10',
+                nov: '11', november: '11', dec: '12', december: '12'
+            };
+            const mStr = monthsMap[String(monthVal).trim().toLowerCase()] || String(monthVal).padStart(2, '0');
+            const dStr = String(dayVal).padStart(2, '0');
+            if (yearVal && mStr && dStr) {
+                birthDateVal = `${yearVal}-${mStr}-${dStr}`;
+            }
+        }
+        setEditForm({
+            ...profileData,
+            dob: birthDateVal,
+            dobDay: dayVal,
+            dobMonth: monthVal,
+            dobYear: yearVal
+        });
         setEditingSection(section);
     };
 
     const handleFormChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'religion') {
+        if (name === 'dob') {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) {
+                const y = match[1];
+                const m = parseInt(match[2], 10);
+                const d = parseInt(match[3], 10);
+                setEditForm(prev => ({
+                    ...prev,
+                    dob: value,
+                    dobDay: String(d),
+                    dobMonth: months[m - 1] || '',
+                    dobYear: String(y)
+                }));
+            } else {
+                setEditForm(prev => ({ ...prev, dob: value }));
+            }
+        } else if (name === 'religion') {
             setEditForm(prev => ({ ...prev, religion: value, caste: '', sect: '' }));
         } else if (name === 'country') {
             setEditForm(prev => ({ ...prev, country: value, state: '', city: '', residentialStatus: value === 'India' ? '' : prev.residentialStatus }));
@@ -517,9 +583,15 @@ const Profile = () => {
             const mergedData = { ...profileData, ...editForm };
             await updateProfile(mergedData);
             const fullData = await getFullProfile();
-            setProfileData(prev => ({ ...prev, ...fullData.profile }));
+            const updatedProf = fullData.profile || {};
+            setProfileData(prev => ({ ...prev, ...updatedProf }));
             setPreferenceData(prev => ({ ...prev, ...fullData.preferences }));
             setFavouritesData(prev => ({ ...prev, ...fullData.favourites }));
+
+            localStorage.setItem('userProfile', JSON.stringify(updatedProf));
+            window.dispatchEvent(new CustomEvent('userProfileUpdated', { detail: updatedProf }));
+            window.dispatchEvent(new Event('storage'));
+
             setEditingSection(null);
             showAlert('Details updated successfully!', 'Success');
         } catch (err) {
@@ -730,21 +802,77 @@ const Profile = () => {
                             </div>
 
                             {/* Date of Birth */}
-                            <div className="bd-field" style={{ position: 'relative' }}>
+                            <div className="bd-field" style={{ position: 'relative', flexDirection: 'column', alignItems: 'flex-start' }}>
                                 <span className="bd-label">Date of Birth</span>
-                                <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '6px', marginBottom: '8px' }}>
+                                    {/* Day Dropdown */}
+                                    <select
+                                        className="bd-value-input"
+                                        style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #e5e7eb', outline: 'none', background: '#fff' }}
+                                        value={editForm.dobDay || ''}
+                                        onChange={(e) => updateDobState(e.target.value, editForm.dobMonth, editForm.dobYear)}
+                                    >
+                                        <option value="">Day</option>
+                                        {Array.from({ length: 31 }, (_, i) => String(i + 1)).map(d => (
+                                            <option key={d} value={d}>{d}</option>
+                                        ))}
+                                    </select>
+
+                                    {/* Month Dropdown */}
+                                    <select
+                                        className="bd-value-input"
+                                        style={{ flex: 1.5, padding: '8px', borderRadius: '6px', border: '1px solid #e5e7eb', outline: 'none', background: '#fff' }}
+                                        value={editForm.dobMonth || ''}
+                                        onChange={(e) => updateDobState(editForm.dobDay, e.target.value, editForm.dobYear)}
+                                    >
+                                        <option value="">Month</option>
+                                        {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
+                                            <option key={m} value={m}>{m}</option>
+                                        ))}
+                                    </select>
+
+                                    {/* Year Dropdown */}
+                                    <select
+                                        className="bd-value-input"
+                                        style={{ flex: 1.2, padding: '8px', borderRadius: '6px', border: '1px solid #e5e7eb', outline: 'none', background: '#fff' }}
+                                        value={editForm.dobYear || ''}
+                                        onChange={(e) => updateDobState(editForm.dobDay, editForm.dobMonth, e.target.value)}
+                                    >
+                                        <option value="">Year</option>
+                                        {Array.from({ length: 70 }, (_, i) => String(2008 - i)).map(y => (
+                                            <option key={y} value={y}>{y}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Calendar Date Picker */}
+                                <div style={{ width: '100%' }}>
                                     <input
                                         type="date"
                                         name="dob"
                                         value={editForm.dob || ''}
                                         onChange={(e) => {
-                                            handleFormChange(e);
-                                            setAgeError('');
+                                            const val = e.target.value;
+                                            const match = String(val).match(/^(\d{4})-(\d{2})-(\d{2})/);
+                                            if (match) {
+                                                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                                updateDobState(match[3], months[parseInt(match[2], 10) - 1], match[1]);
+                                            } else {
+                                                handleFormChange(e);
+                                            }
                                         }}
-                                        style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '8px', outline: 'none', color: '#1a2a3a', fontFamily: 'inherit' }}
+                                        onInput={(e) => {
+                                            const val = e.target.value;
+                                            const match = String(val).match(/^(\d{4})-(\d{2})-(\d{2})/);
+                                            if (match) {
+                                                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                                updateDobState(match[3], months[parseInt(match[2], 10) - 1], match[1]);
+                                            }
+                                        }}
+                                        style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '8px', width: '100%', outline: 'none', color: '#1a2a3a', fontFamily: 'inherit', background: '#fff' }}
                                     />
-                                    {ageError && <span style={{ color: '#D4AF37', fontSize: '0.8rem', marginTop: '5px' }}>{ageError}</span>}
                                 </div>
+                                {ageError && <span style={{ color: '#D4AF37', fontSize: '0.8rem', marginTop: '5px' }}>{ageError}</span>}
                             </div>
 
                             {/* Marital Status */}

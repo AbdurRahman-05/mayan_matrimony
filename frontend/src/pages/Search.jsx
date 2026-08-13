@@ -278,6 +278,16 @@ const Search = () => {
         }
     };
 
+    const handleRequestPhotoAction = async (e, uniqueId) => {
+        e.stopPropagation();
+        try {
+            await requestPhoto(uniqueId);
+            showAlert('Photo request sent successfully!', 'Success');
+        } catch (err) {
+            showAlert(err.message || 'Failed to send photo request', 'Error');
+        }
+    };
+
 
 
     const ageOptions = [];
@@ -474,7 +484,7 @@ const Search = () => {
                                                              ) : null;
                                                          })()}
                                                          <div className="request-photo-overlay" style={{ display: (p.photo || p.image) ? 'none' : 'flex' }}>
-                                                             <button className="request-photo-btn">Request photo</button>
+                                                             <button className="request-photo-btn" onClick={(e) => handleRequestPhotoAction(e, p.uniqueId)}>Request photo</button>
                                                          </div>
                                                      </div>
                                                     <div className="match-card-main">
@@ -570,9 +580,9 @@ const Search = () => {
                                                     {foundProfile.photo || foundProfile.image ? (
                                                         <img src={foundProfile.photo || foundProfile.image} alt={foundProfile.fullName} />
                                                     ) : (
-                                                        <div className="request-photo-overlay">
-                                                            <button className="request-photo-btn">Request photo</button>
-                                                        </div>
+                                                         <div className="request-photo-overlay">
+                                                             <button className="request-photo-btn" onClick={(e) => handleRequestPhotoAction(e, foundProfile.uniqueId)}>Request photo</button>
+                                                         </div>
                                                     )}
                                                 </div>
                                                 <div className="match-card-main">
