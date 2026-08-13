@@ -7,6 +7,7 @@ import { showAlert } from '../components/GlobalModal';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Register.css';
 import SearchableSelect from '../components/SearchableSelect';
+import BrandedLoader from '../components/BrandedLoader';
 import { getCountries, getStates, getCities, getCastes, getSects } from '../data/locationData';
 import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions, getMarriedCounts } from '../data/sharedOptions';
 import { login as apiLogin, register as apiRegister, sendOtp as apiSendOtp, verifyOtp as apiVerifyOtp, resetPassword as apiResetPassword, checkEmailAvailability, checkIdAvailability as apiCheckId, isAuthenticated, checkMobileAvailability } from '../services/api';
@@ -28,6 +29,8 @@ const Register = () => {
     const [loginOtp, setLoginOtp] = useState('');
     const [loginError, setLoginError] = useState('');
     const [showLoginPassword, setShowLoginPassword] = useState(false);
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [loginLoadingText, setLoginLoadingText] = useState('Logging you in...');
     const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
     const [forgotPasswordStep, setForgotPasswordStep] = useState('request'); // 'request', 'verify', 'reset'
     const [forgotPasswordData, setForgotPasswordData] = useState({ mobile: '', otp: '', newPassword: '', confirmPassword: '' });
@@ -120,12 +123,15 @@ const Register = () => {
             setLoginError('Please enter your mobile/email and password.');
             return;
         }
+        setIsLoggingIn(true);
+        setLoginLoadingText('Logging you in...');
         try {
             setLoginError('');
             await apiLogin(loginForm.username, loginForm.password);
             navigate('/home');
         } catch (err) {
             setLoginError(err.message || 'Login failed. Please check your credentials.');
+            setIsLoggingIn(false);
         }
     };
 
@@ -158,15 +164,19 @@ const Register = () => {
             setLoginError('Please enter a valid OTP.');
             return;
         }
+        setIsLoggingIn(true);
+        setLoginLoadingText('Verifying OTP...');
         try {
             const data = await apiVerifyOtp(loginForm.username, loginOtp);
             if (data.token) {
                 navigate('/home');
             } else {
                 setLoginError('User not found. Please register first.');
+                setIsLoggingIn(false);
             }
         } catch (err) {
             setLoginError(err.message || 'Invalid OTP. Please try again.');
+            setIsLoggingIn(false);
         }
     };
 
@@ -2070,6 +2080,7 @@ const Register = () => {
                     </div >
                 )
             }
+            {isLoggingIn && <BrandedLoader message={loginLoadingText} fullScreen={true} />}
         </div >
     );
 };

@@ -11,6 +11,7 @@ import PartnerLifestyleEditor from '../components/PartnerLifestyleEditor';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { showAlert } from '../components/GlobalModal';
+import BrandedLoader from '../components/BrandedLoader';
 import { getProfile, updateProfile, getFullProfile, updatePreferences, updateFavourites, syncPhotos, uploadPhoto, deletePhoto as apiDeletePhoto, setMainPhoto, logout as apiLogout, getMediaUrl } from '../services/api';
 import './Profile.css';
 import { getCountries, getStates, getCities, getCastes, getSects } from '../data/locationData';
@@ -1728,12 +1729,7 @@ const Profile = () => {
 
             {/* Full-page loading spinner */}
             {loading && (
-                <div className="profile-loading-overlay">
-                    <div className="profile-loading-spinner-wrapper">
-                        <Loader2 size={48} className="profile-spinner-icon" />
-                        <p className="profile-loading-text">Loading your profile...</p>
-                    </div>
-                </div>
+                <BrandedLoader message="Loading your profile..." fullScreen={true} />
             )}
 
             {!loading && (
