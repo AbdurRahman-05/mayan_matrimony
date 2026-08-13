@@ -106,45 +106,37 @@ async function apiFetch(url, options = {}) {
             ...options,
             headers,
         });
-        if (response && response.status !== 502) {
-            workingApiBase = targetBase;
-        }
+        workingApiBase = targetBase;
     } catch (fetchError) {
         console.warn(`Primary connection to ${targetBase}${url} failed. Attempting fallback...`);
-    }
+        
+        const isCapacitorNative = typeof window !== 'undefined' && (
+            (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
+            window.location.protocol === 'capacitor:'
+        );
 
-    const isCapacitorNative = typeof window !== 'undefined' && (
-        (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ||
-        window.location.protocol === 'capacitor:'
-    );
-
-    // If primary failed or returned 502 Bad Gateway on native app, try fallbacks
-    if ((!response || response.status === 502) && isCapacitorNative) {
-        const fallbackBases = ['https://srimayanmatrimony.com/api', 'http://localhost:5000/api', 'http://10.0.2.2:5000/api'];
-        for (const fallbackBase of fallbackBases) {
-            if (fallbackBase === targetBase) continue;
-            try {
-                const fbRes = await fetch(`${fallbackBase}${url}`, {
-                    cache: 'no-store',
-                    ...options,
-                    headers,
-                });
-                if (fbRes && fbRes.ok) {
-                    response = fbRes;
-                    workingApiBase = fallbackBase;
-                    break;
-                }
-            } catch (fallbackErr) {}
+        if (isCapacitorNative) {
+            const fallbackBases = ['https://srimayanmatrimony.com/api', 'http://localhost:5000/api', 'http://10.0.2.2:5000/api'];
+            for (const fallbackBase of fallbackBases) {
+                if (fallbackBase === targetBase) continue;
+                try {
+                    response = await fetch(`${fallbackBase}${url}`, {
+                        cache: 'no-store',
+                        ...options,
+                        headers,
+                    });
+                    if (response) {
+                        workingApiBase = fallbackBase;
+                        break;
+                    }
+                } catch (fallbackErr) {}
+            }
         }
-    }
 
-    if (!response) {
-        console.error('Fetch error target URL:', `${apiBase}${url}`);
-        throw new Error(`Network error connecting to ${apiBase}${url}. Please ensure backend is running.`);
-    }
-
-    if (response.status === 502) {
-        throw new Error(`502 Bad Gateway: Backend Node.js server on VPS (62.72.30.47) is stopped. Please run "pm2 restart all" on VPS.`);
+        if (!response) {
+            console.error('Fetch error:', fetchError, 'Target URL:', `${apiBase}${url}`);
+            throw new Error(`Network error connecting to ${apiBase}${url}. Please ensure backend is running.`);
+        }
     }
 
     const contentType = response.headers.get('content-type');
@@ -162,6 +154,7 @@ async function apiFetch(url, options = {}) {
     } else {
         const text = await response.text();
         console.error('Non-JSON response:', text);
+        // If it's a 404 or something, the proxy might have returned an HTML page
         if (!response.ok) {
             throw new Error(`Server error: ${response.status} ${response.statusText}`);
         }
