@@ -76,7 +76,8 @@ router.post('/', auth, async (req, res) => {
 
         const whereClause = baseConditions.join(' AND ');
         const query = `
-            SELECT p.*, u.unique_id, u.email, u.mobile, u.profile_for
+            SELECT p.*, u.unique_id, u.email, u.mobile, u.profile_for,
+                   (SELECT photo_data FROM profile_photos WHERE user_id = p.user_id ORDER BY is_main DESC, created_at ASC LIMIT 1) as gallery_photo
             FROM profiles p
             JOIN users u ON u.id = p.user_id
             WHERE ${whereClause}
@@ -115,6 +116,8 @@ router.post('/', auth, async (req, res) => {
 
             const matchPercentage = totalSpecified > 0 ? Math.round((matchedCount / totalSpecified) * 100) : 100;
 
+            const resolvedPhoto = row.photo || row.gallery_photo || '';
+
             return {
                 id: row.id,
                 uniqueId: row.unique_id,
@@ -133,8 +136,8 @@ router.post('/', auth, async (req, res) => {
                 motherTongue: row.mother_tongue || '',
                 mobile: row.mobile || '',
                 email: row.email || '',
-                photo: row.photo || '',
-                image: row.photo || '',
+                photo: resolvedPhoto,
+                image: resolvedPhoto,
                 maritalStatus: row.marital_status || '',
                 gender: row.gender || '',
                 smoking: row.smoking || '',
@@ -168,7 +171,8 @@ router.post('/', auth, async (req, res) => {
 router.get('/id/:uniqueId', auth, async (req, res) => {
     try {
         const results = await sql`
-      SELECT p.*, u.unique_id, u.email, u.mobile, u.profile_for
+      SELECT p.*, u.unique_id, u.email, u.mobile, u.profile_for,
+             (SELECT photo_data FROM profile_photos WHERE user_id = p.user_id ORDER BY is_main DESC, created_at ASC LIMIT 1) as gallery_photo
       FROM profiles p
       JOIN users u ON u.id = p.user_id
       WHERE u.unique_id = ${req.params.uniqueId}
@@ -179,6 +183,7 @@ router.get('/id/:uniqueId', auth, async (req, res) => {
         }
 
         const row = results[0];
+        const resolvedPhoto = row.photo || row.gallery_photo || '';
 
         // Record profile view
         if (row.user_id !== req.user.id) {
@@ -205,8 +210,8 @@ router.get('/id/:uniqueId', auth, async (req, res) => {
             motherTongue: row.mother_tongue || '',
             mobile: row.mobile || '',
             email: row.email || '',
-            photo: row.photo || '',
-            image: row.photo || '',
+            photo: resolvedPhoto,
+            image: resolvedPhoto,
             maritalStatus: row.marital_status || '',
             gender: row.gender || '',
             profileFor: row.profile_for || ''

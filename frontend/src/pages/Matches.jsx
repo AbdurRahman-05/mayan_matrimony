@@ -11,7 +11,7 @@ import {
 import {
     getMatches, getShortlistedProfiles, getViewedYou, getViewedByYou, getShortlistedYou,
     sendInterest, shortlistProfile, ignoreProfile, getNearbyMatches, getHoroscopeMatches, getMatchesWithPhotos,
-    getEducationPreferenceMatches, getProfile, getSentInterests, globalCache
+    getEducationPreferenceMatches, getProfile, getSentInterests, requestPhoto, getPhotoRequests, getMediaUrl, globalCache
 } from '../services/api';
 import './Matches.css';
 
@@ -34,6 +34,13 @@ const Matches = () => {
     const [userReligion, setUserReligion] = useState('');
     const [sentInterests, setSentInterests] = useState(globalCache.interests?.sent || []);
     const [shortlistedProfiles, setShortlistedProfiles] = useState(globalCache.matches['shortlisted-by-you'] || []);
+    const [photoRequests, setPhotoRequests] = useState({ sent: [], received: [], acceptedTargetUniqueIds: [] });
+
+    useEffect(() => {
+        getPhotoRequests().then(data => {
+            if (data) setPhotoRequests(data);
+        }).catch(err => console.error('Photo requests fetch error:', err));
+    }, []);
 
     // Load user's religion from localStorage or API
     useEffect(() => {
@@ -246,10 +253,11 @@ const Matches = () => {
             const item = group.items.find(i => i.id === activeCategory);
             if (item) return item;
         }
-        return filteredMatchGroups[0].items[0];
+        return filteredMatchGroups[0]?.items[0] || { label: 'Matches', desc: 'View your profile matches' };
     };
 
     const activeItem = getActiveItem();
+
     const emptyTitle = activeCategory === 'viewed-you'
         ? 'No one has viewed your profile yet'
         : activeCategory === 'viewed-by-you'
@@ -260,62 +268,64 @@ const Matches = () => {
                     ? "No matches found. Make sure you've set an Educational Preference."
                     : 'You have no matches right now';
 
-    const renderList = () => {
+    const renderContent = () => {
         if (loading) {
             return (
-                <div className="loading-state">
-                    <Loader2 className="animate-spin" size={40} />
-                    <p>Loading matches...</p>
+                <div className="matches-loading">
+                    <Loader2 size={36} className="spinner-icon" />
+                    <p>Finding your matches...</p>
                 </div>
             );
         }
 
-        if (profiles.length === 0) {
+        if (!profiles || profiles.length === 0) {
             return (
-                <div className="empty-state-wrapper">
-                    <div className="empty-illustration">
-                        <Users size={120} color="#cbd5e1" strokeWidth={1.5} fill="#e2e8f0" />
-                        <div className="search-overlay">
-                            <Search size={40} color="#1e293b" strokeWidth={2.5} />
-                        </div>
+                <div className="matches-empty-state">
+                    <div className="empty-icon-wrapper">
+                        <Users size={48} />
                     </div>
-                    <h3 className="empty-title">{emptyTitle}</h3>
-                    {activeCategory === 'your-matches' && (
-                        <button className="change-pref-btn" onClick={() => navigate('/profile', { state: { openPreferences: true } })}>Change Preferences</button>
-                    )}
+                    <h3>No matches found in this category</h3>
+                    <p>Try adjusting your search preferences or explore other match categories.</p>
                 </div>
             );
         }
 
         if (activeCategory === 'education-preference') {
             return (
-                <div className="edu-pref-section">
-                    <div className="edu-pref-scroll">
+                <div className="edu-matches-list">
+                    <div className="edu-matches-header">
+                        <h3>Matches based on your Education preference</h3>
+                        <p>Profiles that match your educational background preference</p>
+                    </div>
+                    <div className="edu-cards-grid">
                         {profiles.map(p => {
-                            const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId);
+                            const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId) || p.hasInterested;
+                            const isPhotoAccepted = photoRequests.acceptedTargetUniqueIds?.includes(p.id) || photoRequests.acceptedTargetUniqueIds?.includes(p.uniqueId);
+                            const isPhotoPending = photoRequests.sent?.some(s => (s.target_unique_id === p.uniqueId || s.target_id === p.id) && s.status === 'pending');
+                            const rawPhoto = p.photo || p.image || (p.additionalPhotos && p.additionalPhotos[0]);
+                            const photoSrc = rawPhoto ? getMediaUrl(rawPhoto) : null;
+
                             return (
-                                <div key={p.uniqueId} className="edu-pref-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
-                                    <div className="edu-photo-container">
-                                        {p.photo ? (
-                                            <img src={p.photo} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
+                                <div key={p.uniqueId} className="edu-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
+                                    <div className="edu-avatar-wrapper">
+                                        {photoSrc ? (
+                                            <img src={photoSrc} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
                                         ) : null}
-                                        <div className="edu-no-photo" style={{ display: p.photo ? 'none' : 'flex' }}>
-                                            <Image size={24} />
-                                            <span>No Photo</span>
+                                        <div className="edu-no-photo" style={{ display: photoSrc ? 'none' : 'flex' }}>
+                                            {isPhotoPending ? (
+                                                <button className="request-photo-btn pending" disabled style={{ background: '#f59e0b', color: '#fff', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                    Requested
+                                                </button>
+                                            ) : (
+                                                <button className="request-photo-btn" onClick={(e) => handleRequestPhotoAction(e, p.uniqueId)}>
+                                                    Request photo
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="edu-info">
                                         <h4 className="edu-name">{p.fullName}</h4>
                                         <span className="edu-age">{p.age} Yrs, {p.height}</span>
-                                        <span className="edu-detail"><GraduationCap size={14} /> {p.education || 'Education N/A'}</span>
-                                        <span className="edu-detail"><MapPin size={14} /> {p.city || 'Location N/A'}</span>
-                                    </div>
-                                    <div className="edu-actions">
-                                        {!isInterested && (
-                                            <button className="edu-btn edu-interest" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
-                                                <Heart size={16} /> Interest
-                                            </button>
-                                        )}
                                     </div>
                                 </div>
                             );
@@ -330,15 +340,28 @@ const Matches = () => {
                 {profiles.map(p => {
                     const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId) || p.hasInterested;
                     const isShortlisted = shortlistedProfiles.some(s => s.uniqueId === p.uniqueId) || p.hasShortlisted || activeCategory === 'shortlisted-by-you';
+                    const isPhotoAccepted = photoRequests.acceptedTargetUniqueIds?.includes(p.id) || photoRequests.acceptedTargetUniqueIds?.includes(p.uniqueId);
+                    const isPhotoPending = photoRequests.sent?.some(s => (s.target_unique_id === p.uniqueId || s.target_id === p.id) && s.status === 'pending');
+                    const rawPhoto = p.photo || p.image || (p.additionalPhotos && p.additionalPhotos[0]);
+                    const photoSrc = rawPhoto ? getMediaUrl(rawPhoto) : null;
+
                     return (
                         <div key={p.uniqueId} className="match-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
                             <div className="match-card-top">
                                 <div className="match-card-sidebar">
-                                    {p.photo ? (
-                                        <img src={p.photo} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
+                                    {photoSrc ? (
+                                        <img src={photoSrc} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
                                     ) : null}
-                                    <div className="request-photo-overlay" style={{ display: p.photo ? 'none' : 'flex' }}>
-                                        <button className="request-photo-btn">Request photo</button>
+                                    <div className="request-photo-overlay" style={{ display: photoSrc ? 'none' : 'flex' }}>
+                                        {isPhotoPending ? (
+                                            <button className="request-photo-btn pending" disabled style={{ background: '#f59e0b', color: '#fff', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                Photo Requested
+                                            </button>
+                                        ) : (
+                                            <button className="request-photo-btn" onClick={(e) => handleRequestPhotoAction(e, p.uniqueId)}>
+                                                Request photo
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="match-card-main">
@@ -454,7 +477,7 @@ const Matches = () => {
                             </div>
 
                             <div className="matches-body">
-                                {renderList()}
+                                {renderContent()}
                             </div>
                         </main>
                     )}

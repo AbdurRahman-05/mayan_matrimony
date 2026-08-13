@@ -6,7 +6,7 @@ import { Search as SearchIcon, User, Heart, Bookmark, Loader2, MapPin, Briefcase
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import { showAlert, showConfirm } from '../components/GlobalModal';
 import { countryStateCityMap } from '../data/locationData';
-import { searchProfiles, searchProfileById, sendInterest, shortlistProfile, ignoreProfile, getSentInterests, getShortlistedProfiles, globalCache } from '../services/api';
+import { searchProfiles, searchProfileById, sendInterest, shortlistProfile, ignoreProfile, getSentInterests, getShortlistedProfiles, globalCache, getMediaUrl } from '../services/api';
 import './Search.css';
 import './Matches.css';
 
@@ -465,15 +465,18 @@ const Search = () => {
                                             return (
                                             <div key={p.uniqueId} className="match-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
                                                 <div className="match-card-top">
-                                                    <div className="match-card-sidebar">
-                                                        {p.photo || p.image ? (
-                                                            <img src={p.photo || p.image} alt={p.fullName} />
-                                                        ) : (
-                                                            <div className="request-photo-overlay">
-                                                                <button className="request-photo-btn">Request photo</button>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                     <div className="match-card-sidebar">
+                                                         {(() => {
+                                                             const raw = p.photo || p.image;
+                                                             const photoSrc = raw ? getMediaUrl(raw) : null;
+                                                             return photoSrc ? (
+                                                                 <img src={photoSrc} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
+                                                             ) : null;
+                                                         })()}
+                                                         <div className="request-photo-overlay" style={{ display: (p.photo || p.image) ? 'none' : 'flex' }}>
+                                                             <button className="request-photo-btn">Request photo</button>
+                                                         </div>
+                                                     </div>
                                                     <div className="match-card-main">
                                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                                                             <span className="active-today-label">Active Today</span>

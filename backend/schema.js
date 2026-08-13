@@ -249,6 +249,20 @@ async function setupDatabase() {
     `;
     console.log('✅ profile_views table created');
 
+    // Photo requests (request/accept workflow)
+    await sql`
+      CREATE TABLE IF NOT EXISTS photo_requests (
+        id SERIAL PRIMARY KEY,
+        requester_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        target_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(requester_id, target_id)
+      )
+    `;
+    console.log('✅ photo_requests table created');
+
     // Saved searches
     await sql`
       CREATE TABLE IF NOT EXISTS saved_searches (
@@ -334,6 +348,8 @@ async function setupDatabase() {
     await sql`CREATE INDEX IF NOT EXISTS idx_deactivations_user_id ON deactivations(user_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_photo_req_requester ON photo_requests(requester_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_photo_req_target ON photo_requests(target_id)`;
     console.log('✅ indexes created');
 
     console.log('\n🎉 Database setup complete!');

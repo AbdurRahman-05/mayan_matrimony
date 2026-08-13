@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Heart, Eye, Star, MapPin, UserCheck, Image, X, AlertCircle, Sparkles, Bookmark } from 'lucide-react';
-import { getNotifications } from '../services/api';
+import { getNotifications, respondPhotoRequest } from '../services/api';
 import './NotificationDropdown.css';
 
 const ICON_MAP = {
@@ -194,6 +194,38 @@ const NotificationDropdown = () => {
                                                 <span className="notification-time">
                                                     {timeAgo(notification.timestamp)}
                                                 </span>
+                                                {notification.type === 'photo_request' && notification.status === 'pending' && (
+                                                    <div className="photo-req-actions" onClick={(e) => e.stopPropagation()}>
+                                                        <button
+                                                            className="photo-req-btn photo-req-accept"
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                try {
+                                                                    await respondPhotoRequest(notification.requestId, 'accept');
+                                                                    setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, status: 'accepted', title: 'Photo Request Accepted', message: `You accepted photo request from ${notification.userName}` } : n));
+                                                                } catch (err) {
+                                                                    console.error(err);
+                                                                }
+                                                            }}
+                                                        >
+                                                            Accept
+                                                        </button>
+                                                        <button
+                                                            className="photo-req-btn photo-req-decline"
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                try {
+                                                                    await respondPhotoRequest(notification.requestId, 'decline');
+                                                                    handleRemove(e, notification.id);
+                                                                } catch (err) {
+                                                                    console.error(err);
+                                                                }
+                                                            }}
+                                                        >
+                                                            Decline
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );

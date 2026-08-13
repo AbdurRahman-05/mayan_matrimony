@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { getChatList, getChatMessages, sendChatMessage, startChat, editChatMessage, unsendChatMessage, globalCache } from '../services/api';
+import { getChatList, getChatMessages, sendChatMessage, startChat, editChatMessage, unsendChatMessage, globalCache, getMediaUrl } from '../services/api';
 import { Loader2, Send, ArrowLeft, MessageSquare, Edit2, Trash2, X } from 'lucide-react';
 import './Chat.css';
 
@@ -337,10 +337,9 @@ const Chat = () => {
                                     >
                                         <div className="chat-avatar">
                                             {chat.photo ? (
-                                                <img src={chat.photo} alt={chat.full_name} />
-                                            ) : (
-                                                <div className="avatar-placeholder">{chat.full_name?.charAt(0) || '?'}</div>
-                                            )}
+                                                <img src={getMediaUrl(chat.photo)} alt={chat.full_name} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
+                                            ) : null}
+                                            <div className="avatar-placeholder" style={{ display: chat.photo ? 'none' : 'flex' }}>{chat.full_name?.charAt(0) || '?'}</div>
                                         </div>
                                         <div className="chat-list-info">
                                             <div className="chat-list-name">{chat.full_name}</div>
@@ -375,10 +374,9 @@ const Chat = () => {
                                     <div className="chat-header-info" onClick={() => navigate(`/profile/${activeChatUser.uniqueId}`)} style={{cursor: 'pointer'}}>
                                         <div className="chat-avatar small">
                                             {activeChatUser.photo ? (
-                                                <img src={activeChatUser.photo} alt={activeChatUser.fullName} />
-                                            ) : (
-                                                <div className="avatar-placeholder">{activeChatUser.fullName?.charAt(0) || '?'}</div>
-                                            )}
+                                                <img src={getMediaUrl(activeChatUser.photo)} alt={activeChatUser.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
+                                            ) : null}
+                                            <div className="avatar-placeholder" style={{ display: activeChatUser.photo ? 'none' : 'flex' }}>{activeChatUser.fullName?.charAt(0) || '?'}</div>
                                         </div>
                                         <h3>{activeChatUser.fullName}</h3>
                                     </div>

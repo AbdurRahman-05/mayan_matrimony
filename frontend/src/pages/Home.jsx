@@ -83,25 +83,6 @@ const Home = () => {
       iconBg: '#e0f7fa',
       fields: ['diet', 'smoking', 'drinking'],
       navState: { openSection: 'lifestyle' }
-    },
-    {
-      id: 'interests',
-      label: 'Interests',
-      icon: <Star size={24} color="#D4AF37" />,
-      iconBg: '#fdf8e8',
-      fields: [],
-      customCheck: (d) => {
-        const favs = d.favourites || {};
-        return (
-          (favs.hobbies && favs.hobbies.length > 0) ||
-          (favs.sports && favs.sports.length > 0) ||
-          (favs.movies && favs.movies.length > 0) ||
-          (favs.read && favs.read.length > 0) ||
-          (favs.tvShows && favs.tvShows.length > 0) ||
-          (favs.destinations && favs.destinations.length > 0)
-        );
-      },
-      navState: { openFavourites: true }
     }
   ];
 

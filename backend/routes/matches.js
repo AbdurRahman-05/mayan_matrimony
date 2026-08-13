@@ -61,7 +61,8 @@ router.get('/', auth, async (req, res) => {
         const whereClause = conditions.join(' AND ');
 
         const query = `
-      SELECT p.*, u.unique_id, u.email, u.mobile, u.profile_for
+      SELECT p.*, u.unique_id, u.email, u.mobile, u.profile_for,
+             (SELECT photo_data FROM profile_photos WHERE user_id = p.user_id ORDER BY is_main DESC, created_at ASC LIMIT 1) as gallery_photo
       FROM profiles p
       JOIN users u ON u.id = p.user_id
       WHERE ${whereClause}
@@ -85,7 +86,7 @@ router.get('/', auth, async (req, res) => {
             occupation: row.occupation || '',
             income: row.income || '',
             motherTongue: row.mother_tongue || '',
-            photo: row.photo || '',
+            photo: row.photo || row.gallery_photo || '',
             gender: row.gender || ''
         }));
 

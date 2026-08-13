@@ -637,3 +637,23 @@ export function isAuthenticated() {
     return !!getToken() && localStorage.getItem('isLoggedIn') === 'true';
 }
 
+// ============ PHOTO REQUESTS ============
+
+export async function requestPhoto(targetUserId) {
+    return apiFetch('/notifications/photo-request', {
+        method: 'POST',
+        body: JSON.stringify({ targetUserId }),
+    });
+}
+
+export async function respondPhotoRequest(requestId, action) {
+    return apiFetch(`/notifications/photo-request/${requestId}/respond`, {
+        method: 'PUT',
+        body: JSON.stringify({ action }),
+    });
+}
+
+export async function getPhotoRequests() {
+    return apiFetch('/notifications/photo-requests');
+}
+

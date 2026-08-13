@@ -10,6 +10,7 @@ const BottomNav = () => {
 
   const isAuth = isAuthenticated();
   const isLandingPage = !isAuth || location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register';
+  const isChatRoom = location.pathname.startsWith('/chat/') && location.pathname !== '/chat';
 
   useEffect(() => {
     let timeoutId;
@@ -40,7 +41,7 @@ const BottomNav = () => {
     };
   }, [isAuth, isLandingPage]);
 
-  if (isLandingPage) {
+  if (isLandingPage || isChatRoom) {
     return null;
   }
 

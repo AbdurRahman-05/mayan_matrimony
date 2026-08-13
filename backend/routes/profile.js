@@ -120,11 +120,11 @@ router.get('/full', auth, async (req, res) => {
         let profile = {};
         if (profileResults.length > 0) {
             profile = formatProfile(profileResults[0], req);
-            profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => processPhoto(p.photo_data));
-            const mainPhoto = photos.find(p => p.is_main);
+            const mainPhoto = photos.find(p => p.is_main) || photos[0];
             if (mainPhoto) {
                 profile.photo = processPhoto(mainPhoto.photo_data);
             }
+            profile.additionalPhotos = photos.filter(p => p !== mainPhoto).map(p => processPhoto(p.photo_data));
         }
 
         // Build preferences
@@ -202,13 +202,11 @@ router.get('/', auth, async (req, res) => {
       ORDER BY is_main DESC, created_at ASC
     `;
 
-        profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => processPhoto(p.photo_data));
-
-        // If main photo from photos table, use it
-        const mainPhoto = photos.find(p => p.is_main);
+        const mainPhoto = photos.find(p => p.is_main) || photos[0];
         if (mainPhoto) {
             profile.photo = processPhoto(mainPhoto.photo_data);
         }
+        profile.additionalPhotos = photos.filter(p => p !== mainPhoto).map(p => processPhoto(p.photo_data));
 
         res.json(profile);
     } catch (error) {
@@ -384,11 +382,11 @@ router.get('/:uniqueId', auth, async (req, res) => {
       ORDER BY is_main DESC, created_at ASC
     `;
 
-        profile.additionalPhotos = photos.filter(p => !p.is_main).map(p => processPhoto(p.photo_data));
-        const mainPhoto = photos.find(p => p.is_main);
+        const mainPhoto = photos.find(p => p.is_main) || photos[0];
         if (mainPhoto) {
             profile.photo = processPhoto(mainPhoto.photo_data);
         }
+        profile.additionalPhotos = photos.filter(p => p !== mainPhoto).map(p => processPhoto(p.photo_data));
 
         // Record profile view (only if viewing someone else)
         const viewedUserId = results[0].user_id;

@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { ArrowLeft, User, Heart, Lock, Bookmark, Image as ImageIcon, MapPin, Briefcase, GraduationCap, Clock, MessageCircle, MoreVertical, ShieldCheck, Phone, Mail, X, Check, Eye, Loader2, Ruler, Globe2, Images, Languages, Calendar } from 'lucide-react';
 import { showAlert } from '../components/GlobalModal';
-import { getProfileById, getFullProfile, sendInterest, shortlistProfile, getViewedYou } from '../services/api';
+import { getProfileById, getFullProfile, sendInterest, shortlistProfile, getViewedYou, getMediaUrl } from '../services/api';
 import './ProfileView.css';
 
 const ProfileView = () => {
@@ -15,6 +15,7 @@ const ProfileView = () => {
     const [preferenceData, setPreferenceData] = useState({});
     const [favouritesData, setFavouritesData] = useState({});
     const [loading, setLoading] = useState(false);
+    const [imgError, setImgError] = useState(false);
 
     const favouritesCategories = [
         { key: 'hobbies', label: 'Hobbies' },
@@ -156,23 +157,30 @@ const ProfileView = () => {
                     ) : (
                         <>
                             {/* Photo block */}
-                            <div className="pv-photo-block">
-                                {profileData.photo ? (
-                                    <img src={profileData.photo} alt={profileData.fullName || 'Profile'} />
-                                ) : (
-                                    <div className="pv-photo-placeholder">
-                                        <User size={88} color="#9ca3af" />
-                                    </div>
-                                )}
+                            {(() => {
+                                const rawPhoto = profileData.photo || (profileData.additionalPhotos && profileData.additionalPhotos.find(p => p));
+                                const displayPhoto = rawPhoto ? getMediaUrl(rawPhoto) : '';
 
-                                {/* Photo count badge */}
-                                {totalPhotos > 0 && (
-                                    <div className="pv-photo-count-badge">
-                                        <Images size={16} />
-                                        <span>{totalPhotos}</span>
+                                return (
+                                    <div className="pv-photo-block">
+                                        {displayPhoto && !imgError ? (
+                                            <img src={displayPhoto} alt={profileData.fullName || 'Profile'} onError={() => setImgError(true)} />
+                                        ) : (
+                                            <div className="pv-photo-placeholder">
+                                                <User size={88} color="#9ca3af" />
+                                            </div>
+                                        )}
+
+                                        {/* Photo count badge */}
+                                        {totalPhotos > 0 && (
+                                            <div className="pv-photo-count-badge">
+                                                <Images size={16} />
+                                                <span>{totalPhotos}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                );
+                            })()}
 
                             {/* Name overlay at bottom of hero */}
                             <div className="pv-hero-info">
