@@ -48,7 +48,7 @@
 }
 
 .matches-sidebar::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: #4b5563;
 }
 
 .match-group {
@@ -127,7 +127,7 @@
 }
 
 .chevron {
-    color: #94a3b8;
+    color: #475569;
     opacity: 0.8;
 }
 
@@ -154,7 +154,7 @@
 }
 
 .matches-content::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #475569;
 }
 
 .content-header {
@@ -168,7 +168,7 @@
 }
 
 .content-header p {
-    color: #64748b;
+    color: #334155;
     font-size: 0.95rem;
 }
 
@@ -249,7 +249,7 @@
 }
 
 .match-results-list::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #475569;
 }
 
 .match-card {
@@ -350,7 +350,7 @@
 }
 
 .detail-item svg {
-    color: #94a3b8;
+    color: #475569;
 }
 
 .match-card-footer {
@@ -399,7 +399,7 @@
     align-items: center;
     justify-content: center;
     padding: 5rem;
-    color: #64748b;
+    color: #334155;
 }
 
 .loading-state p {
@@ -517,7 +517,7 @@
 }
 
 .edu-pref-scroll::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #475569;
 }
 
 .edu-pref-card {
@@ -559,7 +559,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #94a3b8;
+    color: #475569;
     background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
 }
 
@@ -588,7 +588,7 @@
 
 .edu-age {
     font-size: 0.85rem;
-    color: #64748b;
+    color: #334155;
 }
 
 .edu-detail {
@@ -605,7 +605,7 @@
 
 .edu-detail svg {
     flex-shrink: 0;
-    color: #94a3b8;
+    color: #475569;
 }
 
 .edu-actions {

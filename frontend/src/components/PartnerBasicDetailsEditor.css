@@ -132,7 +132,7 @@
 }
 
 .pbde-simple-input::placeholder {
-    color: #9ca3af;
+    color: #4b5563;
     font-weight: 400;
 }
 
@@ -184,7 +184,7 @@
 }
 
 .pbde-chip:not(.selected) .lucide {
-    color: #9ca3af;
+    color: #4b5563;
 }
 
 /* Save Container */
@@ -364,7 +364,7 @@
     width: 20px;
     height: 20px;
     min-width: 20px;
-    border: 2px solid #9ca3af;
+    border: 2px solid #4b5563;
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -383,7 +383,7 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    border: 2px solid #9ca3af;
+    border: 2px solid #4b5563;
     display: flex;
     align-items: center;
     justify-content: center;

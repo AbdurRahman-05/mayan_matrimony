@@ -105,10 +105,10 @@ const ProfileView = () => {
     const previewReligionText = [profileData.religion, profileData.sect, profileData.caste, profileData.horoscope].filter(Boolean).join(' | ') || 'Religion not specified';
     const previewFamilyLocation = [profileData.familyCity, profileData.familyState, profileData.familyCountry].filter(Boolean).join(', ') || profileData.familyLivingIn || 'Not specified';
     const previewFamilyType = profileData.familyType || 'Not specified';
-    const previewBrothers = profileData.numberOfBrothers ?? profileData.brothers ?? '';
-    const previewSisters = profileData.numberOfSisters ?? profileData.sisters ?? '';
-    const previewMarriedBrothers = profileData.marriedBrothers ?? profileData.brothersMarried ?? '';
-    const previewMarriedSisters = profileData.marriedSisters ?? profileData.sistersMarried ?? '';
+    const previewElderBrothers = profileData.elderBrother || '0';
+    const previewYoungerBrothers = profileData.youngerBrother || '0';
+    const previewElderSisters = profileData.elderSister || '0';
+    const previewYoungerSisters = profileData.youngerSister || '0';
     const previewDiet = profileData.diet || 'Not specified';
     const previewEducationPreference = preferenceData.prefEducation || "Doesn't Matter";
     const previewOccupationPreference = preferenceData.prefOccupation || "Doesn't Matter";
@@ -152,7 +152,7 @@ const ProfileView = () => {
                                             <img src={displayPhoto} alt={profileData.fullName || 'Profile'} onError={() => setImgError(true)} />
                                         ) : (
                                             <div className="pv-photo-placeholder">
-                                                <User size={88} color="#9ca3af" />
+                                                <User size={88} color="#4b5563" />
                                             </div>
                                         )}
 
@@ -196,6 +196,9 @@ const ProfileView = () => {
                                     <div className="pv-quick-item"><Ruler size={18} /><span>{profileData.height || 'Not specified'}</span></div>
                                     <div className="pv-quick-item"><MapPin size={18} /><span>{getLocationString()}</span></div>
                                     <div className="pv-quick-item"><Globe2 size={18} /><span>{previewReligionText}</span></div>
+                                    {profileData.willingToMarryOtherCaste === 'Yes' && (
+                                        <div className="pv-quick-item"><Heart size={18} /><span>Willing to marry any caste</span></div>
+                                    )}
                                     <div className="pv-quick-item"><Briefcase size={18} /><span>{profileData.income || 'No Income'}</span></div>
                                     <div className="pv-quick-item"><Languages size={18} /><span>Mother tongue is {profileData.motherTongue || 'not specified'}</span></div>
                                     <div className="pv-quick-item">
@@ -222,6 +225,9 @@ const ProfileView = () => {
                                     {profileData.disability && profileData.disability !== 'None' && (
                                         <p style={{ marginTop: '8px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Disability:</strong> {profileData.disability}</p>
                                     )}
+                                    {profileData.nationality && (
+                                        <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Nationality:</strong> {profileData.nationality}</p>
+                                    )}
                                 </div>
 
                                 <div className="pv-card">
@@ -235,7 +241,13 @@ const ProfileView = () => {
                                     <h3>{pronounPossCap} Career</h3>
                                     <p><strong>Occupation:</strong> {profileData.occupation || 'Not specified'}</p>
                                     <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Employment Type:</strong> {profileData.employmentType || 'Not specified'}</p>
+                                    {profileData.workingCountry && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Working Country:</strong> {profileData.workingCountry}</p>}
+                                    {profileData.visaStatus && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Visa Status:</strong> {profileData.visaStatus}</p>}
                                     {profileData.organizationName && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Organization:</strong> {profileData.organizationName}</p>}
+                                    {profileData.extraIncome && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Extra Income:</strong> {profileData.extraIncome}</p>}
+                                    {profileData.propertyType && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Property Type:</strong> {profileData.propertyType}</p>}
+                                    {profileData.financialStatus && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Financial Status:</strong> {profileData.financialStatus}</p>}
+                                    {profileData.jobDetails && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Job Details:</strong> {profileData.jobDetails}</p>}
                                     {profileData.settlingAbroad && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Interested in settling abroad?:</strong> {profileData.settlingAbroad}</p>}
                                 </div>
                             </>
@@ -251,15 +263,32 @@ const ProfileView = () => {
                                 <div className="pv-row"><span>Family Status</span><strong>{profileData.familyStatus || 'Not specified'}</strong></div>
                                 <div className="pv-row"><span>Living With Parents</span><strong>{profileData.livingWithParents || 'Not specified'}</strong></div>
                                 <div className="pv-row"><span>Family Income</span><strong>{profileData.familyIncome || 'Not specified'}</strong></div>
-                                <div className="pv-row"><span>Father</span><strong>{profileData.fatherOccupation || 'Not specified'}</strong></div>
-                                <div className="pv-row"><span>Mother</span><strong>{profileData.motherOccupation || 'Not specified'}</strong></div>
-                                <div className="pv-row"><span>Siblings</span><strong>{previewBrothers || 0} Brothers, {previewSisters || 0} Sisters</strong></div>
-                                <div className="pv-row"><span>Married Siblings</span><strong>{previewMarriedBrothers || 0} Brothers, {previewMarriedSisters || 0} Sisters</strong></div>
+                                {(profileData.fatherName || profileData.fatherStatus || profileData.fatherOccupation) && (
+                                    <div className="pv-row"><span>Father</span><strong>{profileData.fatherName ? profileData.fatherName + " " : ""}{profileData.fatherStatus ? `(${profileData.fatherStatus}) ` : ""}{profileData.fatherOccupation ? `- ${profileData.fatherOccupation}` : ""}</strong></div>
+                                )}
+                                {(profileData.motherName || profileData.motherStatus || profileData.motherOccupation) && (
+                                    <div className="pv-row"><span>Mother</span><strong>{profileData.motherName ? profileData.motherName + " " : ""}{profileData.motherStatus ? `(${profileData.motherStatus}) ` : ""}{profileData.motherOccupation ? `- ${profileData.motherOccupation}` : ""}</strong></div>
+                                )}
+                                {(previewElderBrothers !== '0' || previewYoungerBrothers !== '0') && (
+                                    <div className="pv-row"><span>Brothers</span><strong>{previewElderBrothers !== '0' ? `${previewElderBrothers} Elder ` : ""}{previewYoungerBrothers !== '0' ? `${previewYoungerBrothers} Younger` : ""}</strong></div>
+                                )}
+                                {(previewElderSisters !== '0' || previewYoungerSisters !== '0') && (
+                                    <div className="pv-row"><span>Sisters</span><strong>{previewElderSisters !== '0' ? `${previewElderSisters} Elder ` : ""}{previewYoungerSisters !== '0' ? `${previewYoungerSisters} Younger` : ""}</strong></div>
+                                )}
+                            </div>
+
+                            <div className="pv-card">
+                                <h3>Address Details</h3>
+                                <div className="pv-row"><span>Temporary Address</span><strong>{profileData.temporaryAddress || 'Not specified'}</strong></div>
+                                <div className="pv-row"><span>Permanent Address</span><strong>{profileData.permanentAddress || 'Not specified'}</strong></div>
+                                {profileData.contactAddress && <div className="pv-row"><span>Contact Address</span><strong>{profileData.contactAddress}</strong></div>}
                             </div>
 
                             <div className="pv-card">
                                 <h3>{pronounPossCap} Lifestyle and Interests</h3>
                                 <div className="pv-row"><span>Diet</span><strong>{previewDiet}</strong></div>
+                                <div className="pv-row"><span>Body Type</span><strong>{profileData.bodyType || 'Not specified'}</strong></div>
+                                <div className="pv-row"><span>Weight</span><strong>{profileData.weight || 'Not specified'}</strong></div>
                                 <div className="pv-row"><span>Drinking</span><strong>{profileData.drinking || 'Not specified'}</strong></div>
                                 <div className="pv-row"><span>Smoking</span><strong>{profileData.smoking || 'Not specified'}</strong></div>
                                 {favouritesCategories.map(cat => {

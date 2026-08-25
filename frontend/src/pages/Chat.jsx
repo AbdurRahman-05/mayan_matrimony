@@ -9,20 +9,21 @@ import './Chat.css';
 const Chat = () => {
     const { uniqueId } = useParams();
     const navigate = useNavigate();
-    
+
     const [chatList, setChatList] = useState(globalCache.chatList || []);
     const [messages, setMessages] = useState(uniqueId ? (globalCache.chatMessages[uniqueId] || []) : []);
     const [activeChatUser, setActiveChatUser] = useState(null);
     const [inputValue, setInputValue] = useState('');
-    
+
     const [loadingList, setLoadingList] = useState(!globalCache.chatList);
     const [loadingMessages, setLoadingMessages] = useState(uniqueId ? !globalCache.chatMessages[uniqueId] : false);
-    
+    const [chatError, setChatError] = useState(null);
+
     // Message context menu state
     const [selectedMessage, setSelectedMessage] = useState(null); // the message id currently having context menu open
     const [editingMessage, setEditingMessage] = useState(null); // the message currently being edited
     const [editInputValue, setEditInputValue] = useState('');
-    
+
     const chatMessagesRef = useRef(null);
     const isMutatingRef = useRef(false);
     const mutationCountRef = useRef(0);
@@ -30,7 +31,7 @@ const Chat = () => {
     useEffect(() => {
         let isMounted = true;
         let timeoutId;
-        
+
         const loopChatList = async () => {
             if (isMounted) {
                 await loadChatListSilently();
@@ -41,7 +42,7 @@ const Chat = () => {
         loadChatList().then(() => {
             if (isMounted) timeoutId = setTimeout(loopChatList, 2500);
         });
-        
+
         return () => {
             isMounted = false;
             clearTimeout(timeoutId);
@@ -66,6 +67,7 @@ const Chat = () => {
         } else {
             setMessages([]);
             setActiveChatUser(null);
+            setChatError(null);
         }
 
         return () => {
@@ -96,7 +98,7 @@ const Chat = () => {
             const list = await getChatList();
             globalCache.chatList = list;
             setChatList(list);
-            
+
             // If we came with a uniqueId, ensure it's in the list or initialized
             if (uniqueId) {
                 const existing = list.find(c => c.unique_id === uniqueId);
@@ -132,14 +134,12 @@ const Chat = () => {
             globalCache.chatMessages[userId] = data.messages;
             setMessages(data.messages);
             setActiveChatUser(data.otherUser);
-            
+
             // Re-fetch chat list to update read status or latest message
             loadChatListSilently();
         } catch (error) {
             console.error('Failed to load messages:', error);
-            if (error.message.includes('cannot chat')) {
-                 navigate('/chat');
-            }
+            setChatError(error.message);
         } finally {
             setLoadingMessages(false);
         }
@@ -167,17 +167,17 @@ const Chat = () => {
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
-        
+
         if (editingMessage) {
             handleSaveEdit();
             return;
         }
-        
+
         if (!inputValue.trim() || !activeChatUser) return;
 
         const currentInput = inputValue;
         setInputValue('');
-        
+
         // 1. Optimistic UI update (immediate display)
         const tempMsgId = 'temp-' + Date.now();
         const optimisticMsg = {
@@ -188,9 +188,9 @@ const Chat = () => {
             isRead: false,
             isEdited: false
         };
-        
+
         setMessages(prev => [...prev, optimisticMsg]);
-        
+
         // Optimistic chat list update
         setChatList(prev => {
             const updated = prev.map(chat => {
@@ -215,23 +215,23 @@ const Chat = () => {
         } catch (error) {
             console.error('Failed to send message:', error);
             setMessages(prev => prev.filter(m => m.id !== tempMsgId));
-            setInputValue(currentInput); 
+            setInputValue(currentInput);
         } finally {
             setTimeout(() => {
                 isMutatingRef.current = false;
             }, 300);
         }
     };
-    
+
     const handleContextMenu = (e, msg) => {
         e.preventDefault(); // Prevent native right-click menu
         if (msg.isSender) {
             setSelectedMessage(selectedMessage === msg.id ? null : msg.id);
         }
     };
-    
+
     const touchTimerRef = useRef(null);
-    
+
     const handleTouchStart = (e, msg) => {
         if (!msg.isSender) return;
         touchTimerRef.current = setTimeout(() => {
@@ -244,23 +244,23 @@ const Chat = () => {
             clearTimeout(touchTimerRef.current);
         }
     };
-    
+
     const startEditing = (msg) => {
         setEditingMessage(msg);
         setInputValue(msg.content);
         setSelectedMessage(null);
     };
-    
+
     const handleSaveEdit = async () => {
         if (!inputValue.trim() || !editingMessage) return;
         const tempMsgId = editingMessage.id;
         const newContent = inputValue;
-        
+
         // Optimistic update for immediate UI feedback
         setMessages(prev => prev.map(m => m.id === tempMsgId ? { ...m, content: newContent, isEdited: true } : m));
         setEditingMessage(null);
         setInputValue('');
-        
+
         isMutatingRef.current = true;
         mutationCountRef.current += 1;
         try {
@@ -274,23 +274,23 @@ const Chat = () => {
             }, 300);
         }
     };
-    
+
     const cancelEdit = () => {
         setEditingMessage(null);
         setInputValue('');
     };
-    
+
     const handleDeleteMessage = async (msgId) => {
         setSelectedMessage(null);
-        
+
         // Optimistic update for immediate UI feedback
         setMessages(prev => prev.filter(m => m.id !== msgId));
-        
+
         isMutatingRef.current = true;
         mutationCountRef.current += 1;
         try {
             await unsendChatMessage(msgId);
-        } catch(err) {
+        } catch (err) {
             console.error('Failed to unsend:', err);
         } finally {
             setTimeout(() => {
@@ -308,16 +308,16 @@ const Chat = () => {
     return (
         <div className="chat-page">
             <Navbar />
-            
+
             <div className="chat-container">
                 <div className="chat-layout glass-panel">
-                    
+
                     {/* Chat List Sidebar */}
                     <div className={`chat-sidebar ${uniqueId ? 'hidden-mobile' : ''}`}>
                         <div className="chat-sidebar-header">
                             <h2>Messages</h2>
                         </div>
-                        
+
                         <div className="chat-list">
                             {loadingList ? (
                                 <div className="chat-loading">
@@ -330,7 +330,7 @@ const Chat = () => {
                                 </div>
                             ) : (
                                 chatList.map((chat) => (
-                                    <div 
+                                    <div
                                         key={chat.unique_id}
                                         className={`chat-list-item ${uniqueId === chat.unique_id ? 'active' : ''}`}
                                         onClick={() => navigate(`/chat/${chat.unique_id}`)}
@@ -371,7 +371,7 @@ const Chat = () => {
                                     <button className="chat-back-btn desktop-hide" onClick={() => navigate('/chat')}>
                                         <ArrowLeft size={20} />
                                     </button>
-                                    <div className="chat-header-info" onClick={() => navigate(`/profile/${activeChatUser.uniqueId}`)} style={{cursor: 'pointer'}}>
+                                    <div className="chat-header-info" onClick={() => navigate(`/profile/${activeChatUser.uniqueId}`)} style={{ cursor: 'pointer' }}>
                                         <div className="chat-avatar small">
                                             {activeChatUser.photo ? (
                                                 <img src={getMediaUrl(activeChatUser.photo)} alt={activeChatUser.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
@@ -387,7 +387,7 @@ const Chat = () => {
                                         return (
                                             <React.Fragment key={msg.id}>
                                                 <div className={`chat-bubble-wrapper ${msg.isSender ? 'sent' : 'received'}`}>
-                                                    <div 
+                                                    <div
                                                         className={`chat-bubble ${selectedMessage === msg.id ? 'selected' : ''}`}
                                                         onContextMenu={(e) => handleContextMenu(e, msg)}
                                                         onTouchStart={(e) => handleTouchStart(e, msg)}
@@ -399,7 +399,7 @@ const Chat = () => {
                                                             {msg.isEdited && <span className="edited-label">(edited)</span>}
                                                         </div>
                                                         <div className="chat-time">{formatTime(msg.createdAt)}</div>
-                                                        
+
                                                         {selectedMessage === msg.id && msg.isSender && (
                                                             <div className="chat-context-menu">
                                                                 <button type="button" onPointerDown={(e) => { e.stopPropagation(); startEditing(msg); }} onClick={(e) => e.stopPropagation()}>
@@ -439,14 +439,14 @@ const Chat = () => {
                             </>
                         ) : (
                             <div className="chat-empty-window">
-                                <p>User not found.</p>
+                                <p>{chatError || 'User not found.'}</p>
                             </div>
                         )}
                     </div>
-                    
+
                 </div>
             </div>
-            
+
             <Footer />
         </div>
     );

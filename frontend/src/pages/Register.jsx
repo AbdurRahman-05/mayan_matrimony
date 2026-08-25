@@ -8,9 +8,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './Register.css';
 import SearchableSelect from '../components/SearchableSelect';
 import BrandedLoader from '../components/BrandedLoader';
-import { getCountries, getStates, getCities, getCastes, getSects } from '../data/locationData';
-import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions, getMarriedCounts } from '../data/sharedOptions';
-import { login as apiLogin, register as apiRegister, sendOtp as apiSendOtp, verifyOtp as apiVerifyOtp, resetPassword as apiResetPassword, checkEmailAvailability, checkIdAvailability as apiCheckId, isAuthenticated, checkMobileAvailability } from '../services/api';
+import { getCountries, getStates, getCities, getCastes, getSects, nationalities } from '../data/locationData';
+import { profileManagedOptions, genderOptions, maritalOptions, booleanOptions, childrenCountOptions, physicalStatusOptions, disabilityOptions, heights, religions, horoscopes, educationOptions, employedInOptions, occupations, currencies, languages, incomes, residentialStatusOptions, dietOptions, smokingOptions, drinkingOptions, familyTypeOptions, familyStatusOptions, familyValuesOptions, fatherOccupationOptions, motherOccupationOptions, siblingCounts, familyIncomes, livingWithParentsOptions, settleAbroadOptions, getMarriedCounts, bodyTypeOptions, propertyTypeOptions, financialStatusOptions } from '../data/sharedOptions';
+import { login as apiLogin, register as apiRegister, sendOtp as apiSendOtp, verifyOtp as apiVerifyOtp, resetPassword as apiResetPassword, checkEmailAvailability, checkIdAvailability as apiCheckId, isAuthenticated, checkMobileAvailability, getStories } from '../services/api';
 
 const StepIndicator = ({ step, title, currentStep }) => (
     <div className={`step-indicator ${step === currentStep ? 'active' : step < currentStep ? 'completed' : ''}`}>
@@ -106,9 +106,8 @@ const Register = () => {
     useEffect(() => {
         const fetchStories = async () => {
             try {
-                const response = await fetch('/api/admin/stories');
-                if (response.ok) {
-                    const data = await response.json();
+                const data = await getStories();
+                if (data) {
                     setStoryData(data);
                 }
             } catch (error) {
@@ -267,6 +266,7 @@ const Register = () => {
         religion: '',
         sect: '',
         caste: '',
+        willingToMarryOtherCaste: 'No',
         country: '',
         state: '',
         city: '',
@@ -275,6 +275,10 @@ const Register = () => {
         occupation: '',
         currency: 'INR',
         income: '',
+        extraIncome: '',
+        propertyType: '',
+        financialStatus: '',
+        jobDetails: '',
         photo: null,
         profileFor: '',
         partnerPreference: '',
@@ -285,13 +289,23 @@ const Register = () => {
         timeOfBirth: '',
         placeOfBirth: '',
         diet: '',
+        bodyType: '',
+        weight: '',
         familyType: '',
+        fatherName: '',
+        fatherStatus: '',
         fatherOccupation: '',
+        motherName: '',
+        motherStatus: '',
         motherOccupation: '',
-        brothers: '',
-        brothersMarried: '',
-        sisters: '',
-        sistersMarried: '',
+        elderBrother: '0',
+        marriedElderBrother: '0',
+        youngerBrother: '0',
+        marriedYoungerBrother: '0',
+        elderSister: '0',
+        marriedElderSister: '0',
+        youngerSister: '0',
+        marriedYoungerSister: '0',
         familyLivingIn: '',
         contactAddress: '',
         havingChildren: '',
@@ -542,10 +556,6 @@ const Register = () => {
                 }
                 return newData;
             });
-        } else if (name === 'brothers') {
-            setFormData(prev => ({ ...prev, brothers: value, brothersMarried: '' }));
-        } else if (name === 'sisters') {
-            setFormData(prev => ({ ...prev, sisters: value, sistersMarried: '' }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -830,10 +840,10 @@ const Register = () => {
                             padding: '1.5rem',
                             borderRadius: '12px',
                             display: 'inline-block',
-                            border: '1px dashed #9ca3af',
+                            border: '1px dashed #4b5563',
                             marginBottom: '2rem'
                         }}>
-                            <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '0.5rem' }}>Your Unique Member ID</p>
+                            <p style={{ fontSize: '0.9rem', color: '#374151', marginBottom: '0.5rem' }}>Your Unique Member ID</p>
                             <h3 style={{ fontSize: '1.8rem', color: '#D4AF37', margin: 0, fontFamily: 'monospace', letterSpacing: '1px' }}>
                                 {formData.uniqueId}
                             </h3>
@@ -856,9 +866,9 @@ const Register = () => {
 
 
     const countries = getCountries();
-    const availableStates = getStates(formData.country);
-    const availableCities = getCities(formData.country, formData.state);
-    const availableCastes = getCastes(formData.religion);
+    const availableStates = getStates(formData.workingCountry);
+    const availableCities = getCities(formData.workingCountry, formData.state);
+    const availableCastes = getCastes(formData.religion, formData.sect);
     const availableSects = getSects(formData.religion);
 
     return (
@@ -1434,13 +1444,27 @@ const Register = () => {
                                             </div>
 
                                             <div className="jv-form-row">
-                                                <label className="jv-label">Sect</label>
+                                                <label className="jv-label">Nationality</label>
+                                                <div className="jv-input-group">
+                                                    <SearchableSelect
+                                                        name="nationality"
+                                                        value={formData.nationality}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Select Nationality"
+                                                        options={nationalities}
+                                                        className="full"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">{formData.religion === 'Hindu' ? 'Category' : 'Sect'}</label>
                                                 <div className="jv-input-group">
                                                     <SearchableSelect
                                                         name="sect"
                                                         value={formData.sect}
                                                         onChange={handleInputChange}
-                                                        placeholder="Select sect"
+                                                        placeholder={formData.religion === 'Hindu' ? 'Select category' : 'Select sect'}
                                                         disabled={!formData.religion}
                                                         options={availableSects}
                                                         className="full"
@@ -1461,6 +1485,19 @@ const Register = () => {
                                                         className="full"
                                                     />
                                                 </div>
+                                            </div>
+
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', marginTop: '-5px' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    id="willingToMarryOtherCaste"
+                                                    checked={formData.willingToMarryOtherCaste === 'Yes'}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, willingToMarryOtherCaste: e.target.checked ? 'Yes' : 'No' }))}
+                                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                                />
+                                                <label htmlFor="willingToMarryOtherCaste" className="jv-checkbox-label" style={{ cursor: 'pointer', color: '#555', fontSize: '0.9rem' }}>
+                                                    Willing to marry any caste
+                                                </label>
                                             </div>
 
                                             <div className="jv-form-row">
@@ -1523,6 +1560,34 @@ const Register = () => {
                                                 </div>
                                             </div>
 
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Body Type <span className="jv-optional-note">(Optional)</span></label>
+                                                <div className="jv-input-group">
+                                                    <SearchableSelect
+                                                        name="bodyType"
+                                                        value={formData.bodyType}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Select Body Type"
+                                                        options={bodyTypeOptions}
+                                                        className="full"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Weight <span className="jv-optional-note">(Optional)</span></label>
+                                                <div className="jv-input-group">
+                                                    <input
+                                                        type="text"
+                                                        name="weight"
+                                                        className="jv-input full"
+                                                        placeholder="e.g. 60 kg"
+                                                        value={formData.weight}
+                                                        onChange={handleInputChange}
+                                                    />
+                                                </div>
+                                            </div>
+
                                             {formData.religion === 'Hindu' && (
                                                 <>
                                                     <div className="jv-subheading">Horoscope Details</div>
@@ -1544,13 +1609,25 @@ const Register = () => {
                                                     <div className="jv-form-row">
                                                         <label className="jv-label">Time of Birth</label>
                                                         <div className="jv-input-group">
-                                                            <input
-                                                                type="time"
-                                                                name="timeOfBirth"
-                                                                value={formData.timeOfBirth || ''}
-                                                                onChange={handleInputChange}
-                                                                className="jv-input"
-                                                            />
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                                                                <input
+                                                                    type="time"
+                                                                    name="timeOfBirth"
+                                                                    value={formData.timeOfBirth === "Don't know" ? '' : (formData.timeOfBirth || '')}
+                                                                    onChange={handleInputChange}
+                                                                    className="jv-input"
+                                                                    disabled={formData.timeOfBirth === "Don't know"}
+                                                                />
+                                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#555', cursor: 'pointer' }}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={formData.timeOfBirth === "Don't know"}
+                                                                        onChange={(e) => setFormData(prev => ({ ...prev, timeOfBirth: e.target.checked ? "Don't know" : '' }))}
+                                                                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                                                    />
+                                                                    Don't know time of birth
+                                                                </label>
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -1589,20 +1666,36 @@ const Register = () => {
                                             <div className="jv-mandatory-note">mandatory <span className="jv-asterisk">*</span></div>
 
                                             <div className="jv-form-row">
-                                                <label className="jv-label">Country <span className="jv-asterisk">*</span></label>
+                                                <label className="jv-label">Working Country <span className="jv-asterisk">*</span></label>
                                                 <div className="jv-input-group">
                                                     <SearchableSelect
-                                                        name="country"
-                                                        value={formData.country}
+                                                        name="workingCountry"
+                                                        value={formData.workingCountry}
                                                         onChange={handleInputChange}
-                                                        placeholder="Select Country"
+                                                        placeholder="Select Working Country"
                                                         options={countries}
                                                         className="full"
                                                     />
                                                 </div>
                                             </div>
 
-                                            {formData.country === 'India' ? (
+                                            {formData.workingCountry && formData.workingCountry !== 'India' && (
+                                                <div className="jv-form-row">
+                                                    <label className="jv-label">Visa Status</label>
+                                                    <div className="jv-input-group">
+                                                        <SearchableSelect
+                                                            name="visaStatus"
+                                                            value={formData.visaStatus}
+                                                            onChange={handleInputChange}
+                                                            placeholder="Select Visa Status"
+                                                            options={['Citizen', 'Permanent Resident', 'Work Permit', 'Student Visa', 'Temporary Visa', 'Other']}
+                                                            className="full"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {formData.workingCountry === 'India' ? (
                                                 <>
                                                     <div className="jv-form-row">
                                                         <label className="jv-label">State <span className="jv-asterisk">*</span></label>
@@ -1613,7 +1706,7 @@ const Register = () => {
                                                                 onChange={handleInputChange}
                                                                 placeholder="Select State"
                                                                 options={availableStates}
-                                                                disabled={!formData.country}
+                                                                disabled={!formData.workingCountry}
                                                                 className="full"
                                                             />
                                                         </div>
@@ -1692,6 +1785,8 @@ const Register = () => {
                                                 </div>
                                             </div>
 
+
+
                                             <div className="jv-form-row">
                                                 <label className="jv-label">Annual Income <span className="jv-asterisk">*</span></label>
                                                 <div className="jv-input-group column">
@@ -1702,6 +1797,62 @@ const Register = () => {
                                                         placeholder="Select Income"
                                                         options={incomes}
                                                         className="full"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Other Extra Income <span className="jv-optional-note">(Optional)</span></label>
+                                                <div className="jv-input-group column">
+                                                    <input
+                                                        type="text"
+                                                        name="extraIncome"
+                                                        className="jv-input full"
+                                                        placeholder="e.g. Freelancing, Business"
+                                                        value={formData.extraIncome}
+                                                        onChange={handleInputChange}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Property Type <span className="jv-optional-note">(Optional)</span></label>
+                                                <div className="jv-input-group column">
+                                                    <SearchableSelect
+                                                        name="propertyType"
+                                                        value={formData.propertyType}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Select Property Type"
+                                                        options={propertyTypeOptions}
+                                                        className="full"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Financial Status <span className="jv-optional-note">(Optional)</span></label>
+                                                <div className="jv-input-group column">
+                                                    <SearchableSelect
+                                                        name="financialStatus"
+                                                        value={formData.financialStatus}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Select Financial Status"
+                                                        options={financialStatusOptions}
+                                                        className="full"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Job Details <span className="jv-optional-note">(Optional)</span></label>
+                                                <div className="jv-input-group column">
+                                                    <textarea
+                                                        name="jobDetails"
+                                                        className="jv-input full"
+                                                        placeholder="Any non-mandatory job details..."
+                                                        value={formData.jobDetails}
+                                                        onChange={handleInputChange}
+                                                        rows="3"
                                                     />
                                                 </div>
                                             </div>
@@ -1765,6 +1916,8 @@ const Register = () => {
                                                 </div>
                                             </div>
 
+
+
                                             <h3 style={{ fontSize: '1.3rem', color: '#666', fontWeight: 300, marginTop: '2rem', marginBottom: '0.5rem', paddingTop: '1.5rem', borderTop: '1px solid #eee' }}>We would love to know about your family.</h3>
 
                                             <div className="jv-form-row" style={{ paddingTop: '10px' }}>
@@ -1782,57 +1935,43 @@ const Register = () => {
                                             </div>
 
                                             <div className="jv-form-row">
-                                                <label className="jv-label">Father's Occupation</label>
+                                                <label className="jv-label">Father's Name</label>
                                                 <div className="jv-input-group">
-                                                    <SearchableSelect
-                                                        name="fatherOccupation"
-                                                        value={formData.fatherOccupation}
+                                                    <input
+                                                        type="text"
+                                                        name="fatherName"
+                                                        value={formData.fatherName || ''}
                                                         onChange={handleInputChange}
-                                                        placeholder="Select Father's Occupation"
-                                                        options={fatherOccupationOptions}
-                                                        className="full"
+                                                        placeholder="Enter Father's Name"
+                                                        className="jv-input"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div className="jv-form-row">
-                                                <label className="jv-label">Mother's Occupation</label>
+                                                <label className="jv-label">Father's Status</label>
                                                 <div className="jv-input-group">
                                                     <SearchableSelect
-                                                        name="motherOccupation"
-                                                        value={formData.motherOccupation}
+                                                        name="fatherStatus"
+                                                        value={formData.fatherStatus}
                                                         onChange={handleInputChange}
-                                                        placeholder="Select Mother's Occupation"
-                                                        options={motherOccupationOptions}
+                                                        placeholder="Alive / Passed Away"
+                                                        options={['Alive', 'Passed Away']}
                                                         className="full"
                                                     />
                                                 </div>
                                             </div>
 
-                                            <div className="jv-form-row">
-                                                <label className="jv-label">Brothers</label>
-                                                <div className="jv-input-group">
-                                                    <SearchableSelect
-                                                        name="brothers"
-                                                        value={formData.brothers}
-                                                        onChange={handleInputChange}
-                                                        placeholder="Select"
-                                                        options={siblingCounts}
-                                                        className="full"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {formData.brothers && formData.brothers !== '0' && (
+                                            {formData.fatherStatus !== 'Passed Away' && (
                                                 <div className="jv-form-row">
-                                                    <label className="jv-label">Brothers Married</label>
+                                                    <label className="jv-label">Father's Occupation</label>
                                                     <div className="jv-input-group">
                                                         <SearchableSelect
-                                                            name="brothersMarried"
-                                                            value={formData.brothersMarried}
+                                                            name="fatherOccupation"
+                                                            value={formData.fatherOccupation}
                                                             onChange={handleInputChange}
-                                                            placeholder="Select"
-                                                            options={getMarriedCounts(formData.brothers)}
+                                                            placeholder="Select Father's Occupation"
+                                                            options={fatherOccupationOptions}
                                                             className="full"
                                                         />
                                                     </div>
@@ -1840,29 +1979,43 @@ const Register = () => {
                                             )}
 
                                             <div className="jv-form-row">
-                                                <label className="jv-label">Sisters</label>
+                                                <label className="jv-label">Mother's Name</label>
+                                                <div className="jv-input-group">
+                                                    <input
+                                                        type="text"
+                                                        name="motherName"
+                                                        value={formData.motherName || ''}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Enter Mother's Name"
+                                                        className="jv-input"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Mother's Status</label>
                                                 <div className="jv-input-group">
                                                     <SearchableSelect
-                                                        name="sisters"
-                                                        value={formData.sisters}
+                                                        name="motherStatus"
+                                                        value={formData.motherStatus}
                                                         onChange={handleInputChange}
-                                                        placeholder="Select"
-                                                        options={siblingCounts}
+                                                        placeholder="Alive / Passed Away"
+                                                        options={['Alive', 'Passed Away']}
                                                         className="full"
                                                     />
                                                 </div>
                                             </div>
 
-                                            {formData.sisters && formData.sisters !== '0' && (
+                                            {formData.motherStatus !== 'Passed Away' && (
                                                 <div className="jv-form-row">
-                                                    <label className="jv-label">Sisters Married</label>
+                                                    <label className="jv-label">Mother's Occupation</label>
                                                     <div className="jv-input-group">
                                                         <SearchableSelect
-                                                            name="sistersMarried"
-                                                            value={formData.sistersMarried}
+                                                            name="motherOccupation"
+                                                            value={formData.motherOccupation}
                                                             onChange={handleInputChange}
-                                                            placeholder="Select"
-                                                            options={getMarriedCounts(formData.sisters)}
+                                                            placeholder="Select Mother's Occupation"
+                                                            options={motherOccupationOptions}
                                                             className="full"
                                                         />
                                                     </div>
@@ -1870,9 +2023,112 @@ const Register = () => {
                                             )}
 
                                             <div className="jv-form-row">
-                                                <label className="jv-label">Contact Address</label>
+                                                <label className="jv-label">Elder Brothers</label>
                                                 <div className="jv-input-group">
-                                                    <input type="text" className="jv-input" name="contactAddress" placeholder="Enter contact address" value={formData.contactAddress} onChange={handleInputChange} />
+                                                    <SearchableSelect name="elderBrother" value={formData.elderBrother} onChange={handleInputChange} placeholder="Select" options={siblingCounts} className="full" />
+                                                </div>
+                                            </div>
+
+                                            {formData.elderBrother && formData.elderBrother !== '0' && (
+                                                <div className="jv-form-row">
+                                                    <label className="jv-label">Married Elder Brothers</label>
+                                                    <div className="jv-input-group">
+                                                        <SearchableSelect name="marriedElderBrother" value={formData.marriedElderBrother} onChange={handleInputChange} placeholder="Select" options={getMarriedCounts(formData.elderBrother)} className="full" />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Younger Brothers</label>
+                                                <div className="jv-input-group">
+                                                    <SearchableSelect name="youngerBrother" value={formData.youngerBrother} onChange={handleInputChange} placeholder="Select" options={siblingCounts} className="full" />
+                                                </div>
+                                            </div>
+
+                                            {formData.youngerBrother && formData.youngerBrother !== '0' && (
+                                                <div className="jv-form-row">
+                                                    <label className="jv-label">Married Younger Brothers</label>
+                                                    <div className="jv-input-group">
+                                                        <SearchableSelect name="marriedYoungerBrother" value={formData.marriedYoungerBrother} onChange={handleInputChange} placeholder="Select" options={getMarriedCounts(formData.youngerBrother)} className="full" />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Elder Sisters</label>
+                                                <div className="jv-input-group">
+                                                    <SearchableSelect name="elderSister" value={formData.elderSister} onChange={handleInputChange} placeholder="Select" options={siblingCounts} className="full" />
+                                                </div>
+                                            </div>
+
+                                            {formData.elderSister && formData.elderSister !== '0' && (
+                                                <div className="jv-form-row">
+                                                    <label className="jv-label">Married Elder Sisters</label>
+                                                    <div className="jv-input-group">
+                                                        <SearchableSelect name="marriedElderSister" value={formData.marriedElderSister} onChange={handleInputChange} placeholder="Select" options={getMarriedCounts(formData.elderSister)} className="full" />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Younger Sisters</label>
+                                                <div className="jv-input-group">
+                                                    <SearchableSelect name="youngerSister" value={formData.youngerSister} onChange={handleInputChange} placeholder="Select" options={siblingCounts} className="full" />
+                                                </div>
+                                            </div>
+
+                                            {formData.youngerSister && formData.youngerSister !== '0' && (
+                                                <div className="jv-form-row">
+                                                    <label className="jv-label">Married Younger Sisters</label>
+                                                    <div className="jv-input-group">
+                                                        <SearchableSelect name="marriedYoungerSister" value={formData.marriedYoungerSister} onChange={handleInputChange} placeholder="Select" options={getMarriedCounts(formData.youngerSister)} className="full" />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <h3 style={{ fontSize: '1.3rem', color: '#666', fontWeight: 300, marginTop: '2rem', marginBottom: '0.5rem', paddingTop: '1.5rem', borderTop: '1px solid #eee' }}>Verification Documents</h3>
+
+                                            <div className="jv-form-row" style={{ paddingTop: '10px' }}>
+                                                <label className="jv-label">Aadhar Card Number <span className="jv-optional-note">(Optional)</span></label>
+                                                <div className="jv-input-group">
+                                                    <input type="text" className="jv-input" name="aadharNumber" placeholder="Enter Aadhar Number (Will not be shown to others)" value={formData.aadharNumber || ''} onChange={handleInputChange} maxLength="12" />
+                                                    <small style={{ color: '#888', display: 'block', marginTop: '5px' }}>Mention Aadhar card number for account verification. Aadhar verification is better.</small>
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Community Certificate <span className="jv-optional-note">(Optional)</span></label>
+                                                <div className="jv-input-group">
+                                                    <input type="file" className="jv-input" name="communityCertificate" onChange={e => {
+                                                        const file = e.target.files[0];
+                                                        if (file) setFormData(prev => ({ ...prev, communityCertificate: file }));
+                                                    }} accept="image/*,.pdf" />
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Birth Certificate <span className="jv-optional-note">(Optional)</span></label>
+                                                <div className="jv-input-group">
+                                                    <input type="file" className="jv-input" name="birthCertificate" onChange={e => {
+                                                        const file = e.target.files[0];
+                                                        if (file) setFormData(prev => ({ ...prev, birthCertificate: file }));
+                                                    }} accept="image/*,.pdf" />
+                                                </div>
+                                            </div>
+
+                                            <h3 style={{ fontSize: '1.3rem', color: '#666', fontWeight: 300, marginTop: '2rem', marginBottom: '0.5rem', paddingTop: '1.5rem', borderTop: '1px solid #eee' }}>Contact</h3>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Temporary Address</label>
+                                                <div className="jv-input-group">
+                                                    <input type="text" className="jv-input" name="temporaryAddress" placeholder="Enter temporary address" value={formData.temporaryAddress || ''} onChange={handleInputChange} />
+                                                </div>
+                                            </div>
+
+                                            <div className="jv-form-row">
+                                                <label className="jv-label">Permanent Address</label>
+                                                <div className="jv-input-group">
+                                                    <input type="text" className="jv-input" name="permanentAddress" placeholder="Enter permanent address" value={formData.permanentAddress || ''} onChange={handleInputChange} />
                                                 </div>
                                             </div>
 
@@ -1984,9 +2240,31 @@ const Register = () => {
                                                                     photoBase64 = formData.photo;
                                                                 }
 
+                                                                let communityCertBase64 = null;
+                                                                if (formData.communityCertificate && formData.communityCertificate instanceof File) {
+                                                                    communityCertBase64 = await new Promise((resolve, reject) => {
+                                                                        const reader = new FileReader();
+                                                                        reader.readAsDataURL(formData.communityCertificate);
+                                                                        reader.onload = () => resolve(reader.result);
+                                                                        reader.onerror = reject;
+                                                                    });
+                                                                }
+
+                                                                let birthCertBase64 = null;
+                                                                if (formData.birthCertificate && formData.birthCertificate instanceof File) {
+                                                                    birthCertBase64 = await new Promise((resolve, reject) => {
+                                                                        const reader = new FileReader();
+                                                                        reader.readAsDataURL(formData.birthCertificate);
+                                                                        reader.onload = () => resolve(reader.result);
+                                                                        reader.onerror = reject;
+                                                                    });
+                                                                }
+
                                                                 const registrationData = {
                                                                     ...formData,
-                                                                    photo: photoBase64
+                                                                    photo: photoBase64,
+                                                                    communityCertificate: communityCertBase64,
+                                                                    birthCertificate: birthCertBase64
                                                                 };
 
                                                                 const result = await apiRegister(registrationData);

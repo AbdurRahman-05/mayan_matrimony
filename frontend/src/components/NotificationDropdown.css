@@ -183,7 +183,7 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    color: #6b7280;
+    color: #374151;
     transition: all 0.2s ease;
 }
 
@@ -218,7 +218,7 @@
     align-items: center;
     justify-content: center;
     padding: 40px 20px;
-    color: #9ca3af;
+    color: #4b5563;
 }
 
 .notification-empty-icon {
@@ -339,7 +339,7 @@
 .notification-remove-btn {
     background: transparent;
     border: none;
-    color: #9ca3af;
+    color: #4b5563;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -359,7 +359,7 @@
 
 .notification-message {
     font-size: 0.8rem;
-    color: #6b7280;
+    color: #374151;
     margin: 0 0 4px 0;
     line-height: 1.4;
     display: -webkit-box;
@@ -385,7 +385,7 @@
 
 .notification-time {
     font-size: 0.7rem;
-    color: #9ca3af;
+    color: #4b5563;
     font-weight: 500;
     display: block;
     margin-top: 2px;

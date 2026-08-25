@@ -104,12 +104,12 @@
 
 .settings-nav-desc {
     font-size: 0.76rem;
-    color: #9ca3af;
+    color: #4b5563;
     margin-top: 2px;
 }
 
 .settings-nav-chevron {
-    color: #9ca3af;
+    color: #4b5563;
     margin-left: auto;
     transition: transform 0.2s, color 0.2s;
     flex-shrink: 0;
@@ -164,7 +164,7 @@
     transition: all 0.2s ease;
     font-size: 0.88rem;
     font-weight: 500;
-    color: #6b7280;
+    color: #374151;
     border-top: 1px solid #f3f4f6;
 }
 
@@ -243,7 +243,7 @@
 .settings-support h4 {
     font-size: 0.78rem;
     font-weight: 700;
-    color: #9ca3af;
+    color: #4b5563;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin: 0 0 8px;
@@ -359,7 +359,7 @@
 
 .settings-welcome p {
     font-size: 0.9rem;
-    color: #6b7280;
+    color: #374151;
     max-width: 400px;
     line-height: 1.5;
 }
@@ -425,7 +425,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: #9ca3af;
+    color: #4b5563;
     padding: 4px;
     display: flex;
     align-items: center;
@@ -462,7 +462,7 @@
 
 .form-hint {
     font-size: 0.8rem;
-    color: #9ca3af;
+    color: #4b5563;
     margin-top: 6px;
 }
 
@@ -561,7 +561,7 @@
 
 .settings-btn.outline {
     background: transparent;
-    color: #6b7280;
+    color: #374151;
     border: 1.5px solid #e5e7eb;
 }
 
@@ -888,7 +888,7 @@
 .confirm-modal p {
     text-align: center;
     font-size: 0.9rem;
-    color: #6b7280;
+    color: #374151;
     line-height: 1.6;
     margin-bottom: 24px;
 }
@@ -942,7 +942,7 @@
 
 .profiles-list-empty p {
     font-size: 0.88rem;
-    color: #9ca3af;
+    color: #4b5563;
 }
 
 .profile-list-item {
@@ -1002,7 +1002,7 @@
 
 .profile-list-details {
     font-size: 0.82rem;
-    color: #6b7280;
+    color: #374151;
     line-height: 1.4;
 }
 
@@ -1016,7 +1016,7 @@
     font-weight: 600;
     border: 1.5px solid #e5e7eb;
     background: #fff;
-    color: #6b7280;
+    color: #374151;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
@@ -1080,7 +1080,7 @@
 
 .deactivation-card p {
     font-size: 0.95rem;
-    color: #6b7280;
+    color: #374151;
     line-height: 1.6;
     margin-bottom: 8px;
 }

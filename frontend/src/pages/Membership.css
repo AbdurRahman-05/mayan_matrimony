@@ -35,7 +35,7 @@
 }
 
 .membership-header p {
-    color: #64748b;
+    color: #334155;
     font-size: 1.05rem;
     max-width: 600px;
     margin: 0 auto;
@@ -159,7 +159,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #94a3b8;
+    color: #475569;
     margin-bottom: 1rem;
 }
 
@@ -281,7 +281,7 @@
 }
 
 .plan-card.silver .plan-card-header {
-    background: linear-gradient(135deg, #64748b, #94a3b8);
+    background: linear-gradient(135deg, #334155, #475569);
     color: white;
 }
 
@@ -306,12 +306,12 @@
 }
 
 .plan-card.silver .plan-pay-btn {
-    background: linear-gradient(135deg, #64748b, #94a3b8);
+    background: linear-gradient(135deg, #334155, #475569);
     color: white;
 }
 
 .plan-card.silver:hover {
-    border-color: #64748b;
+    border-color: #334155;
 }
 
 /* ─── Gold Theme ─── */
@@ -449,7 +449,7 @@
 }
 
 .compare-table th:nth-child(3) {
-    background: linear-gradient(135deg, #64748b, #94a3b8);
+    background: linear-gradient(135deg, #334155, #475569);
 }
 
 .compare-table th:nth-child(4) {

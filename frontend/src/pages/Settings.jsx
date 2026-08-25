@@ -329,7 +329,7 @@ const Settings = () => {
                     {profile.photo ? (
                         <img src={profile.photo} alt={profile.fullName} />
                     ) : (
-                        <User size={28} color="#9ca3af" />
+                        <User size={28} color="#4b5563" />
                     )}
                 </div>
                 <div className="profile-list-info">
@@ -717,7 +717,7 @@ const Settings = () => {
                                     ) : ignoredProfiles.length === 0 ? (
                                         <div className="profiles-list-empty">
                                             <div className="profiles-list-empty-icon">
-                                                <UserX size={32} color="#9ca3af" />
+                                                <UserX size={32} color="#4b5563" />
                                             </div>
                                             <h4>No Ignored Profiles</h4>
                                             <p>You haven't ignored any profiles yet.</p>
@@ -751,7 +751,7 @@ const Settings = () => {
                                     ) : blockedProfiles.length === 0 ? (
                                         <div className="profiles-list-empty">
                                             <div className="profiles-list-empty-icon">
-                                                <ShieldOff size={32} color="#9ca3af" />
+                                                <ShieldOff size={32} color="#4b5563" />
                                             </div>
                                             <h4>No Blocked Profiles</h4>
                                             <p>You haven't blocked any profiles yet.</p>

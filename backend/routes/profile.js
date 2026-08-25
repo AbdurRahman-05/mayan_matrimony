@@ -77,34 +77,53 @@ function formatProfile(row, req) {
         organizationName: row.organization_name || '',
         currency: row.currency || 'INR',
         income: row.income || '',
+        extraIncome: row.extra_income || '',
+        propertyType: row.property_type || '',
+        financialStatus: row.financial_status || '',
+        jobDetails: row.job_details || '',
         smoking: row.smoking || '',
         drinking: row.drinking || '',
         diet: row.diet || '',
         foodHabits: row.food_habits || '',
+        bodyType: row.body_type || '',
+        weight: row.weight || '',
         about: row.about || '',
         disability: row.disability || 'None',
         partnerPreference: row.partner_preference || '',
         familyType: row.family_type || '',
         familyStatus: row.family_status || '',
         familyIncome: row.family_income || '',
+        fatherName: row.father_name || '',
+        fatherStatus: row.father_status || '',
         fatherOccupation: row.father_occupation || '',
+        motherName: row.mother_name || '',
+        motherStatus: row.mother_status || '',
         motherOccupation: row.mother_occupation || '',
-        numberOfBrothers: row.brothers || '',
-        brothers: row.brothers || '',
-        brothersMarried: row.brothers_married || '',
-        marriedBrothers: row.brothers_married || '',
-        numberOfSisters: row.sisters || '',
-        sisters: row.sisters || '',
-        sistersMarried: row.sisters_married || '',
-        marriedSisters: row.sisters_married || '',
+        elderBrother: row.elder_brother || '0',
+        marriedElderBrother: row.married_elder_brother || '0',
+        youngerBrother: row.younger_brother || '0',
+        marriedYoungerBrother: row.married_younger_brother || '0',
+        elderSister: row.elder_sister || '0',
+        marriedElderSister: row.married_elder_sister || '0',
+        youngerSister: row.younger_sister || '0',
+        marriedYoungerSister: row.married_younger_sister || '0',
         familyLivingIn: row.family_living_in || '',
         familyCountry: row.family_country || '',
         familyState: row.family_state || '',
         familyCity: row.family_city || '',
         livingWithParents: row.living_with_parents || '',
         contactAddress: row.contact_address || '',
+        temporaryAddress: row.temporary_address || '',
+        permanentAddress: row.permanent_address || '',
+        nationality: row.nationality || '',
+        workingCountry: row.working_country || '',
+        visaStatus: row.visa_status || '',
+        willingToMarryOtherCaste: row.willing_to_marry_other_caste || 'No',
         settlingAbroad: row.settling_abroad || '',
         photo: processPhoto(row.photo),
+        aadharNumber: row.aadhar_number || '',
+        communityCertificate: row.community_certificate || '',
+        birthCertificate: row.birth_certificate || '',
         profileFor: row.profile_for || 'Self',
         additionalPhotos: [],
         createdAt: row.created_at
@@ -267,70 +286,70 @@ router.put('/', auth, async (req, res) => {
             rawPhoto = val(rawPhoto);
         }
 
-const parseDobInput = (data, curr) => {
-    const monthsArray = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    const monthsMap = {
-        jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
-        may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8, sep: 9, september: 9,
-        oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12
-    };
+        const parseDobInput = (data, curr) => {
+            const monthsArray = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const monthsMap = {
+                jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
+                may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8, sep: 9, september: 9,
+                oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12
+            };
 
-    const rawDob = data.dob !== undefined ? data.dob : null;
-    if (rawDob && String(rawDob).trim() !== '' && String(rawDob).trim() !== 'null' && String(rawDob).trim() !== 'Not Specified') {
-        const str = String(rawDob).trim();
-        const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-        if (match) {
-            const y = parseInt(match[1], 10);
-            const m = parseInt(match[2], 10);
-            const d = parseInt(match[3], 10);
-            if (y > 1900 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-                return {
-                    dob: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
-                    dobDay: String(d),
-                    dobMonth: monthsArray[m - 1] || String(m),
-                    dobYear: String(y)
-                };
+            const rawDob = data.dob !== undefined ? data.dob : null;
+            if (rawDob && String(rawDob).trim() !== '' && String(rawDob).trim() !== 'null' && String(rawDob).trim() !== 'Not Specified') {
+                const str = String(rawDob).trim();
+                const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+                if (match) {
+                    const y = parseInt(match[1], 10);
+                    const m = parseInt(match[2], 10);
+                    const d = parseInt(match[3], 10);
+                    if (y > 1900 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                        return {
+                            dob: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+                            dobDay: String(d),
+                            dobMonth: monthsArray[m - 1] || String(m),
+                            dobYear: String(y)
+                        };
+                    }
+                }
             }
-        }
-    }
 
-    if (data.dobDay && data.dobMonth && data.dobYear && String(data.dobDay) !== 'Not Specified') {
-        const y = parseInt(data.dobYear, 10);
-        const m = monthsMap[String(data.dobMonth).trim().toLowerCase()] || parseInt(data.dobMonth, 10) || 1;
-        const d = parseInt(data.dobDay, 10);
-        if (y > 1900 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+            if (data.dobDay && data.dobMonth && data.dobYear && String(data.dobDay) !== 'Not Specified') {
+                const y = parseInt(data.dobYear, 10);
+                const m = monthsMap[String(data.dobMonth).trim().toLowerCase()] || parseInt(data.dobMonth, 10) || 1;
+                const d = parseInt(data.dobDay, 10);
+                if (y > 1900 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                    return {
+                        dob: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+                        dobDay: String(d),
+                        dobMonth: monthsArray[m - 1] || String(m),
+                        dobYear: String(y)
+                    };
+                }
+            }
+
+            if (curr.dob) {
+                const str = safeFormatDob(curr.dob);
+                const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (match) {
+                    const y = parseInt(match[1], 10);
+                    const m = parseInt(match[2], 10);
+                    const d = parseInt(match[3], 10);
+                    return {
+                        dob: str,
+                        dobDay: curr.dob_day || String(d),
+                        dobMonth: curr.dob_month || monthsArray[m - 1] || String(m),
+                        dobYear: curr.dob_year || String(y)
+                    };
+                }
+            }
+
             return {
-                dob: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
-                dobDay: String(d),
-                dobMonth: monthsArray[m - 1] || String(m),
-                dobYear: String(y)
+                dob: safeFormatDob(curr.dob),
+                dobDay: curr.dob_day || null,
+                dobMonth: curr.dob_month || null,
+                dobYear: curr.dob_year || null
             };
-        }
-    }
-
-    if (curr.dob) {
-        const str = safeFormatDob(curr.dob);
-        const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (match) {
-            const y = parseInt(match[1], 10);
-            const m = parseInt(match[2], 10);
-            const d = parseInt(match[3], 10);
-            return {
-                dob: str,
-                dobDay: curr.dob_day || String(d),
-                dobMonth: curr.dob_month || monthsArray[m - 1] || String(m),
-                dobYear: curr.dob_year || String(y)
-            };
-        }
-    }
-
-    return {
-        dob: safeFormatDob(curr.dob),
-        dobDay: curr.dob_day || null,
-        dobMonth: curr.dob_month || null,
-        dobYear: curr.dob_year || null
-    };
-};
+        };
 
         const parsedDob = parseDobInput(data, curr);
 
@@ -366,22 +385,36 @@ const parseDobInput = (data, curr) => {
         organization_name = ${val(data.organizationName !== undefined ? data.organizationName : curr.organization_name)},
         currency = ${val(data.currency !== undefined ? data.currency : curr.currency)},
         income = ${val(data.income !== undefined ? data.income : curr.income)},
+        extra_income = ${val(data.extraIncome !== undefined ? data.extraIncome : curr.extra_income)},
+        property_type = ${val(data.propertyType !== undefined ? data.propertyType : curr.property_type)},
+        financial_status = ${val(data.financialStatus !== undefined ? data.financialStatus : curr.financial_status)},
+        job_details = ${val(data.jobDetails !== undefined ? data.jobDetails : curr.job_details)},
         smoking = ${val(data.smoking !== undefined ? data.smoking : curr.smoking)},
         drinking = ${val(data.drinking !== undefined ? data.drinking : curr.drinking)},
         diet = ${val(data.diet !== undefined ? data.diet : curr.diet)},
         food_habits = ${val(data.foodHabits !== undefined ? data.foodHabits : curr.food_habits)},
+        body_type = ${val(data.bodyType !== undefined ? data.bodyType : curr.body_type)},
+        weight = ${val(data.weight !== undefined ? data.weight : curr.weight)},
         about = ${val(data.about !== undefined ? data.about : curr.about)},
         disability = ${val(data.disability !== undefined ? data.disability : curr.disability)},
         partner_preference = ${val(data.partnerPreference !== undefined ? data.partnerPreference : curr.partner_preference)},
         family_type = ${val(data.familyType !== undefined ? data.familyType : curr.family_type)},
         family_status = ${val(data.familyStatus !== undefined ? data.familyStatus : curr.family_status)},
         family_income = ${val(data.familyIncome !== undefined ? data.familyIncome : curr.family_income)},
+        father_name = ${val(data.fatherName !== undefined ? data.fatherName : curr.father_name)},
+        father_status = ${val(data.fatherStatus !== undefined ? data.fatherStatus : curr.father_status)},
         father_occupation = ${val(data.fatherOccupation !== undefined ? data.fatherOccupation : curr.father_occupation)},
+        mother_name = ${val(data.motherName !== undefined ? data.motherName : curr.mother_name)},
+        mother_status = ${val(data.motherStatus !== undefined ? data.motherStatus : curr.mother_status)},
         mother_occupation = ${val(data.motherOccupation !== undefined ? data.motherOccupation : curr.mother_occupation)},
-        brothers = ${val(data.numberOfBrothers !== undefined ? data.numberOfBrothers : (data.brothers !== undefined ? data.brothers : curr.brothers))},
-        brothers_married = ${val(data.marriedBrothers !== undefined ? data.marriedBrothers : (data.brothersMarried !== undefined ? data.brothersMarried : curr.brothers_married))},
-        sisters = ${val(data.numberOfSisters !== undefined ? data.numberOfSisters : (data.sisters !== undefined ? data.sisters : curr.sisters))},
-        sisters_married = ${val(data.marriedSisters !== undefined ? data.marriedSisters : (data.sistersMarried !== undefined ? data.sistersMarried : curr.sisters_married))},
+        elder_brother = ${val(data.elderBrother !== undefined ? data.elderBrother : curr.elder_brother)},
+        married_elder_brother = ${val(data.marriedElderBrother !== undefined ? data.marriedElderBrother : curr.married_elder_brother)},
+        younger_brother = ${val(data.youngerBrother !== undefined ? data.youngerBrother : curr.younger_brother)},
+        married_younger_brother = ${val(data.marriedYoungerBrother !== undefined ? data.marriedYoungerBrother : curr.married_younger_brother)},
+        elder_sister = ${val(data.elderSister !== undefined ? data.elderSister : curr.elder_sister)},
+        married_elder_sister = ${val(data.marriedElderSister !== undefined ? data.marriedElderSister : curr.married_elder_sister)},
+        younger_sister = ${val(data.youngerSister !== undefined ? data.youngerSister : curr.younger_sister)},
+        married_younger_sister = ${val(data.marriedYoungerSister !== undefined ? data.marriedYoungerSister : curr.married_younger_sister)},
         family_living_in = ${val(data.familyLivingIn !== undefined ? data.familyLivingIn : curr.family_living_in)},
         family_country = ${val(data.familyCountry !== undefined ? data.familyCountry : curr.family_country)},
         family_state = ${val(data.familyState !== undefined ? data.familyState : curr.family_state)},
@@ -391,6 +424,15 @@ const parseDobInput = (data, curr) => {
         settling_abroad = ${val(data.settlingAbroad !== undefined ? data.settlingAbroad : curr.settling_abroad)},
         contact_mobile = ${val(data.mobile !== undefined ? data.mobile : curr.contact_mobile)},
         alternate_mobile = ${val(data.alternateMobile !== undefined ? data.alternateMobile : curr.alternate_mobile)},
+        aadhar_number = ${val(data.aadharNumber !== undefined ? data.aadharNumber : curr.aadhar_number)},
+        community_certificate = ${val(data.communityCertificate !== undefined ? data.communityCertificate : curr.community_certificate)},
+        birth_certificate = ${val(data.birthCertificate !== undefined ? data.birthCertificate : curr.birth_certificate)},
+        temporary_address = ${val(data.temporaryAddress !== undefined ? data.temporaryAddress : curr.temporary_address)},
+        permanent_address = ${val(data.permanentAddress !== undefined ? data.permanentAddress : curr.permanent_address)},
+        nationality = ${val(data.nationality !== undefined ? data.nationality : curr.nationality)},
+        working_country = ${val(data.workingCountry !== undefined ? data.workingCountry : curr.working_country)},
+        visa_status = ${val(data.visaStatus !== undefined ? data.visaStatus : curr.visa_status)},
+        willing_to_marry_other_caste = ${val(data.willingToMarryOtherCaste !== undefined ? data.willingToMarryOtherCaste : curr.willing_to_marry_other_caste)},
         photo = ${val(rawPhoto)},
         updated_at = CURRENT_TIMESTAMP
       WHERE user_id = ${req.user.id}

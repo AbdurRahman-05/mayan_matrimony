@@ -193,7 +193,7 @@ const PartnerEducationEditor = ({ initialData, onSave, onClose }) => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <Search size={18} color="#9ca3af" />
+                            <Search size={18} color="#4b5563" />
                         </div>
                     </div>
 
@@ -373,7 +373,7 @@ const PartnerEducationEditor = ({ initialData, onSave, onClose }) => {
                         <label>Partner's Highest Degree</label>
                         <div className="peoe-value-display peoe-clickable" onClick={() => setActiveModal('education')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>{formatDegreeDisplay()}</span>
-                            <ChevronLeft size={18} color="#9ca3af" style={{ transform: 'rotate(-90deg)' }} />
+                            <ChevronLeft size={18} color="#4b5563" style={{ transform: 'rotate(-90deg)' }} />
                         </div>
                     </div>
 
@@ -382,7 +382,7 @@ const PartnerEducationEditor = ({ initialData, onSave, onClose }) => {
                         <label>Partner's Employment Type</label>
                         <div className="peoe-value-display peoe-clickable" onClick={() => setActiveModal('employment')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>{formatEmploymentDisplay()}</span>
-                            <ChevronLeft size={18} color="#9ca3af" style={{ transform: 'rotate(-90deg)' }} />
+                            <ChevronLeft size={18} color="#4b5563" style={{ transform: 'rotate(-90deg)' }} />
                         </div>
                     </div>
 
@@ -391,7 +391,7 @@ const PartnerEducationEditor = ({ initialData, onSave, onClose }) => {
                         <label>Partner's Occupation</label>
                         <div className="peoe-value-display peoe-clickable" onClick={() => setActiveModal('occupation')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>{formatOccupationDisplay()}</span>
-                            <ChevronLeft size={18} color="#9ca3af" style={{ transform: 'rotate(-90deg)' }} />
+                            <ChevronLeft size={18} color="#4b5563" style={{ transform: 'rotate(-90deg)' }} />
                         </div>
                     </div>
 
@@ -400,7 +400,7 @@ const PartnerEducationEditor = ({ initialData, onSave, onClose }) => {
                         <label>Annual Income</label>
                         <div className="peoe-value-display peoe-clickable" onClick={() => setActiveModal('income')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>{formatIncomeDisplay()}</span>
-                            <ChevronLeft size={18} color="#9ca3af" style={{ transform: 'rotate(-90deg)' }} />
+                            <ChevronLeft size={18} color="#4b5563" style={{ transform: 'rotate(-90deg)' }} />
                         </div>
                     </div>
 

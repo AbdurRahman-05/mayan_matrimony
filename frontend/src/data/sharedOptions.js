@@ -53,7 +53,15 @@ export const occupations = ["Software Professional", "Manager", "Engineer", "Doc
 
 export const currencies = ["INR", "USD", "EUR", "GBP", "AED", "SGD", "MYR", "LKR"];
 
-export const languages = ["Tamil", "English", "Telugu", "Malayalam", "Kannada", "Hindi", "Marathi", "Bengali", "Gujarati", "Urdu", "Punjabi", "Odia"];
+export const languages = [
+    "Tamil", "Telugu", "Malayalam", "Kannada", "Hindi", "English", "Bengali", "Marathi", "Gujarati", "Punjabi",
+    "Urdu", "Odia", "Assamese", "Konkani", "Sindhi", "Kashmiri", "Nepali", "Sanskrit", "Maithili", "Bhojpuri",
+    "Rajasthani", "Marwari", "Haryanvi", "Bihari", "Chhattisgarhi", "Jharkhandi", "Garhwali", "Kumaoni", "Manipuri",
+    "Meitei", "Mizo", "Naga", "Tripuri", "Khasi", "Garo", "Tulu", "Kodava", "Coorgi", "Saurashtra", "Brahui", "Bodo",
+    "Santhali", "Santali", "Kokborok", "Dogri", "Awadhi", "Magahi", "Magadhi", "Kutchi", "Bhili", "Gondi", "Ho",
+    "Munda", "Oraon", "Kurukh", "Korku", "Toda", "Irula", "Badaga", "Lambadi", "Lambani", "Banjari", "Banjara",
+    "Dakhini", "Dhundhari", "Harauti", "Malvi", "Nimadi", "Bundeli", "Bagheli", "Braj", "Himachali", "Pahari", "Other"
+];
 
 export const incomes = [
     "No Income", "Rs. 0 - 1 Lakh", "Rs. 1 - 2 Lakh", "Rs. 2 - 3 Lakh",
@@ -70,9 +78,15 @@ export const smokingOptions = ['No', 'Occasionally', 'Yes', 'Regularly'];
 
 export const drinkingOptions = ['No', 'Occasionally', 'Yes', 'Regularly'];
 
+export const bodyTypeOptions = ['Slim', 'Slim & Fit', 'Lean', 'Athletic', 'Fit', 'Average', 'Medium', 'Muscular', 'Toned', 'Broad', 'Stocky', 'Heavy', 'Curvy', 'Plus Size', 'Chubby', 'Voluptuous', 'Other', 'Prefer Not to Say'];
+
 export const familyTypeOptions = ['Joint Family', 'Nuclear Family', 'Others'];
 
 export const familyStatusOptions = ["Rich/Affluent", "Upper Middle Class", "Middle Class"];
+
+export const financialStatusOptions = ["Rich", "Upper Middle Class", "Middle Class", "Lower Middle Class"];
+
+export const propertyTypeOptions = ["Own House", "Rented House", "Living with Parents", "Other"];
 
 export const familyValuesOptions = ["Orthodox", "Traditional", "Moderate", "Liberal"];
 

@@ -152,7 +152,7 @@
 }
 
 .peoe-chip:not(.selected) .lucide {
-    color: #9ca3af;
+    color: #4b5563;
 }
 
 /* Suggested chips */
@@ -354,7 +354,7 @@
 }
 
 .peoe-search-bar input::placeholder {
-    color: #9ca3af;
+    color: #4b5563;
 }
 
 .peoe-modal-body {
@@ -386,7 +386,7 @@
     width: 20px;
     height: 20px;
     min-width: 20px;
-    border: 2px solid #9ca3af;
+    border: 2px solid #4b5563;
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -405,7 +405,7 @@
     width: 22px;
     height: 22px;
     min-width: 22px;
-    border: 1px solid #9ca3af;
+    border: 1px solid #4b5563;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -446,7 +446,7 @@
 }
 
 .peoe-search-bar-outlined input::placeholder {
-    color: #9ca3af;
+    color: #4b5563;
 }
 
 .peoe-modal-footer {

@@ -289,7 +289,7 @@ const PartnerBasicDetailsEditor = ({ initialData, onSave, onClose }) => {
                         <label>Partner's Country</label>
                         <div className="pbde-value-display pbde-clickable" onClick={() => setActiveModal('country')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>{form.prefCountry || "Doesn't Matter"}</span>
-                            <ChevronLeft size={18} color="#9ca3af" style={{ transform: 'rotate(-90deg)' }} />
+                            <ChevronLeft size={18} color="#4b5563" style={{ transform: 'rotate(-90deg)' }} />
                         </div>
                     </div>
 
@@ -299,7 +299,7 @@ const PartnerBasicDetailsEditor = ({ initialData, onSave, onClose }) => {
                             <label>Partner's State</label>
                             <div className="pbde-value-display pbde-clickable" onClick={() => setActiveModal('state')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span>{form.prefState || "Doesn't Matter"}</span>
-                                <ChevronLeft size={18} color="#9ca3af" style={{ transform: 'rotate(-90deg)' }} />
+                                <ChevronLeft size={18} color="#4b5563" style={{ transform: 'rotate(-90deg)' }} />
                             </div>
                         </div>
                     )}
@@ -310,7 +310,7 @@ const PartnerBasicDetailsEditor = ({ initialData, onSave, onClose }) => {
                             <label>Partner's City</label>
                             <div className="pbde-value-display pbde-clickable" onClick={() => setActiveModal('city')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span>{form.prefCity || "Doesn't Matter"}</span>
-                                <ChevronLeft size={18} color="#9ca3af" style={{ transform: 'rotate(-90deg)' }} />
+                                <ChevronLeft size={18} color="#4b5563" style={{ transform: 'rotate(-90deg)' }} />
                             </div>
                         </div>
                     )}

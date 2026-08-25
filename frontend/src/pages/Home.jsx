@@ -211,7 +211,7 @@ const Home = () => {
                   }}
                 />
                 <div style={{ display: profileData.photo ? 'none' : 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                  <User size={50} color="#9ca3af" />
+                  <User size={50} color="#4b5563" />
                 </div>
               </div>
               <button

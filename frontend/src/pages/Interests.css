@@ -117,7 +117,7 @@
 }
 
 .interests-content::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #475569;
 }
 
 .content-header h2 {
@@ -268,7 +268,7 @@
 }
 
 .match-results-list::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #475569;
 }
 
 .match-card {
@@ -369,7 +369,7 @@
 }
 
 .detail-item svg {
-    color: #94a3b8;
+    color: #475569;
 }
 
 .match-card-footer {

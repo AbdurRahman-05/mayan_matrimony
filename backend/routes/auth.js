@@ -477,11 +477,14 @@ router.post('/register', async (req, res) => {
             dob, dobDay, dobMonth, dobYear, motherTongue, height, physicalStatus,
             maritalStatus, religion, sect, caste, country, state, city,
             education, employmentType, occupation, currency, income,
-            horoscope, timeOfBirth, placeOfBirth, diet, smoking, drinking,
-            familyType, fatherOccupation, motherOccupation,
-            brothers, brothersMarried, sisters, sistersMarried,
+            extraIncome, propertyType, financialStatus, jobDetails,
+            horoscope, timeOfBirth, placeOfBirth, diet, bodyType, weight, smoking, drinking,
+            familyType, fatherName, fatherStatus, fatherOccupation, motherName, motherStatus, motherOccupation,
+            elderBrother, marriedElderBrother, youngerBrother, marriedYoungerBrother, elderSister, marriedElderSister, youngerSister, marriedYoungerSister,
             familyLivingIn, contactAddress, havingChildren, numberOfChildren,
             residentialStatus, partnerPreference, about, photo,
+            aadharNumber, communityCertificate, birthCertificate,
+            temporaryAddress, permanentAddress, nationality, workingCountry, visaStatus, willingToMarryOtherCaste,
             uniqueId: requestedUniqueId
         } = req.body;
 
@@ -538,10 +541,13 @@ router.post('/register', async (req, res) => {
         horoscope, time_of_birth, place_of_birth,
         country, state, city, residential_status,
         education, employment_type, occupation, currency, income,
-        smoking, drinking, diet, about, partner_preference,
-        family_type, father_occupation, mother_occupation,
-        brothers, brothers_married, sisters, sisters_married,
-        family_living_in, contact_address, photo
+        extra_income, property_type, financial_status, job_details,
+        smoking, drinking, diet, body_type, weight, about, partner_preference,
+        family_type, father_name, father_status, father_occupation, mother_name, mother_status, mother_occupation,
+        elder_brother, married_elder_brother, younger_brother, married_younger_brother,
+        elder_sister, married_elder_sister, younger_sister, married_younger_sister,
+        family_living_in, contact_address, photo, aadhar_number, community_certificate, birth_certificate,
+        temporary_address, permanent_address, nationality, working_country, visa_status, willing_to_marry_other_caste
       ) VALUES (
         ${user.id}, ${fullName || null}, ${finalGender || null},
         ${dob || null}, ${dobDay || null}, ${dobMonth || null}, ${dobYear || null},
@@ -553,12 +559,15 @@ router.post('/register', async (req, res) => {
         ${country || null}, ${state || null}, ${city || null}, ${residentialStatus || null},
         ${education || null}, ${employmentType || null}, ${occupation || null},
         ${currency || 'INR'}, ${income || null},
-        ${smoking || null}, ${drinking || null}, ${diet || null},
+        ${extraIncome || null}, ${propertyType || null}, ${financialStatus || null}, ${jobDetails || null},
+        ${smoking || null}, ${drinking || null}, ${diet || null}, ${bodyType || null}, ${weight || null},
         ${about || null}, ${partnerPreference || null},
-        ${familyType || null}, ${fatherOccupation || null}, ${motherOccupation || null},
-        ${brothers || null}, ${brothersMarried || null},
-        ${sisters || null}, ${sistersMarried || null},
-        ${familyLivingIn || null}, ${contactAddress || null}, ${photo || null}
+        ${familyType || null}, ${fatherName || null}, ${fatherStatus || null}, ${fatherOccupation || null}, ${motherName || null}, ${motherStatus || null}, ${motherOccupation || null},
+        ${elderBrother || null}, ${marriedElderBrother || null}, ${youngerBrother || null}, ${marriedYoungerBrother || null},
+        ${elderSister || null}, ${marriedElderSister || null}, ${youngerSister || null}, ${marriedYoungerSister || null},
+        ${familyLivingIn || null}, ${contactAddress || null}, ${photo || null},
+        ${aadharNumber || null}, ${communityCertificate || null}, ${birthCertificate || null},
+        ${temporaryAddress || null}, ${permanentAddress || null}, ${nationality || null}, ${workingCountry || null}, ${visaStatus || null}, ${willingToMarryOtherCaste || 'No'}
       )
     `;
 
@@ -610,7 +619,7 @@ router.post('/login', async (req, res) => {
 
         // Find user by email or mobile
         const users = await sql`
-      SELECT u.*, p.full_name, p.dob, p.dob_day, p.dob_month, p.dob_year, p.photo, p.about, p.religion, p.mother_tongue, p.height, p.education, p.occupation, p.city, p.state, p.country, p.family_type, p.father_occupation, p.mother_occupation, p.brothers, p.sisters
+      SELECT u.*, p.full_name, p.dob, p.dob_day, p.dob_month, p.dob_year, p.photo, p.about, p.religion, p.mother_tongue, p.height, p.education, p.occupation, p.city, p.state, p.country, p.family_type, p.father_name, p.father_status, p.father_occupation, p.mother_name, p.mother_status, p.mother_occupation, p.elder_brother, p.younger_brother, p.elder_sister, p.younger_sister
       FROM users u
       LEFT JOIN profiles p ON p.user_id = u.id
       WHERE u.email = ${username} OR u.mobile = ${username} OR u.unique_id = ${username}
@@ -683,10 +692,16 @@ router.post('/login', async (req, res) => {
                 state: user.state || '',
                 country: user.country || '',
                 familyType: user.family_type || '',
+                fatherName: user.father_name || '',
+                fatherStatus: user.father_status || '',
                 fatherOccupation: user.father_occupation || '',
+                motherName: user.mother_name || '',
+                motherStatus: user.mother_status || '',
                 motherOccupation: user.mother_occupation || '',
-                brothers: user.brothers || '',
-                sisters: user.sisters || ''
+                elderBrother: user.elder_brother || '0',
+                youngerBrother: user.younger_brother || '0',
+                elderSister: user.elder_sister || '0',
+                youngerSister: user.younger_sister || '0'
             }
         });
     } catch (error) {
@@ -930,7 +945,7 @@ router.post('/reset-password', async (req, res) => {
                 const url = `https://cpaas.messagecentral.com/verification/v3/validateOtp?countryCode=91&customerId=${customerId}&mobileNumber=${value}&verificationId=${stored.verificationId}&code=${otp}`;
 
                 const response = await axios.get(url, { headers: { authToken: token } });
-                
+
                 if (!(response.data && response.data.responseCode == 200)) {
                     return res.status(400).json({ error: 'Incorrect or expired OTP' });
                 }

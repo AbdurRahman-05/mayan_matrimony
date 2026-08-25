@@ -106,7 +106,7 @@
     height: 40px;
     border-radius: 50%;
     background: #e5e7eb;
-    color: #6b7280;
+    color: #374151;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -315,7 +315,7 @@
 
 .divider {
     font-size: 0.9rem;
-    color: #9ca3af;
+    color: #4b5563;
     font-weight: 600;
     position: relative;
     padding: 0 1rem;
@@ -437,16 +437,16 @@
     left: 0;
     width: 100%;
     z-index: 1000;
-    background: #ffffff;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 100%);
+    box-shadow: none;
     overflow: visible;
     transition: all 0.3s ease;
 }
 
 .landing-navbar.scrolled {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(18px);
-    box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .landing-navbar-inner {
@@ -459,10 +459,11 @@
 }
 
 .landing-navbar-logo img {
-    width: 150px;
+    width: 140px;
     height: auto;
     display: block;
     object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
 }
 
 .landing-navbar-actions {
@@ -473,23 +474,25 @@
 }
 
 .landing-nav-login {
-    color: #1a1a2e;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 1rem;
-    background: transparent;
+    background: linear-gradient(135deg, #d4af37, #c49a2f);
+    color: #ffffff;
     border: none;
-    cursor: pointer;
-    padding: 8px 18px;
+    padding: 10px 24px;
     border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
     font-family: 'Inter', sans-serif;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
     white-space: nowrap;
 }
 
 .landing-nav-login:hover {
-    color: #d4af37;
-    background: rgba(212, 175, 55, 0.06);
+    background: linear-gradient(135deg, #c49a2f, #b08928);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.4);
+    color: #ffffff;
 }
 
 .landing-nav-register {
@@ -517,17 +520,19 @@
 .ts-hero-section {
     position: relative;
     height: 100vh;
+    height: 100dvh;
     min-height: 500px;
+    background-color: #33380f;
     background-image: url('/couple_hero.jpg');
     background-size: cover;
-    background-position: center 15%;
+    background-position: center 35px;
     background-repeat: no-repeat;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
     text-align: left;
-    padding-top: 100px;
+    padding-top: 80px;
 }
 
 .ts-hero-overlay {
@@ -536,7 +541,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.55) 100%);
     z-index: 1;
 }
 
@@ -846,7 +851,7 @@
     display: flex;
     align-items: center;
     padding: 0 20px;
-    color: #94a3b8;
+    color: #475569;
     font-size: 0.85rem;
     position: relative;
 }
@@ -1286,7 +1291,9 @@
         height: 100vh;
         height: 100dvh;
         min-height: 480px;
-        background-position: 85% center;
+        background-color: #33380f;
+        background-position: center 38px;
+        background-size: cover;
         padding-top: 80px;
         display: flex;
         align-items: center;
@@ -1529,7 +1536,9 @@
         height: 100vh;
         height: 100dvh;
         min-height: 400px;
-        background-position: 87% center;
+        background-color: #33380f;
+        background-position: center 42px;
+        background-size: cover;
         padding-top: 75px;
         display: flex;
         align-items: center;
@@ -1786,7 +1795,9 @@
         height: 100vh;
         height: 100dvh;
         min-height: 350px;
-        background-position: 90% center;
+        background-color: #33380f;
+        background-position: center 44px;
+        background-size: cover;
         padding-top: 70px;
         display: flex;
         align-items: center;

@@ -9,9 +9,9 @@
   /* Deep Midnight Blue */
   --accent: #D4AF37;
   /* Logo Gold */
-  --text-main: #1f2937;
-  --text-light: #6b7280;
-  --bg-light: #f9fafb;
+  --text-main: #0f172a;
+  --text-light: #374151;
+  --bg-light: #f8fafc;
   --bg-gradient: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%);
   /* Soft sunrise */
   --dark-bg-gradient: linear-gradient(135deg, #1a1c2c 0%, #1e1e1e 100%);
@@ -94,6 +94,8 @@ body {
   background: var(--bg-light);
   color: var(--text-main);
   line-height: 1.6;
+  text-align: left;
+  letter-spacing: 0.01em;
   overflow-x: hidden;
 }
 
@@ -202,4 +204,27 @@ h6 {
   -webkit-text-fill-color: transparent;
 }
 
+
 /* Clean custom scrollbar removed to default to native, premium system scrollbar navigation */
+
+/* App-Wide Typography Hierarchy */
+h1, .page-title, .screen-title { font-weight: 700 !important; } /* Main Page Titles */
+h2, .section-heading, .pv-tab { font-weight: 700 !important; } /* Section Headings */
+h3, .important-heading, .question-text { font-weight: 700 !important; } /* Important Headings */
+.selected-value, .bd-value, .jv-input[value]:not([value=""]), .jv-input, .ss-selected-text { font-weight: 600 !important; } /* Selected Field Values */
+.profile-name, .pv-name, .dash-user-name { font-weight: 600 !important; } /* Profile Names */
+.card-title { font-weight: 600 !important; } /* Card Titles */
+button, .btn, .jv-submit-btn, .bd-save-btn, .pv-back-btn, .ss-back-btn { font-weight: 600 !important; } /* Button Text */
+.nav-label, .menu-item, .footer-link { font-weight: 600 !important; } /* Navigation Labels */
+label, .field-label, .jv-label, .bd-label, .jv-input-group label { font-weight: 400 !important; } /* Field Labels */
+::placeholder, .placeholder-text { font-weight: 400 !important; } /* Placeholder Text */
+p, .body-text { font-weight: 400 !important; } /* Normal Body Text */
+.description, .supporting-text, .bd-subtitle { font-weight: 400 !important; } /* Description / Supporting Text */
+.optional-text, .jv-optional-note { font-weight: 400 !important; } /* Optional Text */
+.secondary-text, .pv-row span { font-weight: 400 !important; } /* Secondary Text */
+option, .dropdown-option, .ss-option { font-weight: 500 !important; } /* Dropdown Options */
+.checkbox-text, .radio-text, .jv-checkbox-label, .ss-modal-option { font-weight: 500 !important; } /* Checkbox / Radio Option Text */
+.important-contact, .contact-detail strong { font-weight: 700 !important; } /* Important Contact Information */
+.number, .stat-value, .stat-number, .pv-row strong { font-weight: 600 !important; } /* Numbers / Key Statistics */
+.error-text, .validation-error, .jv-form-row p { font-weight: 500 !important; } /* Error / Validation Text */
+.success-text, .status-active { font-weight: 500 !important; } /* Success / Status Text */

@@ -205,7 +205,7 @@ const PartnerReligionEditor = ({ initialData, onSave, onCancel }) => {
                                     {sel} <button onClick={() => toggleItem(fieldKey, sel)}><X size={12} /></button>
                                 </div>
                             ))}
-                            {arr.length > 3 && <span style={{ fontSize: '0.85rem', color: '#64748b', alignSelf: 'center' }}>+{arr.length - 3} More</span>}
+                            {arr.length > 3 && <span style={{ fontSize: '0.85rem', color: '#334155', alignSelf: 'center' }}>+{arr.length - 3} More</span>}
                         </div>
                     )}
 
@@ -218,7 +218,7 @@ const PartnerReligionEditor = ({ initialData, onSave, onCancel }) => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <Search size={18} color="#9ca3af" />
+                            <Search size={18} color="#4b5563" />
                         </div>
                     )}
 

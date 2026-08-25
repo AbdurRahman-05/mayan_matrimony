@@ -5,7 +5,8 @@ import Footer from '../components/Footer';
 import { Search as SearchIcon, User, Heart, Bookmark, Loader2, MapPin, Briefcase, GraduationCap, Sparkles, Star, X, MessageCircle, Languages, Clock, MoreVertical } from 'lucide-react';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import { showAlert, showConfirm } from '../components/GlobalModal';
-import { countryStateCityMap } from '../data/locationData';
+import { countryStateCityMap, getCastes, getSects } from '../data/locationData';
+import { languages } from '../data/sharedOptions';
 import { searchProfiles, searchProfileById, sendInterest, shortlistProfile, ignoreProfile, getSentInterests, getShortlistedProfiles, globalCache, getMediaUrl } from '../services/api';
 import './Search.css';
 import './Matches.css';
@@ -76,28 +77,19 @@ const Search = () => {
         setCriteria(prev => ({ ...prev, religion: value, section: [], caste: [] }));
     };
 
-    const religionCasteMap = {
-        'Hindu': ['Brahmin', 'Gounder', 'Vanniyar', 'Thevar', 'Nadar', 'Chettiar', 'Yadav', 'Mudaliar', 'Naidu', 'Pillai', 'Reddy', 'Viswakarma', 'SC/ST', 'Caste No Bar'],
-        'Muslim': ['Sunni', 'Shia', 'Pathan', 'Syed', 'Sheikh', 'Lebbai', 'Maraicar', 'Rowther', 'Mapila', 'Caste No Bar'],
-        'Christian': ['Roman Catholic', 'Protestant', 'Pentecost', 'CSI', 'Latin Catholic', 'Syrian Catholic', 'Caste No Bar'],
-        'Sikh': ['Jat', 'Ramgarhia', 'Ramdasia', 'Arora', 'Khatri', 'Caste No Bar'],
-        'Jain': ['Shwetamber', 'Digamber', 'Caste No Bar'],
-        'Buddhist': ['Neo Buddhist', 'Caste No Bar'],
-        'Inter-Religion': ['Caste No Bar']
-    };
+    const sectionOptionsForReligion = getSects(criteria.religion);
 
-    const religionSectionMap = {
-        'Hindu': ['Saiva', 'Vaishnava', 'Smartha', 'Srivaishnava', 'Others'],
-        'Muslim': ['Sunni', 'Shia', 'Others'],
-        'Christian': ['Catholic', 'Protestant', 'Orthodox', 'Others'],
-        'Sikh': ['Others'],
-        'Jain': ['Others'],
-        'Buddhist': ['Others'],
-        'Inter-Religion': ['Others']
-    };
-
-    const casteOptionsForReligion = criteria.religion ? (religionCasteMap[criteria.religion] || []) : [];
-    const sectionOptionsForReligion = criteria.religion ? (religionSectionMap[criteria.religion] || []) : [];
+    // Support multi-select section for Search
+    let casteOptionsForReligion = [];
+    if (criteria.religion === 'Hindu' && criteria.section && criteria.section.length > 0) {
+        criteria.section.forEach(sec => {
+            const castes = getCastes(criteria.religion, sec);
+            casteOptionsForReligion = [...casteOptionsForReligion, ...castes];
+        });
+        casteOptionsForReligion = [...new Set(casteOptionsForReligion)].sort();
+    } else {
+        casteOptionsForReligion = getCastes(criteria.religion);
+    }
 
     const allCountries = Object.keys(countryStateCityMap);
 
@@ -145,7 +137,7 @@ const Search = () => {
         profileCreatedBy: ['Self', 'Parents', 'Sibling', 'Friend', 'Relative', 'Others'],
         maritalStatus: ['Never Married', 'Divorced', 'Widowed', 'Awaiting Divorce'],
         havingChildren: ['No', 'Yes'],
-        motherTongue: ['Tamil', 'English', 'Telugu', 'Hindi', 'Malayalam', 'Kannada', 'Marathi', 'Bengali', 'Gujarati', 'Urdu', 'Punjabi', 'Odia'],
+        motherTongue: languages,
         physicalStatus: ['Normal', 'Physically Challenged'],
         religion: ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Inter-Religion'],
         caste: ['Brahmin', 'Gounder', 'Vanniyar', 'Thevar', 'Nadar', 'Chettiar', 'Yadav', 'Mudaliar', 'Naidu', 'Pillai', 'Reddy', 'Viswakarma', 'SC/ST', 'Caste No Bar'],
@@ -389,13 +381,13 @@ const Search = () => {
                                         </div>
                                         {criteria.religion && (
                                             <div className="criteria-row">
-                                                <label className="criteria-label">Section</label>
+                                                <label className="criteria-label">{criteria.religion === 'Hindu' ? 'Category' : 'Section'}</label>
                                                 <div className="criteria-value">
                                                     <MultiSelectDropdown
                                                         options={sectionOptionsForReligion}
                                                         selected={criteria.section}
                                                         onChange={(sel) => handleMultiChange('section', sel)}
-                                                        placeholder="Search Section"
+                                                        placeholder={`Search ${criteria.religion === 'Hindu' ? 'Category' : 'Section'}`}
                                                     />
                                                 </div>
                                             </div>
@@ -473,81 +465,81 @@ const Search = () => {
                                             const isInterested = sentInterests.some(i => i.receiver?.uniqueId === p.uniqueId);
                                             const isShortlisted = shortlistedProfiles.some(s => s.uniqueId === p.uniqueId);
                                             return (
-                                            <div key={p.uniqueId} className="match-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
-                                                <div className="match-card-top">
-                                                     <div className="match-card-sidebar">
-                                                         {(() => {
-                                                             const raw = p.photo || p.image;
-                                                             const photoSrc = raw ? getMediaUrl(raw) : null;
-                                                             return photoSrc ? (
-                                                                 <img src={photoSrc} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
-                                                             ) : null;
-                                                         })()}
-                                                         <div className="request-photo-overlay" style={{ display: (p.photo || p.image) ? 'none' : 'flex' }}>
-                                                             <button className="request-photo-btn" onClick={(e) => handleRequestPhotoAction(e, p.uniqueId)}>Request photo</button>
-                                                         </div>
-                                                     </div>
-                                                    <div className="match-card-main">
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                                            <span className="active-today-label">Active Today</span>
-                                                            {p.matchPercentage !== undefined && (
-                                                                <span className={`search-match-badge ${p.matchPercentage >= 90 ? 'high-match' : (p.matchPercentage >= 75 ? 'mid-match' : 'base-match')}`}>
-                                                                    <Sparkles size={13} style={{ marginRight: '3px' }} />
-                                                                    {p.matchPercentage}% Match
-                                                                </span>
-                                                            )}
+                                                <div key={p.uniqueId} className="match-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
+                                                    <div className="match-card-top">
+                                                        <div className="match-card-sidebar">
+                                                            {(() => {
+                                                                const raw = p.photo || p.image;
+                                                                const photoSrc = raw ? getMediaUrl(raw) : null;
+                                                                return photoSrc ? (
+                                                                    <img src={photoSrc} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
+                                                                ) : null;
+                                                            })()}
+                                                            <div className="request-photo-overlay" style={{ display: (p.photo || p.image) ? 'none' : 'flex' }}>
+                                                                <button className="request-photo-btn" onClick={(e) => handleRequestPhotoAction(e, p.uniqueId)}>Request photo</button>
+                                                            </div>
                                                         </div>
-                                                        <h3 className="match-card-name">{p.fullName}, {p.age}</h3>
-                                                        <div className="match-card-basics">
-                                                            {p.height} • {p.city || 'Location N/A'} • {p.religion}-{p.caste || p.sect || p.section || 'Community N/A'}
-                                                        </div>
-                                                        <div className="match-card-details-grid">
-                                                            <div className="detail-item">
-                                                                <Briefcase size={16} />
-                                                                <span>{p.occupation || 'Profession N/A'}</span> • <span>{p.income || 'No Income'}</span>
+                                                        <div className="match-card-main">
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                                                <span className="active-today-label">Active Today</span>
+                                                                {p.matchPercentage !== undefined && (
+                                                                    <span className={`search-match-badge ${p.matchPercentage >= 90 ? 'high-match' : (p.matchPercentage >= 75 ? 'mid-match' : 'base-match')}`}>
+                                                                        <Sparkles size={13} style={{ marginRight: '3px' }} />
+                                                                        {p.matchPercentage}% Match
+                                                                    </span>
+                                                                )}
                                                             </div>
-                                                            <div className="detail-item">
-                                                                <GraduationCap size={16} />
-                                                                <span>{p.education || 'Education N/A'}</span>
+                                                            <h3 className="match-card-name">{p.fullName}, {p.age}</h3>
+                                                            <div className="match-card-basics">
+                                                                {p.height} • {p.city || 'Location N/A'} • {p.religion}-{p.caste || p.sect || p.section || 'Community N/A'}
                                                             </div>
-                                                            <div className="detail-item">
-                                                                <Heart size={16} />
-                                                                <span>{p.maritalStatus || 'Never Married'}</span>
-                                                            </div>
-                                                            {p.motherTongue && (
+                                                            <div className="match-card-details-grid">
                                                                 <div className="detail-item">
-                                                                    <Languages size={16} />
-                                                                    <span>{p.motherTongue}</span>
+                                                                    <Briefcase size={16} />
+                                                                    <span>{p.occupation || 'Profession N/A'}</span> • <span>{p.income || 'No Income'}</span>
                                                                 </div>
-                                                            )}
+                                                                <div className="detail-item">
+                                                                    <GraduationCap size={16} />
+                                                                    <span>{p.education || 'Education N/A'}</span>
+                                                                </div>
+                                                                <div className="detail-item">
+                                                                    <Heart size={16} />
+                                                                    <span>{p.maritalStatus || 'Never Married'}</span>
+                                                                </div>
+                                                                {p.motherTongue && (
+                                                                    <div className="detail-item">
+                                                                        <Languages size={16} />
+                                                                        <span>{p.motherTongue}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                    <div className="match-card-footer">
+                                                        {!isInterested && (
+                                                            <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
+                                                                <Sparkles size={18} />
+                                                                Interest
+                                                            </button>
+                                                        )}
+                                                        {isShortlisted ? (
+                                                            <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                                <Star size={18} fill="currentColor" />
+                                                                Shortlisted
+                                                            </button>
+                                                        ) : (
+                                                            <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, p.uniqueId)}>
+                                                                <Star size={18} />
+                                                                Shortlist
+                                                            </button>
+                                                        )}
+                                                        <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, p.uniqueId)}>
+                                                            <X size={18} />
+                                                            Ignore
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div className="match-card-footer">
-                                                    {!isInterested && (
-                                                        <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
-                                                            <Sparkles size={18} />
-                                                            Interest
-                                                        </button>
-                                                    )}
-                                                    {isShortlisted ? (
-                                                        <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
-                                                            <Star size={18} fill="currentColor" />
-                                                            Shortlisted
-                                                        </button>
-                                                    ) : (
-                                                        <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, p.uniqueId)}>
-                                                            <Star size={18} />
-                                                            Shortlist
-                                                        </button>
-                                                    )}
-                                                    <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, p.uniqueId)}>
-                                                        <X size={18} />
-                                                        Ignore
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        );
+                                            );
                                         })}
                                     </div>
                                 )}
@@ -580,9 +572,9 @@ const Search = () => {
                                                     {foundProfile.photo || foundProfile.image ? (
                                                         <img src={foundProfile.photo || foundProfile.image} alt={foundProfile.fullName} />
                                                     ) : (
-                                                         <div className="request-photo-overlay">
-                                                             <button className="request-photo-btn" onClick={(e) => handleRequestPhotoAction(e, foundProfile.uniqueId)}>Request photo</button>
-                                                         </div>
+                                                        <div className="request-photo-overlay">
+                                                            <button className="request-photo-btn" onClick={(e) => handleRequestPhotoAction(e, foundProfile.uniqueId)}>Request photo</button>
+                                                        </div>
                                                     )}
                                                 </div>
                                                 <div className="match-card-main">

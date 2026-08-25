@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { showAlert } from '../components/GlobalModal';
+import { apiFetch } from '../services/api';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -56,14 +57,8 @@ const AdminPanel = () => {
         setShowStorage(true);
         setLoadingStorage(true);
         try {
-            const response = await fetch('/api/admin/storage');
-            if (response.ok) {
-                const data = await response.json();
-                setStorageData(data);
-            } else {
-                showAlert('Failed to fetch storage details', 'Error');
-                setShowStorage(false);
-            }
+            const data = await apiFetch('/admin/storage');
+            setStorageData(data);
         } catch (error) {
             console.error('Error fetching storage:', error);
             showAlert('Network error while fetching storage', 'Error');
@@ -77,19 +72,17 @@ const AdminPanel = () => {
         e.preventDefault();
         setLoginError('');
         try {
-            const response = await fetch('/api/admin/login', {
+            const data = await apiFetch('/admin/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: loginId, password: loginPassword })
             });
-            const data = await response.json();
             if (data.success) {
                 setIsAuthenticated(true);
             } else {
                 setLoginError(data.error || 'Invalid ID or Password');
             }
         } catch (error) {
-            setLoginError('An error occurred during login');
+            setLoginError(error.message || 'An error occurred during login');
         }
     };
 
@@ -104,12 +97,10 @@ const AdminPanel = () => {
         setResetError('');
         setResetMessage('');
         try {
-            const response = await fetch('/api/admin/forgot-password', {
+            const data = await apiFetch('/admin/forgot-password', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail })
             });
-            const data = await response.json();
             if (data.success) {
                 setResetMessage('OTP sent successfully to your email.');
                 setForgotStep('otp');
@@ -117,7 +108,7 @@ const AdminPanel = () => {
                 setResetError(data.error || 'Failed to send OTP.');
             }
         } catch (error) {
-            setResetError('An error occurred while sending OTP.');
+            setResetError(error.message || 'An error occurred while sending OTP.');
         }
     };
 
@@ -126,12 +117,10 @@ const AdminPanel = () => {
         setResetError('');
         setResetMessage('');
         try {
-            const response = await fetch('/api/admin/verify-otp', {
+            const data = await apiFetch('/admin/verify-otp', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail, otp: resetOtp })
             });
-            const data = await response.json();
             if (data.success) {
                 setResetMessage('OTP verified. Please enter your new password.');
                 setForgotStep('reset');
@@ -139,7 +128,7 @@ const AdminPanel = () => {
                 setResetError(data.error || 'Invalid OTP.');
             }
         } catch (error) {
-            setResetError('An error occurred while verifying OTP.');
+            setResetError(error.message || 'An error occurred while verifying OTP.');
         }
     };
 
@@ -152,12 +141,10 @@ const AdminPanel = () => {
             return;
         }
         try {
-            const response = await fetch('/api/admin/reset-password', {
+            const data = await apiFetch('/admin/reset-password', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail, otp: resetOtp, newPassword })
             });
-            const data = await response.json();
             if (data.success) {
                 showAlert('Password reset successfully. You can now login.', 'Success');
                 setForgotStep('login');
@@ -166,17 +153,14 @@ const AdminPanel = () => {
                 setResetError(data.error || 'Failed to reset password.');
             }
         } catch (error) {
-            setResetError('An error occurred while resetting password.');
+            setResetError(error.message || 'An error occurred while resetting password.');
         }
     };
 
     const fetchStats = async () => {
         try {
-            const response = await fetch('/api/admin/stats');
-            if (response.ok) {
-                const data = await response.json();
-                setStats(data);
-            }
+            const data = await apiFetch('/admin/stats');
+            setStats(data);
         } catch (error) {
             console.error('Error fetching stats:', error);
         } finally {
@@ -191,12 +175,9 @@ const AdminPanel = () => {
         }
         setLoadingUsers(true);
         try {
-            const response = await fetch('/api/admin/users');
-            if (response.ok) {
-                const data = await response.json();
-                setUsersList(data);
-                if (!force) setShowUsers(true);
-            }
+            const data = await apiFetch('/admin/users');
+            setUsersList(data);
+            if (!force) setShowUsers(true);
         } catch (error) {
             console.error('Error fetching users:', error);
         } finally {
@@ -211,18 +192,14 @@ const AdminPanel = () => {
     const confirmDeleteUser = async () => {
         if (!userToDelete) return;
         try {
-            const response = await fetch(`/api/admin/users/${userToDelete}`, {
+            await apiFetch(`/admin/users/${userToDelete}`, {
                 method: 'DELETE',
             });
-            if (response.ok) {
-                // Refresh list and stats
-                fetchUsers(true);
-                fetchStats();
-                setUserToDelete(null);
-                setFullProfile(null);
-            } else {
-                showAlert('Failed to delete user', 'Error');
-            }
+            // Refresh list and stats
+            fetchUsers(true);
+            fetchStats();
+            setUserToDelete(null);
+            setFullProfile(null);
         } catch (error) {
             console.error('Error deleting user:', error);
             showAlert('An error occurred during deletion', 'Error');
@@ -232,13 +209,8 @@ const AdminPanel = () => {
     const handleSeeProfile = async (userId) => {
         setLoadingProfile(true);
         try {
-            const response = await fetch(`/api/admin/users/${userId}`);
-            if (response.ok) {
-                const data = await response.json();
-                setFullProfile(data);
-            } else {
-                showAlert('Failed to fetch user profile', 'Error');
-            }
+            const data = await apiFetch(`/admin/users/${userId}`);
+            setFullProfile(data);
         } catch (error) {
             console.error('Error fetching profile:', error);
             showAlert('An error occurred while fetching the profile', 'Error');
@@ -259,21 +231,14 @@ const AdminPanel = () => {
             const base64Data = reader.result;
 
             try {
-                const response = await fetch('/api/admin/images', {
+                const data = await apiFetch('/admin/images', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ target: targetField, base64Data })
                 });
-
-                if (response.ok) {
-                    setUploadStatus({ message: 'Image successfully updated! Refresh the home page to see changes.', error: false });
-                } else {
-                    const data = await response.json();
-                    setUploadStatus({ message: data.error || 'Failed to update image.', error: true });
-                }
+                setUploadStatus({ message: 'Image successfully updated! Refresh the home page to see changes.', error: false });
             } catch (error) {
                 console.error('Error updating image:', error);
-                setUploadStatus({ message: 'Network error. Failed to update image.', error: true });
+                setUploadStatus({ message: error.message || 'Network error. Failed to update image.', error: true });
             }
         };
         reader.onerror = () => {
@@ -283,11 +248,8 @@ const AdminPanel = () => {
 
     const fetchStoryData = async () => {
         try {
-            const response = await fetch('/api/admin/stories');
-            if (response.ok) {
-                const data = await response.json();
-                setStoryData(data);
-            }
+            const data = await apiFetch('/admin/stories');
+            setStoryData(data);
         } catch (error) {
             console.error('Error fetching stories:', error);
         }
@@ -307,20 +269,14 @@ const AdminPanel = () => {
         setSavingStories(true);
         setStoryStatus({ message: '', error: false });
         try {
-            const response = await fetch('/api/admin/stories', {
+            await apiFetch('/admin/stories', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(storyData)
             });
-            if (response.ok) {
-                setStoryStatus({ message: 'Story content updated successfully! Refresh the home page to see changes.', error: false });
-            } else {
-                const data = await response.json();
-                setStoryStatus({ message: data.error || 'Failed to update stories.', error: true });
-            }
+            setStoryStatus({ message: 'Story content updated successfully! Refresh the home page to see changes.', error: false });
         } catch (error) {
             console.error('Error saving stories:', error);
-            setStoryStatus({ message: 'Network error. Failed to save stories.', error: true });
+            setStoryStatus({ message: error.message || 'Network error. Failed to save stories.', error: true });
         } finally {
             setSavingStories(false);
         }
@@ -331,7 +287,7 @@ const AdminPanel = () => {
             <div className="admin-page">
                 <div className="admin-login-wrapper">
                     <div className="admin-login-card">
-                        
+
                         {forgotStep === 'login' && (
                             <>
                                 <h2>Admin Login</h2>
@@ -556,6 +512,10 @@ const AdminPanel = () => {
                                             <p><strong>Employment Type:</strong> {fullProfile.profile.employment_type || 'N/A'}</p>
                                             <p><strong>Income:</strong> {fullProfile.profile.income || 'N/A'}</p>
                                             <p><strong>Organization:</strong> {fullProfile.profile.organization_name || 'N/A'}</p>
+                                            <p><strong>Extra Income:</strong> {fullProfile.profile.extra_income || 'N/A'}</p>
+                                            <p><strong>Property Type:</strong> {fullProfile.profile.property_type || 'N/A'}</p>
+                                            <p><strong>Financial Status:</strong> {fullProfile.profile.financial_status || 'N/A'}</p>
+                                            <p><strong>Job Details:</strong> {fullProfile.profile.job_details || 'N/A'}</p>
                                         </div>
                                     </div>
 
@@ -564,10 +524,12 @@ const AdminPanel = () => {
                                         <div className="admin-profile-grid">
                                             <p><strong>Family Type:</strong> {fullProfile.profile.family_type || 'N/A'}</p>
                                             <p><strong>Family Status:</strong> {fullProfile.profile.family_status || 'N/A'}</p>
-                                            <p><strong>Father Occupation:</strong> {fullProfile.profile.father_occupation || 'N/A'}</p>
-                                            <p><strong>Mother Occupation:</strong> {fullProfile.profile.mother_occupation || 'N/A'}</p>
-                                            <p><strong>Brothers:</strong> {fullProfile.profile.brothers || '0'}</p>
-                                            <p><strong>Sisters:</strong> {fullProfile.profile.sisters || '0'}</p>
+                                            <p><strong>Father:</strong> {fullProfile.profile.father_name ? fullProfile.profile.father_name + " " : ""}{fullProfile.profile.father_status ? `(${fullProfile.profile.father_status}) ` : ""}{fullProfile.profile.father_occupation ? `- ${fullProfile.profile.father_occupation}` : "N/A"}</p>
+                                            <p><strong>Mother:</strong> {fullProfile.profile.mother_name ? fullProfile.profile.mother_name + " " : ""}{fullProfile.profile.mother_status ? `(${fullProfile.profile.mother_status}) ` : ""}{fullProfile.profile.mother_occupation ? `- ${fullProfile.profile.mother_occupation}` : "N/A"}</p>
+                                            <p><strong>Elder Brothers:</strong> {fullProfile.profile.elder_brother || '0'}</p>
+                                            <p><strong>Younger Brothers:</strong> {fullProfile.profile.younger_brother || '0'}</p>
+                                            <p><strong>Elder Sisters:</strong> {fullProfile.profile.elder_sister || '0'}</p>
+                                            <p><strong>Younger Sisters:</strong> {fullProfile.profile.younger_sister || '0'}</p>
                                         </div>
                                     </div>
 
@@ -577,6 +539,8 @@ const AdminPanel = () => {
                                             <p><strong>Dietary Habits:</strong> {fullProfile.profile.diet || fullProfile.profile.food_habits || 'N/A'}</p>
                                             <p><strong>Drinking Habits:</strong> {fullProfile.profile.drinking || 'N/A'}</p>
                                             <p><strong>Smoking Habits:</strong> {fullProfile.profile.smoking || 'N/A'}</p>
+                                            <p><strong>Body Type:</strong> {fullProfile.profile.body_type || 'N/A'}</p>
+                                            <p><strong>Weight:</strong> {fullProfile.profile.weight || 'N/A'}</p>
                                         </div>
                                     </div>
                                 </>
@@ -853,22 +817,22 @@ const AdminPanel = () => {
                         <div className="admin-modal" style={{ maxWidth: '500px', width: '90%', padding: '30px' }} onClick={(e) => e.stopPropagation()}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <h3 style={{ margin: 0, fontSize: '1.5rem', color: '#1f2937' }}>Server Storage Info</h3>
-                                <button onClick={() => setShowStorage(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#6b7280' }}>&times;</button>
+                                <button onClick={() => setShowStorage(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#374151' }}>&times;</button>
                             </div>
-                            
+
                             {loadingStorage ? (
-                                <div style={{ textAlign: 'center', padding: '30px', color: '#6b7280' }}>Fetching live server details...</div>
+                                <div style={{ textAlign: 'center', padding: '30px', color: '#374151' }}>Fetching live server details...</div>
                             ) : storageData ? (
                                 <div>
                                     <div style={{ background: '#f9fafb', padding: '15px', borderRadius: '8px', border: '1px solid #e5e7eb', marginBottom: '20px' }}>
                                         <h4 style={{ margin: '0 0 10px 0', color: '#374151', paddingBottom: '8px', borderBottom: '1px solid #e5e7eb' }}>VPS Storage Usage</h4>
-                                        <p style={{ margin: '8px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6b7280' }}>Total storage:</span> <strong style={{color: '#111827'}}>{storageData.vpsStorage.total}</strong></p>
-                                        <p style={{ margin: '8px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6b7280' }}>Used storage:</span> <strong style={{color: '#ef4444'}}>{storageData.vpsStorage.used}</strong></p>
-                                        <p style={{ margin: '8px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6b7280' }}>Remaining storage:</span> <strong style={{color: '#10b981'}}>{storageData.vpsStorage.available}</strong></p>
+                                        <p style={{ margin: '8px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#374151' }}>Total storage:</span> <strong style={{ color: '#111827' }}>{storageData.vpsStorage.total}</strong></p>
+                                        <p style={{ margin: '8px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#374151' }}>Used storage:</span> <strong style={{ color: '#ef4444' }}>{storageData.vpsStorage.used}</strong></p>
+                                        <p style={{ margin: '8px 0', display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#374151' }}>Remaining storage:</span> <strong style={{ color: '#10b981' }}>{storageData.vpsStorage.available}</strong></p>
                                         <div style={{ marginTop: '15px', height: '8px', width: '100%', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
                                             <div style={{ height: '100%', backgroundColor: '#3b82f6', width: storageData.vpsStorage.usePercent }}></div>
                                         </div>
-                                        <p style={{ margin: '5px 0 0 0', fontSize: '0.8rem', textAlign: 'right', color: '#6b7280' }}>{storageData.vpsStorage.usePercent} Occupied OS & Packages</p>
+                                        <p style={{ margin: '5px 0 0 0', fontSize: '0.8rem', textAlign: 'right', color: '#374151' }}>{storageData.vpsStorage.usePercent} Occupied OS & Packages</p>
                                     </div>
 
                                     <div style={{ background: '#f0f9ff', padding: '15px', borderRadius: '8px', border: '1px solid #bae6fd' }}>
@@ -881,7 +845,7 @@ const AdminPanel = () => {
                                             Includes {storageData.totalUsers} registered users' details and images. Updates automatically.
                                         </p>
                                     </div>
-                                    
+
                                     <div style={{ marginTop: '25px', textAlign: 'right' }}>
                                         <button onClick={() => setShowStorage(false)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Close</button>
                                     </div>

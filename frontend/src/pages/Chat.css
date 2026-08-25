@@ -91,7 +91,7 @@
 .avatar-placeholder {
     font-size: 1.2rem;
     font-weight: 600;
-    color: #64748b;
+    color: #334155;
     text-transform: uppercase;
 }
 
@@ -116,7 +116,7 @@
 
 .chat-list-preview {
     font-size: 0.875rem;
-    color: #64748b;
+    color: #334155;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -138,7 +138,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #94a3b8;
+    color: #475569;
     text-align: center;
     padding: 2rem;
 }
@@ -171,7 +171,7 @@
 .chat-back-btn {
     background: none;
     border: none;
-    color: #64748b;
+    color: #334155;
     cursor: pointer;
     padding: 0.5rem;
     display: flex;
@@ -254,7 +254,7 @@
 }
 
 .received .chat-time {
-    color: #94a3b8;
+    color: #475569;
 }
 
 .chat-input-area {
@@ -378,7 +378,7 @@
 .edit-badge button {
     background: none;
     border: none;
-    color: #64748b;
+    color: #334155;
     cursor: pointer;
     display: flex;
     align-items: center;

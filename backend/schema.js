@@ -116,10 +116,22 @@ async function setupDatabase() {
       ['brothers_married', 'VARCHAR(10)'],
       ['sisters', 'VARCHAR(10)'],
       ['sisters_married', 'VARCHAR(10)'],
+      ['elder_brother', 'VARCHAR(10)'],
+      ['married_elder_brother', 'VARCHAR(10)'],
+      ['younger_brother', 'VARCHAR(10)'],
+      ['married_younger_brother', 'VARCHAR(10)'],
+      ['elder_sister', 'VARCHAR(10)'],
+      ['married_elder_sister', 'VARCHAR(10)'],
+      ['younger_sister', 'VARCHAR(10)'],
+      ['married_younger_sister', 'VARCHAR(10)'],
       ['family_type', 'VARCHAR(100)'],
       ['family_status', 'VARCHAR(100)'],
       ['family_income', 'VARCHAR(100)'],
+      ['father_name', 'VARCHAR(255)'],
+      ['father_status', 'VARCHAR(100)'],
       ['father_occupation', 'VARCHAR(255)'],
+      ['mother_name', 'VARCHAR(255)'],
+      ['mother_status', 'VARCHAR(100)'],
       ['mother_occupation', 'VARCHAR(255)'],
       ['family_living_in', 'VARCHAR(255)'],
       ['family_country', 'VARCHAR(100)'],
@@ -128,11 +140,26 @@ async function setupDatabase() {
       ['living_with_parents', 'VARCHAR(50)'],
       ['contact_address', 'TEXT'],
       ['settling_abroad', 'VARCHAR(50)'],
+      ['body_type', 'VARCHAR(50)'],
+      ['weight', 'VARCHAR(20)'],
+      ['extra_income', 'VARCHAR(100)'],
+      ['property_type', 'VARCHAR(100)'],
+      ['financial_status', 'VARCHAR(50)'],
+      ['job_details', 'TEXT'],
       ['contact_mobile', 'VARCHAR(20)'],
       ['alternate_mobile', 'VARCHAR(20)'],
       ['residential_status', 'VARCHAR(100)'],
       ['organization_name', 'VARCHAR(255)'],
-      ['partner_preference', 'TEXT']
+      ['partner_preference', 'TEXT'],
+      ['aadhar_number', 'VARCHAR(20)'],
+      ['community_certificate', 'TEXT'],
+      ['birth_certificate', 'TEXT'],
+      ['temporary_address', 'TEXT'],
+      ['permanent_address', 'TEXT'],
+      ['nationality', 'VARCHAR(100)'],
+      ['working_country', 'VARCHAR(100)'],
+      ['visa_status', 'VARCHAR(100)'],
+      ['willing_to_marry_other_caste', 'VARCHAR(10)']
     ];
 
     for (const [col, colType] of extraColumns) {
@@ -141,7 +168,7 @@ async function setupDatabase() {
       } catch (e) {
         try {
           await sql`ALTER TABLE profiles ADD COLUMN ${sql(col)} ${sql.unsafe(colType)}`;
-        } catch (err) {}
+        } catch (err) { }
       }
     }
 

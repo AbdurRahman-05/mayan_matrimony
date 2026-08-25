@@ -77,6 +77,7 @@ const Navbar = () => {
             </li>
             <li><Link to="/matches">Matches</Link></li>
             <li><Link to="/membership">Membership</Link></li>
+            <li><Link to="/settings">Settings</Link></li>
           </ul>
         )}
 

@@ -1,1 +1,71 @@
-/* Cleared to avoid conflicts with custom index.css */
+/* Universal Typography & Text Alignment Fix */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    text-align: left;
+    color: var(--text-main, #0f172a);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+p,
+span,
+div,
+label,
+li {
+    font-weight: 400;
+    /* Ensure text is not too thin */
+}
+
+/* Base text styling */
+p {
+    text-align: left;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+/* Make labels perfectly aligned */
+label {
+    text-align: left;
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-main, #0f172a);
+}
+
+/* Ensure centering utility classes work */
+.text-center {
+    text-align: center !important;
+}
+
+.text-left {
+    text-align: left !important;
+}
+
+.text-right {
+    text-align: right !important;
+}
+
+.text-justify {
+    text-align: justify !important;
+}
+
+/* Improve readabilty of lists */
+ul,
+ol {
+    text-align: left;
+}
+
+/* Fix grid alignments globally */
+.align-baseline {
+    align-items: baseline;
+}

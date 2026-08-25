@@ -320,7 +320,15 @@ const Matches = () => {
                             const photoSrc = rawPhoto ? getMediaUrl(rawPhoto) : null;
 
                             return (
-                                <div key={p.uniqueId} className="edu-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
+                                <div key={p.uniqueId} className="edu-card" onClick={(e) => {
+                                    if (!photoSrc && !isPhotoAccepted) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        showAlert('Please request a photo and wait for it to be accepted to view this profile.', 'Action Required');
+                                    } else {
+                                        navigate(`/profile/${p.uniqueId}`);
+                                    }
+                                }}>
                                     <div className="edu-avatar-wrapper">
                                         {photoSrc ? (
                                             <img src={photoSrc} alt={p.fullName} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'; }} />
@@ -360,7 +368,15 @@ const Matches = () => {
                     const photoSrc = rawPhoto ? getMediaUrl(rawPhoto) : null;
 
                     return (
-                        <div key={p.uniqueId} className="match-card" onClick={() => navigate(`/profile/${p.uniqueId}`)}>
+                        <div key={p.uniqueId} className="match-card" onClick={(e) => {
+                            if (!photoSrc && !isPhotoAccepted) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                showAlert('Please request a photo and wait for it to be accepted to view this profile.', 'Action Required');
+                            } else {
+                                navigate(`/profile/${p.uniqueId}`);
+                            }
+                        }}>
                             <div className="match-card-top">
                                 <div className="match-card-sidebar">
                                     {photoSrc ? (
@@ -422,6 +438,12 @@ const Matches = () => {
                                     <button className="card-action-btn" onClick={(e) => handleShortlistAction(e, p.uniqueId)}>
                                         <Star size={18} />
                                         Shortlist
+                                    </button>
+                                )}
+                                {isPhotoAccepted && (
+                                    <button className="card-action-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/chat/${p.uniqueId}`); }}>
+                                        <MessageCircle size={18} />
+                                        Chat
                                     </button>
                                 )}
                                 <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, p.uniqueId)}>

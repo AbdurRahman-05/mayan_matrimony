@@ -1,9 +1,8 @@
 let workingApiBase = null;
 
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
     if (workingApiBase) return workingApiBase;
     if (localStorage.getItem('API_URL_OVERRIDE')) return localStorage.getItem('API_URL_OVERRIDE');
-    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
     
     // Check if running inside Capacitor native app (Android / iOS)
     const isCapacitorNative = 
@@ -14,9 +13,11 @@ const getApiBaseUrl = () => {
         );
 
     if (isCapacitorNative) {
-        // Physical mobile phones & native APKs default to production live server https://srimayanmatrimony.com/api
-        return 'https://srimayanmatrimony.com/api';
+        // Mobile phones & native APKs default to http://localhost:5000/api for USB debugging, fallback to production
+        return 'http://localhost:5000/api';
     }
+
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
 
     // Web Browser (Dev or Production)
     return '/api';
@@ -657,3 +658,8 @@ export async function getPhotoRequests() {
     return apiFetch('/notifications/photo-requests');
 }
 
+export async function getStories() {
+    return apiFetch('/admin/stories');
+}
+
+export { apiFetch };

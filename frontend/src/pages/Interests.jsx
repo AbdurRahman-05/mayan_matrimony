@@ -4,9 +4,9 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import {
     Loader2, User, Clock, Check, X, MapPin, Briefcase, GraduationCap,
-    Heart, Languages, Sparkles, Star, MessageCircle, ArrowLeft
+    Heart, Languages, Sparkles, Star, MessageCircle, ArrowLeft, Camera, Eye
 } from 'lucide-react';
-import { getReceivedInterests, getSentInterests, respondToInterest, shortlistProfile, ignoreProfile, getChatList, globalCache } from '../services/api';
+import { getReceivedInterests, getSentInterests, respondToInterest, shortlistProfile, ignoreProfile, getChatList, globalCache, requestPhoto, getPhotoRequests, getMediaUrl } from '../services/api';
 import { showAlert, showConfirm } from '../components/GlobalModal';
 import './Interests.css';
 
@@ -32,11 +32,13 @@ const Interests = () => {
     const [receivedInterests, setReceivedInterests] = useState(globalCache.interests?.received || []);
     const [sentInterests, setSentInterests] = useState(globalCache.interests?.sent || []);
     const [chatList, setChatList] = useState([]);
+    const [photoRequests, setPhotoRequests] = useState({ sent: [], acceptedTargetUniqueIds: [] });
     const [loading, setLoading] = useState(!globalCache.interests?.received || !globalCache.interests?.sent);
 
     useEffect(() => {
         loadAllInterests();
         loadChatData();
+        loadPhotoRequests();
     }, []);
 
     // Filter data based on active section and filter locally
@@ -45,6 +47,15 @@ const Interests = () => {
         if (activeFilter === 'all') return sourceData;
         return sourceData.filter(item => item.status === activeFilter);
     }, [activeSection, activeFilter, receivedInterests, sentInterests]);
+
+    const loadPhotoRequests = async () => {
+        try {
+            const reqs = await getPhotoRequests();
+            setPhotoRequests(reqs);
+        } catch (err) {
+            console.error('Failed to load photo requests', err);
+        }
+    };
 
     const loadChatData = async () => {
         try {
@@ -122,8 +133,29 @@ const Interests = () => {
     };
 
     const handleChatAction = (e, uniqueId) => {
+        e.preventDefault();
         e.stopPropagation();
-        navigate(`/chat/${uniqueId}`);
+        if (uniqueId) {
+            navigate(`/chat/${uniqueId}`);
+        } else {
+            console.error('uniqueId is undefined');
+        }
+    };
+
+    const handleRequestPhoto = async (e, uniqueId) => {
+        e.stopPropagation();
+        try {
+            await requestPhoto(uniqueId);
+            showAlert('Photo request sent successfully! They will be notified.', 'Request Sent');
+            loadPhotoRequests(); // Refresh the list
+        } catch (err) {
+            showAlert(err.message || 'Failed to send photo request. Please try again.', 'Error');
+        }
+    };
+
+    const handleViewProfile = (e, uniqueId) => {
+        e.stopPropagation();
+        navigate(`/profile/${uniqueId}`);
     };
 
     const tabs = [
@@ -266,15 +298,36 @@ const Interests = () => {
                                     <div className="match-results-list">
                                         {filteredInterests.map(item => {
                                             const profile = activeSection === 'received' ? item.sender : item.receiver;
+                                            const isPhotoPending = photoRequests.sent?.some(s => s.target_unique_id === profile.uniqueId && s.status === 'pending');
+                                            const isPhotoAccepted = photoRequests.acceptedTargetUniqueIds?.includes(profile.uniqueId) || photoRequests.acceptedTargetIds?.includes(profile.id);
+                                            const photoSrc = profile.photo ? getMediaUrl(profile.photo) : null;
+
                                             return (
-                                                <div key={item.id} className="match-card" onClick={() => navigate(`/profile/${profile.uniqueId}`)}>
+                                                <div key={item.id} className="match-card" onClick={(e) => {
+                                                    if (!photoSrc && !isPhotoAccepted) {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        showAlert('Please request a photo and wait for it to be accepted to view this profile.', 'Action Required');
+                                                    } else {
+                                                        navigate(`/profile/${profile.uniqueId}`);
+                                                    }
+                                                }}>
                                                     <div className="match-card-top">
                                                         <div className="match-card-sidebar">
-                                                            {profile.photo ? (
-                                                                <img src={profile.photo} alt={profile.fullName} />
+                                                            {photoSrc ? (
+                                                                <img src={photoSrc} alt={profile.fullName} />
                                                             ) : (
                                                                 <div className="request-photo-overlay">
-                                                                    <button className="request-photo-btn" onClick={(e) => e.stopPropagation()}>Request photo</button>
+                                                                    {isPhotoPending ? (
+                                                                        <button className="request-photo-btn pending" disabled style={{ background: '#f59e0b', color: '#fff', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                                            Requested
+                                                                        </button>
+                                                                    ) : (
+                                                                        <button className="request-photo-btn" onClick={(e) => handleRequestPhoto(e, profile.uniqueId)}>
+                                                                            <Camera size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                                                                            Request Photo
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -331,14 +384,22 @@ const Interests = () => {
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, profile.uniqueId)}>
-                                                                    <X size={18} />
-                                                                    Ignore
-                                                                </button>
-                                                                {!chatList.some(c => c.unique_id === profile.uniqueId) && (
+                                                                {item.status === 'accepted' && (
+                                                                    <button className="card-action-btn" style={{ color: '#7c3aed' }} onClick={(e) => handleViewProfile(e, profile.uniqueId)}>
+                                                                        <Eye size={18} />
+                                                                        View Profile
+                                                                    </button>
+                                                                )}
+                                                                {item.status === 'accepted' && (photoSrc || isPhotoAccepted) && (
                                                                     <button className="card-action-btn" onClick={(e) => handleChatAction(e, profile.uniqueId)}>
                                                                         <MessageCircle size={18} />
                                                                         Chat
+                                                                    </button>
+                                                                )}
+                                                                {item.status !== 'accepted' && (
+                                                                    <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, profile.uniqueId)}>
+                                                                        <X size={18} />
+                                                                        Ignore
                                                                     </button>
                                                                 )}
                                                             </>

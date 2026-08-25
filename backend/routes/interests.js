@@ -88,12 +88,18 @@ router.get('/received', auth, async (req, res) => {
         const query = `
       SELECT i.*, p.full_name, p.photo, p.height, p.religion, p.caste,
              p.education, p.occupation, p.city, p.state, p.country, p.income,
+             p.marital_status, p.mother_tongue,
              u.unique_id, u.email, u.mobile,
              p.dob
       FROM interests i
       JOIN users u ON u.id = i.sender_id
       JOIN profiles p ON p.user_id = i.sender_id
       WHERE i.receiver_id = ${req.user.id} ${statusCondition}
+        AND NOT EXISTS (
+            SELECT 1 FROM ignores ig
+            WHERE (ig.user_id = ${req.user.id} AND ig.ignored_user_id = i.sender_id)
+               OR (ig.user_id = i.sender_id AND ig.ignored_user_id = ${req.user.id})
+        )
       ORDER BY i.created_at DESC
     `;
 
@@ -118,7 +124,9 @@ router.get('/received', auth, async (req, res) => {
                 state: row.state || '',
                 country: row.country || '',
                 income: row.income || '',
-                mobile: row.mobile || ''
+                mobile: row.mobile || '',
+                maritalStatus: row.marital_status || '',
+                motherTongue: row.mother_tongue || ''
             }
         }));
 
@@ -141,12 +149,18 @@ router.get('/sent', auth, async (req, res) => {
         const query = `
       SELECT i.*, p.full_name, p.photo, p.height, p.religion, p.caste,
              p.education, p.occupation, p.city, p.state, p.country, p.income,
+             p.marital_status, p.mother_tongue,
              u.unique_id, u.email, u.mobile,
              p.dob
       FROM interests i
       JOIN users u ON u.id = i.receiver_id
       JOIN profiles p ON p.user_id = i.receiver_id
       WHERE i.sender_id = ${req.user.id} ${statusCondition}
+        AND NOT EXISTS (
+            SELECT 1 FROM ignores ig
+            WHERE (ig.user_id = ${req.user.id} AND ig.ignored_user_id = i.receiver_id)
+               OR (ig.user_id = i.receiver_id AND ig.ignored_user_id = ${req.user.id})
+        )
       ORDER BY i.created_at DESC
     `;
 
@@ -171,7 +185,9 @@ router.get('/sent', auth, async (req, res) => {
                 state: row.state || '',
                 country: row.country || '',
                 income: row.income || '',
-                mobile: row.mobile || ''
+                mobile: row.mobile || '',
+                maritalStatus: row.marital_status || '',
+                motherTongue: row.mother_tongue || ''
             }
         }));
 
