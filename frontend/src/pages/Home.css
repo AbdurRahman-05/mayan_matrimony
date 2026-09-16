@@ -8,8 +8,8 @@
     margin: 0 auto;
     padding: 25px 20px 40px;
     /* added bottom padding */
-    margin-top: 100px;
-    min-height: calc(100vh - 100px);
+    margin-top: 140px;
+    min-height: calc(100vh - 140px);
 }
 
 /* ============================================
@@ -25,9 +25,9 @@
     /* Make it sticky and independently scrollable */
     align-self: flex-start;
     position: sticky;
-    top: 120px;
+    top: 160px;
     /* offset from navbar */
-    max-height: calc(100vh - 140px);
+    max-height: calc(100vh - 160px);
     /* stop before the bottom edge */
     overflow-y: auto;
 }
@@ -99,7 +99,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #D4AF37, #c29d31);
+    background: linear-gradient(135deg, #10b981, #10b981);
     border: 2px solid #fff;
     display: flex;
     align-items: center;
@@ -114,7 +114,7 @@
 
 .sidebar-avatar-edit-btn:hover {
     transform: scale(1.12);
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .sidebar-name {
@@ -126,7 +126,7 @@
 
 .sidebar-brand {
     font-size: 0.78rem;
-    color: #D4AF37;
+    color: #10b981;
     margin-bottom: 6px;
     display: flex;
     align-items: center;
@@ -164,7 +164,7 @@
 
 .upgrade-btn {
     display: inline-block;
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
     padding: 7px 18px;
     border-radius: 5px;
@@ -175,8 +175,8 @@
 }
 
 .upgrade-btn:hover {
-    background: #c29d31;
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    background: #10b981;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .sidebar-menu {
@@ -200,7 +200,7 @@
 
 .sidebar-menu-item:hover {
     background: #f9fafb;
-    color: #D4AF37;
+    color: #10b981;
 }
 
 .sidebar-support {
@@ -286,15 +286,15 @@
 
 .completion-fill {
     height: 100%;
-    background: linear-gradient(90deg, #D4AF37, #e0c04e);
+    background: linear-gradient(90deg, #10b981, #34d399);
     border-radius: 10px;
     transition: width 0.6s ease;
 }
 
 .quick-action-cards {
     display: flex;
+    flex-direction: column;
     gap: 15px;
-    flex-wrap: wrap;
 }
 
 .profile-complete-msg {
@@ -323,8 +323,8 @@
 }
 
 .quick-action-card:hover {
-    border-color: #D4AF37;
-    box-shadow: 0 3px 10px rgba(212, 175, 55, 0.12);
+    border-color: #10b981;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.12);
     transform: translateY(-2px);
 }
 
@@ -348,7 +348,7 @@
    MEMBERSHIP PROMO CARD
    ============================================ */
 .membership-promo-card {
-    border-left: 4px solid #ea580c;
+    border-left: 4px solid #10b981;
     display: flex;
     align-items: stretch;
     padding: 0;
@@ -374,7 +374,7 @@
 }
 
 .discount-highlight {
-    color: #ea580c;
+    color: #10b981;
     font-weight: 700;
     font-size: 1.15rem;
 }
@@ -422,7 +422,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
 }
 
 .promo-image img {

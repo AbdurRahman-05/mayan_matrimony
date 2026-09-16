@@ -69,7 +69,7 @@
 
 .pbde-title-block p {
     font-size: 0.85rem;
-    color: #D4AF37;
+    color: #10b981;
     margin: 0;
 }
 
@@ -82,13 +82,13 @@
 
 .pbde-error-alert {
     background: #fdf8e8;
-    color: #D4AF37;
+    color: #10b981;
     padding: 12px 16px;
     border-radius: 8px;
     margin-bottom: 20px;
     font-size: 0.9rem;
     font-weight: 500;
-    border-left: 4px solid #D4AF37;
+    border-left: 4px solid #10b981;
 }
 
 .pbde-field-group {
@@ -168,19 +168,19 @@
 }
 
 .pbde-chip.selected {
-    border-color: #f5e6a3;
+    border-color: #6ee7b7;
     color: #1a2a3a;
     background: #fff;
 }
 
 .pbde-chip.selected.default-sel {
-    border-color: #D4AF37;
+    border-color: #10b981;
     color: #1a2a3a;
     background: #fdf8e8;
 }
 
 .pbde-chip .lucide {
-    color: #D4AF37;
+    color: #10b981;
 }
 
 .pbde-chip:not(.selected) .lucide {
@@ -201,7 +201,7 @@
 
 .pbde-save-btn {
     width: 100%;
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
     border: none;
     padding: 14px;
@@ -213,7 +213,7 @@
 }
 
 .pbde-save-btn:hover {
-    background: #b8962e;
+    background: #059669;
 }
 
 
@@ -310,7 +310,7 @@
     align-items: center;
     gap: 8px;
     background: #fdf8e8;
-    border: 1px solid #f5e6a3;
+    border: 1px solid #6ee7b7;
     border-radius: 20px;
     padding: 6px 12px;
     margin: 16px 0;
@@ -324,7 +324,7 @@
 .pbde-chip-clear {
     background: none;
     border: none;
-    color: #D4AF37;
+    color: #10b981;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -375,8 +375,8 @@
 }
 
 .pbde-checkbox.selected {
-    background: #D4AF37;
-    border-color: #D4AF37;
+    background: #10b981;
+    border-color: #10b981;
 }
 
 .pbde-radio {
@@ -391,14 +391,14 @@
 }
 
 .pbde-radio.selected {
-    border-color: #D4AF37;
+    border-color: #10b981;
 }
 
 .pbde-radio-inner {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #D4AF37;
+    background: #10b981;
 }
 
 .pbde-list-item:has(.pbde-radio.selected) span {

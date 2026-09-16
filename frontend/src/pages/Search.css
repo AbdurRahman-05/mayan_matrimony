@@ -200,7 +200,7 @@
 }
 
 .criteria-search-btn {
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
     border: none;
     padding: 8px 24px;
@@ -216,8 +216,8 @@
 }
 
 .criteria-search-btn:hover {
-    background: #c29d31;
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    background: #10b981;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 /* ===== ID Search Tab ===== */
@@ -311,7 +311,7 @@
 }
 
 .id-badge {
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
     padding: 2px 10px;
     border-radius: 20px;

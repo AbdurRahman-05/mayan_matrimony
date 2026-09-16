@@ -24,7 +24,7 @@
 }
 
 .profile-spinner-icon {
-    color: #D4AF37;
+    color: #10b981;
     animation: profile-spin 1s linear infinite;
 }
 
@@ -207,7 +207,7 @@
 
 .ep-tab.active {
     color: #1a2a3a;
-    border-bottom-color: #d4af37;
+    border-bottom-color: #10b981;
     font-weight: 600;
 }
 
@@ -237,7 +237,7 @@
 }
 
 .ep-verify-highlight {
-    color: #D4AF37;
+    color: #10b981;
     font-weight: 600;
 }
 
@@ -247,7 +247,7 @@
     align-items: center;
     gap: 1.25rem;
     background: #fff5f5;
-    border: 1px solid #f5e6a3;
+    border: 1px solid #6ee7b7;
     padding: 1.25rem 1.5rem;
     margin-top: 16px;
     border-radius: 8px;
@@ -265,7 +265,7 @@
 }
 
 .ep-completion-link {
-    color: #D4AF37;
+    color: #10b981;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
@@ -364,7 +364,7 @@
 }
 
 .ep-add-link {
-    color: #D4AF37;
+    color: #10b981;
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -423,8 +423,8 @@
     gap: 6px;
     padding: 8px 16px;
     background-color: transparent;
-    border: 1px dashed #D4AF37;
-    color: #D4AF37;
+    border: 1px dashed #10b981;
+    color: #10b981;
     font-size: 0.9rem;
     font-weight: 500;
     border-radius: 20px;
@@ -446,7 +446,7 @@
 }
 
 .ep-verify-link {
-    color: #D4AF37;
+    color: #10b981;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
@@ -490,7 +490,7 @@
 }
 
 .ep-habit-card:hover {
-    border-color: #d4af37;
+    border-color: #10b981;
     background: #fefce8;
 }
 
@@ -520,8 +520,8 @@
     align-items: center;
     gap: 4px;
     background: #fef9e7;
-    border: 1px solid #f5e6a3;
-    color: #D4AF37;
+    border: 1px solid #6ee7b7;
+    color: #10b981;
     padding: 7px 14px;
     border-radius: 20px;
     font-size: 0.82rem;
@@ -531,8 +531,8 @@
 }
 
 .ep-fav-tag:hover {
-    background: #f5e6a3;
-    border-color: #D4AF37;
+    background: #6ee7b7;
+    border-color: #10b981;
 }
 
 /* Partner Preference Rows (Looking For tab) */
@@ -629,7 +629,7 @@
 
 .bd-subtitle {
     font-size: 0.9rem;
-    color: #D4AF37;
+    color: #10b981;
     margin: 0;
 }
 
@@ -652,7 +652,7 @@ button.bd-field, .bd-field-btn {
     font: inherit;
     cursor: pointer;
     display: block;
-    -webkit-tap-highlight-color: rgba(212, 175, 55, 0.1);
+    -webkit-tap-highlight-color: rgba(16, 185, 129, 0.1);
 }
 
 .bd-field-no-border {
@@ -662,7 +662,7 @@ button.bd-field, .bd-field-btn {
 .bd-label {
     display: block;
     font-size: 0.85rem;
-    color: #D4AF37;
+    color: #10b981;
     font-weight: 500;
     margin-bottom: 4px;
 }
@@ -787,7 +787,7 @@ button.bd-field, .bd-field-btn {
 }
 
 .bd-income-option.selected .bd-income-radio {
-    border-color: #D4AF37;
+    border-color: #10b981;
     border-width: 2px;
 }
 
@@ -795,7 +795,7 @@ button.bd-field, .bd-field-btn {
     content: '';
     width: 12px;
     height: 12px;
-    background: #D4AF37;
+    background: #10b981;
     border-radius: 50%;
 }
 
@@ -858,8 +858,8 @@ button.bd-field, .bd-field-btn {
 }
 
 .bd-checkbox input:checked+.bd-checkbox-mark {
-    background: #D4AF37;
-    border-color: #D4AF37;
+    background: #10b981;
+    border-color: #10b981;
 }
 
 .bd-checkbox input:checked+.bd-checkbox-mark::after {
@@ -903,12 +903,12 @@ button.bd-field, .bd-field-btn {
 }
 
 .bd-chip:hover {
-    border-color: #D4AF37;
+    border-color: #10b981;
 }
 
 .bd-chip.active {
     background: #fdf8e8;
-    border-color: #D4AF37;
+    border-color: #10b981;
     color: #1a2a3a;
     font-weight: 500;
 }
@@ -968,7 +968,7 @@ button.bd-field, .bd-field-btn {
 .bd-save-btn {
     width: 100%;
     padding: 14px;
-    background: linear-gradient(135deg, #D4AF37 0%, #e0c04e 100%);
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
     color: #fff;
     border: none;
     border-radius: 30px;
@@ -977,12 +977,12 @@ button.bd-field, .bd-field-btn {
     cursor: pointer;
     transition: all 0.3s;
     font-family: 'Inter', sans-serif;
-    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
 }
 
 .bd-save-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
 }
 
 .bd-save-btn:active {
@@ -993,7 +993,7 @@ button.bd-field, .bd-field-btn {
 .bd-textarea {
     width: 100%;
     border: none;
-    border-right: 3px solid #D4AF37;
+    border-right: 3px solid #10b981;
     background: transparent;
     font-size: 0.95rem;
     color: #1a2a3a;
@@ -1016,7 +1016,7 @@ button.bd-field, .bd-field-btn {
 
 .bd-count-warn {
     font-size: 0.85rem;
-    color: #D4AF37;
+    color: #10b981;
     font-weight: 500;
 }
 
@@ -1129,8 +1129,8 @@ button.bd-field, .bd-field-btn {
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #d4af37;
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .form-group textarea {
@@ -1587,7 +1587,7 @@ button.bd-field, .bd-field-btn {
 
 .pm-upload-btn {
     display: inline-block;
-    background: linear-gradient(135deg, #D4AF37, #b8962e);
+    background: linear-gradient(135deg, #10b981, #059669);
     color: #fff;
     border: none;
     padding: 14px 48px;
@@ -1596,12 +1596,12 @@ button.bd-field, .bd-field-btn {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
-    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
 }
 
 .pm-upload-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
 }
 
 .pm-upload-format {
@@ -1674,7 +1674,7 @@ button.bd-field, .bd-field-btn {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
     font-size: 11px;
     font-weight: 700;
@@ -1794,7 +1794,7 @@ button.bd-field, .bd-field-btn {
 }
 
 .pm-dropdown-delete {
-    color: #D4AF37;
+    color: #10b981;
 }
 
 .pm-dropdown-delete:hover {
@@ -2035,7 +2035,7 @@ button.bd-field, .bd-field-btn {
     position: absolute;
     bottom: 8px;
     left: 8px;
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
     font-size: 0.72rem;
     font-weight: 700;
@@ -2059,5 +2059,5 @@ button.bd-field, .bd-field-btn {
 }
 
 .pm-photo-card:hover .pm-set-main-hint {
-    background: #D4AF37;
+    background: #10b981;
 }

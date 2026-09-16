@@ -22,8 +22,8 @@
 }
 
 .notification-bell:hover {
-    background: rgba(234, 179, 8, 0.1);
-    color: #eab308;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
     transform: scale(1.08);
 }
 
@@ -150,14 +150,14 @@
     font-size: 0.75rem;
     font-weight: 600;
     color: #fff;
-    background: linear-gradient(135deg, #eab308, #d97706);
+    background: linear-gradient(135deg, #10b981, #10b981);
     padding: 2px 10px;
     border-radius: 20px;
 }
 
 .mark-all-read-btn {
-    background: #fef08a;
-    color: #854d0e;
+    background: #a7f3d0;
+    color: #064e3b;
     border: none;
     font-size: 0.72rem;
     font-weight: 600;
@@ -168,8 +168,8 @@
 }
 
 .mark-all-read-btn:hover {
-    background: #fde047;
-    color: #713f12;
+    background: #a7f3d0;
+    color: #022c22;
 }
 
 /* Close Button */
@@ -246,7 +246,7 @@
 }
 
 .notification-item:hover {
-    background: rgba(234, 179, 8, 0.05);
+    background: rgba(16, 185, 129, 0.05);
 }
 
 .notification-item:last-child {
@@ -254,12 +254,12 @@
 }
 
 .notification-item.unread {
-    background: rgba(234, 179, 8, 0.04);
-    border-left: 3px solid #eab308;
+    background: rgba(16, 185, 129, 0.04);
+    border-left: 3px solid #10b981;
 }
 
 .notification-item.unread:hover {
-    background: rgba(234, 179, 8, 0.08);
+    background: rgba(16, 185, 129, 0.08);
 }
 
 /* Notification Icon Circle */
@@ -275,8 +275,8 @@
 }
 
 .notification-icon-circle.interest {
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    color: #d97706;
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #10b981;
 }
 
 .notification-icon-circle.profile_view {
@@ -300,8 +300,8 @@
 }
 
 .notification-icon-circle.horoscope {
-    background: linear-gradient(135deg, #fef3c7, #fbbf24);
-    color: #b45309;
+    background: linear-gradient(135deg, #d1fae5, #34d399);
+    color: #059669;
 }
 
 .notification-icon-circle.photo_match {
@@ -401,13 +401,13 @@
 .notification-footer a {
     font-size: 0.82rem;
     font-weight: 600;
-    color: #eab308;
+    color: #10b981;
     text-decoration: none;
     transition: color 0.2s;
 }
 
 .notification-footer a:hover {
-    color: #ca8a04;
+    color: #10b981;
 }
 
 /* Overlay for closing */

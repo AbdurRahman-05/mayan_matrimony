@@ -269,7 +269,7 @@ const Settings = () => {
             <div className="deactivation-screen">
                 <div className="deactivation-card">
                     <div className="deactivation-icon">
-                        <EyeOff size={36} color="#D4AF37" />
+                        <EyeOff size={36} color="#10b981" />
                     </div>
                     <h2>Your Profile is Deactivated</h2>
                     <p>Your profile is currently hidden from other users. You will not receive interests, messages, or matches during this period.</p>
@@ -291,8 +291,8 @@ const Settings = () => {
     const passwordStrength = getPasswordStrength(newPassword);
 
     const navItems = [
-        { id: 'preferences', label: 'Edit Preferences', icon: <SlidersHorizontal size={18} color="#D4AF37" />, desc: 'Update match preferences', external: '/profile', externalState: { openPreferences: true } },
-        { id: 'password', label: 'Change Password', icon: <Lock size={18} color="#D4AF37" />, desc: 'Secure your account' },
+        { id: 'preferences', label: 'Edit Preferences', icon: <SlidersHorizontal size={18} color="#10b981" />, desc: 'Update match preferences', external: '/profile', externalState: { openPreferences: true } },
+        { id: 'password', label: 'Change Password', icon: <Lock size={18} color="#10b981" />, desc: 'Secure your account' },
         { id: 'deactivate', label: 'Deactivate Profile', icon: <EyeOff size={18} color="#ec4899" />, desc: 'Hide profile temporarily' },
         { id: 'delete', label: 'Delete Profile', icon: <Trash2 size={18} color="#ef4444" />, desc: 'Permanently erase account' },
         { id: 'ignored', label: 'Ignored Profiles', icon: <UserX size={18} color="#3b82f6" />, desc: 'Manage ignored members' },
@@ -384,11 +384,13 @@ const Settings = () => {
                         </div>
 
                         {/* Upgrade Banner */}
+                        {/*
                         <div className="settings-upgrade-banner">
                             <Crown size={16} />
                             <p>Upgrade membership to chat with matches</p>
                             <Link to="/membership" className="settings-upgrade-btn">Upgrade now</Link>
                         </div>
+                        */}
 
                         {/* Logout */}
                         <div className="settings-logout-btn" onClick={() => { apiLogout(); navigate('/'); }}>
@@ -425,7 +427,7 @@ const Settings = () => {
                         {!activeSection && (
                             <div className="settings-welcome">
                                 <div className="settings-welcome-icon">
-                                    <SettingsIcon size={36} color="#D4AF37" />
+                                    <SettingsIcon size={36} color="#10b981" />
                                 </div>
                                 <h3>Account Settings</h3>
                                 <p>Manage your account settings, change password, control your profile visibility, and manage ignored or blocked profiles.</p>
@@ -439,8 +441,8 @@ const Settings = () => {
                                     <button className="settings-mobile-back" onClick={() => navigate('/settings')} title="Back">
                                         <ArrowLeft size={18} />
                                     </button>
-                                    <div className="header-icon" style={{ background: '#fef3c7' }}>
-                                        <Lock size={22} color="#D4AF37" />
+                                    <div className="header-icon" style={{ background: '#d1fae5' }}>
+                                        <Lock size={22} color="#10b981" />
                                     </div>
                                     <h2>Change Password</h2>
                                 </div>
@@ -585,7 +587,7 @@ const Settings = () => {
                                 <div className="settings-content-body">
                                     <div className="deactivate-form">
                                         <div className="deactivate-info">
-                                            <Info size={20} color="#92400e" />
+                                            <Info size={20} color="#064e3b" />
                                             <p>
                                                 When your profile is deactivated, other users will not be able to see your profile.
                                                 You will not receive interests, messages, or matches during the deactivation period.
@@ -712,7 +714,7 @@ const Settings = () => {
                                 <div className="settings-content-body">
                                     {loadingIgnored ? (
                                         <div className="settings-loading">
-                                            <Loader2 size={32} color="#D4AF37" />
+                                            <Loader2 size={32} color="#10b981" />
                                         </div>
                                     ) : ignoredProfiles.length === 0 ? (
                                         <div className="profiles-list-empty">
@@ -746,7 +748,7 @@ const Settings = () => {
                                 <div className="settings-content-body">
                                     {loadingBlocked ? (
                                         <div className="settings-loading">
-                                            <Loader2 size={32} color="#D4AF37" />
+                                            <Loader2 size={32} color="#10b981" />
                                         </div>
                                     ) : blockedProfiles.length === 0 ? (
                                         <div className="profiles-list-empty">

@@ -12,6 +12,7 @@ import Matches from './pages/Matches';
 import Membership from './pages/Membership';
 import ComingSoon from './pages/ComingSoon';
 import AdminPanel from './pages/AdminPanel';
+import VerifyAccount from './pages/VerifyAccount';
 import Settings from './pages/Settings';
 import Chat from './pages/Chat';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -62,6 +63,7 @@ function App() {
           <Route path="/membership" element={<Membership />} />
 
           {/* Protected Routes */}
+          <Route path="/verify" element={<ProtectedRoute requireVerification={false}><VerifyAccount /></ProtectedRoute>} />
           <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/profile/:uniqueId" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />

@@ -488,6 +488,32 @@ router.get('/:uniqueId', auth, async (req, res) => {
       `;
         }
 
+        // Check if phone number should be visible
+        let canViewPhone = false;
+        if (req.user.id === viewedUserId) {
+            canViewPhone = true;
+        } else {
+            const acceptedInterest = await sql`
+                SELECT id FROM interests 
+                WHERE status = 'accepted' 
+                  AND (
+                      (sender_id = ${req.user.id} AND receiver_id = ${viewedUserId})
+                      OR 
+                      (sender_id = ${viewedUserId} AND receiver_id = ${req.user.id})
+                  )
+            `;
+            if (acceptedInterest.length > 0) {
+                canViewPhone = true;
+            }
+        }
+
+        if (!canViewPhone) {
+            profile.mobile = '+91 **********';
+            profile.registeredMobile = '+91 **********';
+            profile.alternateMobile = '+91 **********';
+            profile.isPhoneHidden = true;
+        }
+
         res.json(profile);
     } catch (error) {
         return dbErrorResponse(res, 'Get profile by ID error', error, 'Failed to get profile');

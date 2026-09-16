@@ -85,7 +85,7 @@
 .register-icon {
     color: var(--primary);
     margin-bottom: 1rem;
-    filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.4));
+    filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.4));
 }
 
 .register-header h2 {
@@ -118,7 +118,7 @@
 .step-indicator.active {
     background: var(--primary);
     color: #fff;
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
 }
 
 .step-indicator.completed {
@@ -155,7 +155,7 @@
 .register-input:focus,
 .register-select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     background: #fff;
 }
 
@@ -206,7 +206,7 @@
 
 .preference-option-card:hover {
     border-color: var(--primary);
-    background: #fffbeb;
+    background: #ecfdf5;
 }
 
 .preference-option-card .radio-label,
@@ -294,7 +294,7 @@
 
 .upload-option:hover {
     border-color: var(--primary);
-    background-color: #fffbeb;
+    background-color: #ecfdf5;
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
@@ -437,10 +437,11 @@
     left: 0;
     width: 100%;
     z-index: 1000;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 100%);
+    background: #33380f;
     box-shadow: none;
     overflow: visible;
     transition: all 0.3s ease;
+    padding-top: env(safe-area-inset-top, 0px);
 }
 
 .landing-navbar.scrolled {
@@ -474,7 +475,7 @@
 }
 
 .landing-nav-login {
-    background: linear-gradient(135deg, #d4af37, #c49a2f);
+    background: linear-gradient(135deg, #10b981, #10b981);
     color: #ffffff;
     border: none;
     padding: 10px 24px;
@@ -484,19 +485,19 @@
     font-size: 0.95rem;
     transition: all 0.3s ease;
     font-family: 'Inter', sans-serif;
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
     white-space: nowrap;
 }
 
 .landing-nav-login:hover {
-    background: linear-gradient(135deg, #c49a2f, #b08928);
+    background: linear-gradient(135deg, #10b981, #059669);
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
     color: #ffffff;
 }
 
 .landing-nav-register {
-    background: linear-gradient(135deg, #d4af37, #c49a2f);
+    background: linear-gradient(135deg, #10b981, #10b981);
     color: #ffffff;
     border: none;
     padding: 10px 28px;
@@ -506,14 +507,14 @@
     font-size: 0.95rem;
     transition: all 0.3s ease;
     font-family: 'Inter', sans-serif;
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
     white-space: nowrap;
 }
 
 .landing-nav-register:hover {
-    background: linear-gradient(135deg, #c49a2f, #b08928);
+    background: linear-gradient(135deg, #10b981, #059669);
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
 }
 
 /* --- Hero Section --- */
@@ -523,7 +524,7 @@
     height: 100dvh;
     min-height: 500px;
     background-color: #33380f;
-    background-image: url('/couple_hero.jpg');
+    background-image: url('/hero-bg.jpg');
     background-size: cover;
     background-position: center 35px;
     background-repeat: no-repeat;
@@ -550,7 +551,8 @@
     z-index: 2;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
     width: fit-content;
     padding: 2rem 0;
     margin-left: 8%;
@@ -576,7 +578,7 @@
 }
 
 .ts-hero-highlight {
-    color: #D4AF37;
+    color: #10b981;
 }
 
 .ts-hero-subtitle {
@@ -589,7 +591,7 @@
 }
 
 .ts-hero-btn {
-    background: #d4af37;
+    background: #10b981;
     color: #ffffff;
     font-size: 1.1rem;
     font-weight: 600;
@@ -604,7 +606,7 @@
 }
 
 .ts-hero-btn:hover {
-    background: #b8962e;
+    background: #059669;
 }
 
 /* --- Trust Section --- */
@@ -897,7 +899,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #f8efcf, #edd38b);
+    background: linear-gradient(135deg, #d1fae5, #34d399);
     border: 1px solid #d5dde7;
 }
 
@@ -972,7 +974,7 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #f8efcf, #edd38b);
+    background: linear-gradient(135deg, #d1fae5, #34d399);
     border: 1px solid #9aa4b3;
 }
 
@@ -992,7 +994,7 @@
     height: 42px;
     border-radius: 50%;
     background: var(--primary);
-    box-shadow: 0 8px 18px rgba(212, 175, 55, 0.55);
+    box-shadow: 0 8px 18px rgba(16, 185, 129, 0.55);
 }
 
 .ts-steps-cta-wrap {
@@ -1137,7 +1139,7 @@
 }
 
 .custom-login-field input:focus {
-    border-color: #E1C174;
+    border-color: #34d399;
 }
 
 .custom-login-field input[type="password"]::-ms-reveal,
@@ -1187,22 +1189,22 @@
 }
 
 .custom-login-btn.primary {
-    background-color: #E1C174;
+    background-color: #34d399;
     color: #ffffff;
 }
 
 .custom-login-btn.primary:hover {
-    background-color: #cca957;
+    background-color: #10b981;
 }
 
 .custom-login-btn.primary-outline {
-    background-color: #E1C174;
+    background-color: #34d399;
     color: #ffffff;
     margin-top: 10px;
 }
 
 .custom-login-btn.primary-outline:hover {
-    background-color: #cca957;
+    background-color: #10b981;
 }
 
 .custom-login-divider {
@@ -1942,7 +1944,7 @@
 }
 
 .jv-register-header {
-    background: linear-gradient(to right, #E1C174, #cca957);
+    background: linear-gradient(to right, #34d399, #10b981);
     color: #fff;
     position: relative;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -1999,7 +2001,7 @@
 }
 
 .jv-logo-text {
-    color: #E1C174;
+    color: #34d399;
     font-weight: 700;
     font-size: 1.5rem;
 }
@@ -2232,7 +2234,7 @@
 }
 
 .jv-step0-input:focus {
-    border-color: #E1C174;
+    border-color: #34d399;
 }
 
 .jv-step0-hint {
@@ -2261,12 +2263,12 @@
 }
 
 .jv-register-me-btn.gold-theme {
-    background-color: #E1C174;
-    box-shadow: 0 4px 10px rgba(225, 193, 116, 0.3);
+    background-color: #34d399;
+    box-shadow: 0 4px 10px rgba(52, 211, 153, 0.3);
 }
 
 .jv-register-me-btn.gold-theme:hover {
-    background-color: #d1b164;
+    background-color: #10b981;
 }
 
 .jv-input {
@@ -2281,7 +2283,7 @@
 
 .jv-input:focus,
 .jv-select:focus {
-    border-color: #E1C174;
+    border-color: #34d399;
 }
 
 .jv-input-action {
@@ -2332,7 +2334,7 @@
 }
 
 .jv-submit-btn {
-    background-color: #E1C174;
+    background-color: #34d399;
     color: #fff;
     border: none;
     padding: 12px 40px;
@@ -2340,12 +2342,12 @@
     font-weight: 600;
     border-radius: 4px;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(225, 193, 116, 0.3);
+    box-shadow: 0 4px 10px rgba(52, 211, 153, 0.3);
     transition: 0.3s;
 }
 
 .jv-submit-btn:hover {
-    background-color: #d1b164;
+    background-color: #10b981;
 }
 
 .jv-sidebar-section {
@@ -2410,4 +2412,17 @@
     font-size: 0.85rem;
     color: #777;
     line-height: 1.4;
+}
+
+@keyframes jv-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.jv-spin-anim {
+    animation: jv-spin 1s linear infinite;
 }

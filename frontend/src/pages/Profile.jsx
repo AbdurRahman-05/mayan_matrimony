@@ -598,6 +598,9 @@ const Profile = () => {
         try {
             // Merge editForm into profileData so we send the complete profile, not partial data
             const mergedData = { ...profileData, ...editForm };
+            if (mergedData.horoscope === 'Other' && mergedData.horoscopeOther) {
+                mergedData.horoscope = mergedData.horoscopeOther;
+            }
             await updateProfile(mergedData);
             const fullData = await getFullProfile();
             const updatedProf = fullData.profile || {};
@@ -889,7 +892,16 @@ const Profile = () => {
                                         style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '8px', width: '100%', outline: 'none', color: '#1a2a3a', fontFamily: 'inherit', background: '#fff' }}
                                     />
                                 </div>
-                                {ageError && <span style={{ color: '#D4AF37', fontSize: '0.8rem', marginTop: '5px' }}>{ageError}</span>}
+                                {ageError && <span style={{ color: '#10b981', fontSize: '0.8rem', marginTop: '5px' }}>{ageError}</span>}
+                            </div>
+
+                            {/* Nationality */}
+                            <div className="bd-field" style={{ cursor: 'pointer' }} onClick={() => setActiveDropdown({ title: 'Nationality', field: 'nationality', options: nationalities })}>
+                                <span className="bd-label">Nationality</span>
+                                <div className="bd-field-row">
+                                    <span className="bd-value">{editForm.nationality || 'Select Nationality'}</span>
+                                    <ChevronRight size={18} color="#4b5563" />
+                                </div>
                             </div>
 
                             {/* Marital Status */}
@@ -1013,13 +1025,19 @@ const Profile = () => {
                             {/* Hindu Special Fields */}
                             {editForm.religion === 'Hindu' && (
                                 <>
-                                    <div className="bd-field" style={{ cursor: 'pointer' }} onClick={() => setActiveDropdown({ title: 'Horoscope', field: 'horoscope', options: horoscopes })}>
-                                        <span className="bd-label">Horoscope</span>
+                                    <div className="bd-field" style={{ cursor: 'pointer' }} onClick={() => setActiveDropdown({ title: 'Horoscope (Rasi Natchathiram)', field: 'horoscope', options: horoscopes })}>
+                                        <span className="bd-label">Horoscope (Rasi Natchathiram)</span>
                                         <div className="bd-field-row">
                                             <span className="bd-value">{editForm.horoscope || 'Select Horoscope'}</span>
                                             <ChevronRight size={18} color="#4b5563" />
                                         </div>
                                     </div>
+                                    {editForm.horoscope === 'Other' && (
+                                        <div className="bd-field">
+                                            <span className="bd-label">Enter your Horoscope</span>
+                                            <input type="text" className="bd-value-input" name="horoscopeOther" value={editForm.horoscopeOther || ''} onChange={handleFormChange} placeholder="Enter your Horoscope" />
+                                        </div>
+                                    )}
                                     <div className="bd-field" style={{ position: 'relative', flexDirection: 'column', alignItems: 'flex-start' }}>
                                         <span className="bd-label">Time of Birth</span>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', width: '100%', marginTop: '6px' }}>
@@ -1121,12 +1139,7 @@ const Profile = () => {
                                     <Search size={20} />
                                 </div>
                                 <div className="bd-income-list">
-                                    {[
-                                        "No Income", "Rs. 0 - 1 Lakh", "Rs. 1 - 2 Lakh", "Rs. 2 - 3 Lakh",
-                                        "Rs. 3 - 4 Lakh", "Rs. 4 - 5 Lakh", "Rs. 5 - 7.5 Lakh", "Rs. 7.5 - 10 Lakh",
-                                        "Rs. 10 - 15 Lakh", "Rs. 15 - 20 Lakh", "Rs. 20 - 30 Lakh", "Rs. 30 - 50 Lakh",
-                                        "Rs. 50 - 75 Lakh", "Rs. 75 - 1 Crore", "Rs. 1 Crore & Above"
-                                    ].filter(inc => inc.toLowerCase().includes(incomeSearchTerm.toLowerCase())).map(incomeStr => (
+                                    {incomes.filter(inc => inc.toLowerCase().includes(incomeSearchTerm.toLowerCase())).map(incomeStr => (
                                         <label key={incomeStr} className={`bd-income-option ${editForm.income === incomeStr ? 'selected' : ''}`} onClick={() => {
                                             setEditForm(prev => ({ ...prev, income: incomeStr }));
                                             setShowIncomeModal(false);
@@ -1214,14 +1227,6 @@ const Profile = () => {
                                 </div>
                             </div>
 
-                            {/* Nationality */}
-                            <div className="bd-field" style={{ cursor: 'pointer', marginTop: '1.5rem', borderBottom: 'none' }} onClick={() => setActiveDropdown({ title: 'Nationality', field: 'nationality', options: nationalities })}>
-                                <span className="bd-label" style={{ fontSize: '0.95rem', color: '#1a2a3a', fontWeight: 600 }}>Nationality</span>
-                                <div className="bd-field-row" style={{ marginTop: '10px' }}>
-                                    <span className="bd-value">{editForm.nationality || 'Select Nationality'}</span>
-                                    <ChevronRight size={18} color="#4b5563" />
-                                </div>
-                            </div>
                         </div>
 
                         <div className="bd-save-area">
@@ -1452,7 +1457,7 @@ const Profile = () => {
                                             key={opt}
                                             className={`bd-chip ${editForm.familyStatus === opt ? 'active' : ''}`}
                                             onClick={() => setEditForm(prev => ({ ...prev, familyStatus: opt }))}
-                                            style={{ backgroundColor: editForm.familyStatus === opt ? '#fdf8e8' : '#fff', color: editForm.familyStatus === opt ? '#1a2a3a' : '#334155', borderColor: editForm.familyStatus === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '30px', padding: '10px 20px', fontSize: '0.95rem' }}
+                                            style={{ backgroundColor: editForm.familyStatus === opt ? '#fdf8e8' : '#fff', color: editForm.familyStatus === opt ? '#1a2a3a' : '#334155', borderColor: editForm.familyStatus === opt ? '#10b981' : '#e2e8f0', borderRadius: '30px', padding: '10px 20px', fontSize: '0.95rem' }}
                                         >
                                             {opt}
                                         </button>
@@ -1469,7 +1474,7 @@ const Profile = () => {
                                             key={opt}
                                             className={`bd-chip ${editForm.familyType === opt ? 'active' : ''}`}
                                             onClick={() => setEditForm(prev => ({ ...prev, familyType: opt }))}
-                                            style={{ backgroundColor: editForm.familyType === opt ? '#fdf8e8' : '#fff', color: editForm.familyType === opt ? '#1a2a3a' : '#334155', borderColor: editForm.familyType === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '30px', padding: '10px 20px', fontSize: '0.95rem' }}
+                                            style={{ backgroundColor: editForm.familyType === opt ? '#fdf8e8' : '#fff', color: editForm.familyType === opt ? '#1a2a3a' : '#334155', borderColor: editForm.familyType === opt ? '#10b981' : '#e2e8f0', borderRadius: '30px', padding: '10px 20px', fontSize: '0.95rem' }}
                                         >
                                             {opt}
                                         </button>
@@ -1486,7 +1491,7 @@ const Profile = () => {
                                             key={opt}
                                             className={`bd-chip ${editForm.livingWithParents === opt ? 'active' : ''}`}
                                             onClick={() => setEditForm(prev => ({ ...prev, livingWithParents: opt }))}
-                                            style={{ backgroundColor: editForm.livingWithParents === opt ? '#fdf8e8' : '#fff', color: editForm.livingWithParents === opt ? '#1a2a3a' : '#334155', borderColor: editForm.livingWithParents === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '30px', padding: '10px 20px', fontSize: '0.95rem' }}
+                                            style={{ backgroundColor: editForm.livingWithParents === opt ? '#fdf8e8' : '#fff', color: editForm.livingWithParents === opt ? '#1a2a3a' : '#334155', borderColor: editForm.livingWithParents === opt ? '#10b981' : '#e2e8f0', borderRadius: '30px', padding: '10px 20px', fontSize: '0.95rem' }}
                                         >
                                             {opt}
                                         </button>
@@ -1560,7 +1565,7 @@ const Profile = () => {
                                 <span className="bd-label" style={{ fontSize: '0.95rem', color: '#1a2a3a', fontWeight: 600 }}>No. of Elder Brother(s)</span>
                                 <div className="bd-chips" style={{ marginTop: '10px' }}>
                                     {siblingCounts.map(opt => (
-                                        <button key={opt} className={`bd-chip ${editForm.elderBrother === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => { const newForm = { ...prev, elderBrother: opt }; if (opt === "0") newForm.marriedElderBrother = ""; return newForm; })} style={{ backgroundColor: editForm.elderBrother === opt ? '#fdf8e8' : '#fff', color: editForm.elderBrother === opt ? '#1a2a3a' : '#334155', borderColor: editForm.elderBrother === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
+                                        <button key={opt} className={`bd-chip ${editForm.elderBrother === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => { const newForm = { ...prev, elderBrother: opt }; if (opt === "0") newForm.marriedElderBrother = ""; return newForm; })} style={{ backgroundColor: editForm.elderBrother === opt ? '#fdf8e8' : '#fff', color: editForm.elderBrother === opt ? '#1a2a3a' : '#334155', borderColor: editForm.elderBrother === opt ? '#10b981' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
                                     ))}
                                 </div>
                             </div>
@@ -1569,7 +1574,7 @@ const Profile = () => {
                                     <span className="bd-label" style={{ fontSize: '0.95rem', color: '#1a2a3a', fontWeight: 600 }}>Married Elder Brother(s)</span>
                                     <div className="bd-chips" style={{ marginTop: '10px' }}>
                                         {getMarriedCounts(editForm.elderBrother).map(opt => (
-                                            <button key={opt} className={`bd-chip ${editForm.marriedElderBrother === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => ({ ...prev, marriedElderBrother: opt }))} style={{ backgroundColor: editForm.marriedElderBrother === opt ? '#fdf8e8' : '#fff', color: editForm.marriedElderBrother === opt ? '#1a2a3a' : '#334155', borderColor: editForm.marriedElderBrother === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
+                                            <button key={opt} className={`bd-chip ${editForm.marriedElderBrother === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => ({ ...prev, marriedElderBrother: opt }))} style={{ backgroundColor: editForm.marriedElderBrother === opt ? '#fdf8e8' : '#fff', color: editForm.marriedElderBrother === opt ? '#1a2a3a' : '#334155', borderColor: editForm.marriedElderBrother === opt ? '#10b981' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -1580,7 +1585,7 @@ const Profile = () => {
                                 <span className="bd-label" style={{ fontSize: '0.95rem', color: '#1a2a3a', fontWeight: 600 }}>No. of Younger Brother(s)</span>
                                 <div className="bd-chips" style={{ marginTop: '10px' }}>
                                     {siblingCounts.map(opt => (
-                                        <button key={opt} className={`bd-chip ${editForm.youngerBrother === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => { const newForm = { ...prev, youngerBrother: opt }; if (opt === "0") newForm.marriedYoungerBrother = ""; return newForm; })} style={{ backgroundColor: editForm.youngerBrother === opt ? '#fdf8e8' : '#fff', color: editForm.youngerBrother === opt ? '#1a2a3a' : '#334155', borderColor: editForm.youngerBrother === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
+                                        <button key={opt} className={`bd-chip ${editForm.youngerBrother === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => { const newForm = { ...prev, youngerBrother: opt }; if (opt === "0") newForm.marriedYoungerBrother = ""; return newForm; })} style={{ backgroundColor: editForm.youngerBrother === opt ? '#fdf8e8' : '#fff', color: editForm.youngerBrother === opt ? '#1a2a3a' : '#334155', borderColor: editForm.youngerBrother === opt ? '#10b981' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
                                     ))}
                                 </div>
                             </div>
@@ -1589,7 +1594,7 @@ const Profile = () => {
                                     <span className="bd-label" style={{ fontSize: '0.95rem', color: '#1a2a3a', fontWeight: 600 }}>Married Younger Brother(s)</span>
                                     <div className="bd-chips" style={{ marginTop: '10px' }}>
                                         {getMarriedCounts(editForm.youngerBrother).map(opt => (
-                                            <button key={opt} className={`bd-chip ${editForm.marriedYoungerBrother === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => ({ ...prev, marriedYoungerBrother: opt }))} style={{ backgroundColor: editForm.marriedYoungerBrother === opt ? '#fdf8e8' : '#fff', color: editForm.marriedYoungerBrother === opt ? '#1a2a3a' : '#334155', borderColor: editForm.marriedYoungerBrother === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
+                                            <button key={opt} className={`bd-chip ${editForm.marriedYoungerBrother === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => ({ ...prev, marriedYoungerBrother: opt }))} style={{ backgroundColor: editForm.marriedYoungerBrother === opt ? '#fdf8e8' : '#fff', color: editForm.marriedYoungerBrother === opt ? '#1a2a3a' : '#334155', borderColor: editForm.marriedYoungerBrother === opt ? '#10b981' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -1600,7 +1605,7 @@ const Profile = () => {
                                 <span className="bd-label" style={{ fontSize: '0.95rem', color: '#1a2a3a', fontWeight: 600 }}>No. of Elder Sister(s)</span>
                                 <div className="bd-chips" style={{ marginTop: '10px' }}>
                                     {siblingCounts.map(opt => (
-                                        <button key={opt} className={`bd-chip ${editForm.elderSister === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => { const newForm = { ...prev, elderSister: opt }; if (opt === "0") newForm.marriedElderSister = ""; return newForm; })} style={{ backgroundColor: editForm.elderSister === opt ? '#fdf8e8' : '#fff', color: editForm.elderSister === opt ? '#1a2a3a' : '#334155', borderColor: editForm.elderSister === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
+                                        <button key={opt} className={`bd-chip ${editForm.elderSister === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => { const newForm = { ...prev, elderSister: opt }; if (opt === "0") newForm.marriedElderSister = ""; return newForm; })} style={{ backgroundColor: editForm.elderSister === opt ? '#fdf8e8' : '#fff', color: editForm.elderSister === opt ? '#1a2a3a' : '#334155', borderColor: editForm.elderSister === opt ? '#10b981' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
                                     ))}
                                 </div>
                             </div>
@@ -1609,7 +1614,7 @@ const Profile = () => {
                                     <span className="bd-label" style={{ fontSize: '0.95rem', color: '#1a2a3a', fontWeight: 600 }}>Married Elder Sister(s)</span>
                                     <div className="bd-chips" style={{ marginTop: '10px' }}>
                                         {getMarriedCounts(editForm.elderSister).map(opt => (
-                                            <button key={opt} className={`bd-chip ${editForm.marriedElderSister === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => ({ ...prev, marriedElderSister: opt }))} style={{ backgroundColor: editForm.marriedElderSister === opt ? '#fdf8e8' : '#fff', color: editForm.marriedElderSister === opt ? '#1a2a3a' : '#334155', borderColor: editForm.marriedElderSister === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
+                                            <button key={opt} className={`bd-chip ${editForm.marriedElderSister === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => ({ ...prev, marriedElderSister: opt }))} style={{ backgroundColor: editForm.marriedElderSister === opt ? '#fdf8e8' : '#fff', color: editForm.marriedElderSister === opt ? '#1a2a3a' : '#334155', borderColor: editForm.marriedElderSister === opt ? '#10b981' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -1620,7 +1625,7 @@ const Profile = () => {
                                 <span className="bd-label" style={{ fontSize: '0.95rem', color: '#1a2a3a', fontWeight: 600 }}>No. of Younger Sister(s)</span>
                                 <div className="bd-chips" style={{ marginTop: '10px' }}>
                                     {siblingCounts.map(opt => (
-                                        <button key={opt} className={`bd-chip ${editForm.youngerSister === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => { const newForm = { ...prev, youngerSister: opt }; if (opt === "0") newForm.marriedYoungerSister = ""; return newForm; })} style={{ backgroundColor: editForm.youngerSister === opt ? '#fdf8e8' : '#fff', color: editForm.youngerSister === opt ? '#1a2a3a' : '#334155', borderColor: editForm.youngerSister === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
+                                        <button key={opt} className={`bd-chip ${editForm.youngerSister === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => { const newForm = { ...prev, youngerSister: opt }; if (opt === "0") newForm.marriedYoungerSister = ""; return newForm; })} style={{ backgroundColor: editForm.youngerSister === opt ? '#fdf8e8' : '#fff', color: editForm.youngerSister === opt ? '#1a2a3a' : '#334155', borderColor: editForm.youngerSister === opt ? '#10b981' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
                                     ))}
                                 </div>
                             </div>
@@ -1629,7 +1634,7 @@ const Profile = () => {
                                     <span className="bd-label" style={{ fontSize: '0.95rem', color: '#1a2a3a', fontWeight: 600 }}>Married Younger Sister(s)</span>
                                     <div className="bd-chips" style={{ marginTop: '10px' }}>
                                         {getMarriedCounts(editForm.youngerSister).map(opt => (
-                                            <button key={opt} className={`bd-chip ${editForm.marriedYoungerSister === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => ({ ...prev, marriedYoungerSister: opt }))} style={{ backgroundColor: editForm.marriedYoungerSister === opt ? '#fdf8e8' : '#fff', color: editForm.marriedYoungerSister === opt ? '#1a2a3a' : '#334155', borderColor: editForm.marriedYoungerSister === opt ? '#D4AF37' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
+                                            <button key={opt} className={`bd-chip ${editForm.marriedYoungerSister === opt ? 'active' : ''}`} onClick={() => setEditForm(prev => ({ ...prev, marriedYoungerSister: opt }))} style={{ backgroundColor: editForm.marriedYoungerSister === opt ? '#fdf8e8' : '#fff', color: editForm.marriedYoungerSister === opt ? '#1a2a3a' : '#334155', borderColor: editForm.marriedYoungerSister === opt ? '#10b981' : '#e2e8f0', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0', fontSize: '0.95rem' }}>{opt}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -1856,7 +1861,7 @@ const Profile = () => {
         return (
             <svg width="80" height="80" viewBox="0 0 80 80">
                 <circle cx="40" cy="40" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="6" />
-                <circle cx="40" cy="40" r={radius} fill="none" stroke="#D4AF37" strokeWidth="6"
+                <circle cx="40" cy="40" r={radius} fill="none" stroke="#10b981" strokeWidth="6"
                     strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
                     transform="rotate(-90 40 40)" style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
                 <text x="40" y="44" textAnchor="middle" fontSize="14" fontWeight="700" fill="#1f2937">{percentage}%</text>
@@ -2286,17 +2291,17 @@ const Profile = () => {
 
                                     <h4 className="ep-subsection-title" style={{ marginTop: '24px' }}>Habits</h4>
                                     <div className="ep-habits-grid">
-                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.drinking ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.drinking ? '#fef9e7' : 'transparent' }}>
-                                            <Wine size={24} color={profileData.drinking ? "#D4AF37" : "#4b5563"} strokeWidth={profileData.drinking ? 2 : 1.5} />
-                                            <span style={{ fontSize: '0.9rem', color: profileData.drinking ? '#D4AF37' : '#334155', fontWeight: profileData.drinking ? '600' : '500' }}>{profileData.drinking ? `Drinking: ${profileData.drinking}` : 'Add Drinking Habits'}</span>
+                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.drinking ? '1.5px solid #6ee7b7' : '1px solid #e5e7eb', backgroundColor: profileData.drinking ? '#fef9e7' : 'transparent' }}>
+                                            <Wine size={24} color={profileData.drinking ? "#10b981" : "#4b5563"} strokeWidth={profileData.drinking ? 2 : 1.5} />
+                                            <span style={{ fontSize: '0.9rem', color: profileData.drinking ? '#10b981' : '#334155', fontWeight: profileData.drinking ? '600' : '500' }}>{profileData.drinking ? `Drinking: ${profileData.drinking}` : 'Add Drinking Habits'}</span>
                                         </div>
-                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.diet ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.diet ? '#fef9e7' : 'transparent' }}>
-                                            <Utensils size={24} color={profileData.diet ? "#D4AF37" : "#4b5563"} strokeWidth={profileData.diet ? 2 : 1.5} />
-                                            <span style={{ fontSize: '0.9rem', color: profileData.diet ? '#D4AF37' : '#334155', fontWeight: profileData.diet ? '600' : '500' }}>{profileData.diet ? `Diet: ${profileData.diet}` : 'Add Dietary Habits'}</span>
+                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.diet ? '1.5px solid #6ee7b7' : '1px solid #e5e7eb', backgroundColor: profileData.diet ? '#fef9e7' : 'transparent' }}>
+                                            <Utensils size={24} color={profileData.diet ? "#10b981" : "#4b5563"} strokeWidth={profileData.diet ? 2 : 1.5} />
+                                            <span style={{ fontSize: '0.9rem', color: profileData.diet ? '#10b981' : '#334155', fontWeight: profileData.diet ? '600' : '500' }}>{profileData.diet ? `Diet: ${profileData.diet}` : 'Add Dietary Habits'}</span>
                                         </div>
-                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.smoking ? '1.5px solid #f5e6a3' : '1px solid #e5e7eb', backgroundColor: profileData.smoking ? '#fef9e7' : 'transparent' }}>
-                                            <Cigarette size={24} color={profileData.smoking ? "#D4AF37" : "#4b5563"} strokeWidth={profileData.smoking ? 2 : 1.5} />
-                                            <span style={{ fontSize: '0.9rem', color: profileData.smoking ? '#D4AF37' : '#334155', fontWeight: profileData.smoking ? '600' : '500' }}>{profileData.smoking ? `Smoking: ${profileData.smoking}` : 'Add Smoking Habits'}</span>
+                                        <div className="ep-habit-card" onClick={() => handleEditSection('lifestyle')} style={{ borderRadius: '8px', padding: '24px 16px', alignItems: 'flex-start', textAlign: 'left', gap: '12px', border: profileData.smoking ? '1.5px solid #6ee7b7' : '1px solid #e5e7eb', backgroundColor: profileData.smoking ? '#fef9e7' : 'transparent' }}>
+                                            <Cigarette size={24} color={profileData.smoking ? "#10b981" : "#4b5563"} strokeWidth={profileData.smoking ? 2 : 1.5} />
+                                            <span style={{ fontSize: '0.9rem', color: profileData.smoking ? '#10b981' : '#334155', fontWeight: profileData.smoking ? '600' : '500' }}>{profileData.smoking ? `Smoking: ${profileData.smoking}` : 'Add Smoking Habits'}</span>
                                         </div>
                                     </div>
 
@@ -2552,7 +2557,7 @@ const Profile = () => {
 
                                 {/* Update Profile (Preferences) */}
                                 <div style={{ textAlign: 'center', padding: '1rem 0 2rem' }}>
-                                    <button className="btn btn-outline" onClick={handleUpdateProfile} style={{ color: '#c49b63', borderColor: '#c49b63' }}>
+                                    <button className="btn btn-outline" onClick={handleUpdateProfile} style={{ color: '#10b981', borderColor: '#10b981' }}>
                                         <Save size={16} /> Update Profile
                                     </button>
                                 </div>
@@ -2975,7 +2980,7 @@ const Profile = () => {
                                             setTimeout(() => setShowPrivacyModal(false), 200);
                                         }}>
                                             <div style={{ marginTop: '2px' }}>
-                                                <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: isActive ? '6px solid #D4AF37' : '2px solid #4b5563', boxSizing: 'border-box' }}></div>
+                                                <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: isActive ? '6px solid #10b981' : '2px solid #4b5563', boxSizing: 'border-box' }}></div>
                                             </div>
                                             <div>
                                                 <div style={{ color: isActive ? '#1a2a3a' : '#475569', fontWeight: 600, fontSize: '1rem', margin: '0 0 4px 0' }}>{opt.val}</div>

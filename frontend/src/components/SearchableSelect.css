@@ -28,8 +28,8 @@
 }
 
 .ss-control.ss-open {
-    border-color: #c9a84c;
-    box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.15);
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
     border-radius: 6px 6px 0 0;
 }
 
@@ -121,18 +121,18 @@
 
 .ss-option:hover,
 .ss-option.ss-highlighted {
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
 }
 
 .ss-option.ss-selected {
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
     font-weight: 500;
 }
 
 .ss-option.ss-selected.ss-highlighted {
-    background: #c49a2f;
+    background: #10b981;
 }
 
 .ss-header {

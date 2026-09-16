@@ -112,6 +112,7 @@ router.get('/users', async (req, res) => {
                 COALESCE(u.mobile, 'No Phone') as phone, 
                 COALESCE(u.gender, 'Not Specified') as gender, 
                 COALESCE(p.religion, 'Not Specified') as religion,
+                u.last_seen,
                 u.created_at 
             FROM users u
             LEFT JOIN profiles p ON u.id = p.user_id

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { showAlert } from '../components/GlobalModal';
 import { apiFetch } from '../services/api';
+import { horoscopes } from '../data/sharedOptions';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -32,6 +35,72 @@ const AdminPanel = () => {
 
     const [filterGender, setFilterGender] = useState('');
     const [filterReligion, setFilterReligion] = useState('');
+    const [filterHoroscope, setFilterHoroscope] = useState('');
+
+    const handleDownloadPDF = () => {
+        const doc = new jsPDF('landscape');
+        
+        doc.setFontSize(18);
+        doc.text('Registered Users - Admin Dashboard', 14, 22);
+
+        const filteredUsers = usersList.filter(user => {
+            if (filterGender && user.gender !== filterGender) return false;
+            if (filterReligion && (user.religion || 'Not Specified') !== filterReligion) return false;
+            if (filterHoroscope && (user.horoscope || 'Not Specified') !== filterHoroscope) return false;
+            return true;
+        });
+
+        const tableColumn = ["ID", "Name", "Email", "Phone", "Gender", "Religion", "Horoscope", "Reg Date", "Active Days", "Last Seen", "Status"];
+        const tableRows = [];
+
+        filteredUsers.forEach((user, index) => {
+            const activeDays = Math.max(0, Math.floor((new Date() - new Date(user.created_at)) / (1000 * 60 * 60 * 24)));
+            let lastSeenStr = 'Never';
+            let status = 'Active';
+            
+            if (user.last_seen) {
+                const lastSeenDate = new Date(user.last_seen);
+                const diffMs = new Date() - lastSeenDate;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHours / 24);
+
+                if (diffMins < 1) lastSeenStr = 'Just now';
+                else if (diffMins < 60) lastSeenStr = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+                else if (diffHours < 24) lastSeenStr = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+                else if (diffDays === 1) lastSeenStr = 'Yesterday';
+                else lastSeenStr = `${diffDays} days ago`;
+
+                if (diffDays > 90) status = 'Inactive (>3 Months)';
+            }
+            
+            const userData = [
+                index + 1,
+                `${user.first_name} ${user.last_name}`,
+                user.email,
+                user.phone,
+                user.gender,
+                user.religion || 'N/A',
+                user.horoscope || 'N/A',
+                new Date(user.created_at).toLocaleDateString(),
+                activeDays,
+                lastSeenStr,
+                status
+            ];
+            tableRows.push(userData);
+        });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 30,
+            theme: 'grid',
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [75, 85, 99] }
+        });
+
+        doc.save(`users_list_${new Date().toISOString().slice(0,10)}.pdf`);
+    };
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -621,6 +690,11 @@ const AdminPanel = () => {
                             <button className="admin-btn-show-users" onClick={() => fetchUsers(false)}>
                                 {showUsers ? 'Hide Users' : 'Show Users'}
                             </button>
+                            {showUsers && (
+                                <button className="admin-btn-show-users" style={{ marginLeft: '10px', background: '#dc2626' }} onClick={handleDownloadPDF}>
+                                    Download as PDF
+                                </button>
+                            )}
                         </>
                     )}
 
@@ -631,41 +705,46 @@ const AdminPanel = () => {
                             <select
                                 className="admin-filter-select"
                                 value={filterGender}
-                                onChange={(e) => {
-                                    setFilterGender(e.target.value);
-                                    if (!e.target.value) setFilterReligion('');
-                                }}
+                                onChange={(e) => setFilterGender(e.target.value)}
                             >
                                 <option value="">Filter by Gender (All)</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
 
-                            {filterGender && (
-                                <select
-                                    className="admin-filter-select"
-                                    value={filterReligion}
-                                    onChange={(e) => setFilterReligion(e.target.value)}
-                                >
-                                    <option value="">Filter by Religion (All)</option>
-                                    <option value="Hindu">Hindu</option>
-                                    <option value="Muslim">Muslim</option>
-                                    <option value="Christian">Christian</option>
-                                    <option value="Sikh">Sikh</option>
-                                    <option value="Buddhist">Buddhist</option>
-                                    <option value="Jain">Jain</option>
-                                    <option value="Parsi">Parsi</option>
-                                    <option value="Jewish">Jewish</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            )}
+                            <select
+                                className="admin-filter-select"
+                                value={filterReligion}
+                                onChange={(e) => setFilterReligion(e.target.value)}
+                            >
+                                <option value="">Filter by Religion (All)</option>
+                                <option value="Hindu">Hindu</option>
+                                <option value="Muslim">Muslim</option>
+                                <option value="Christian">Christian</option>
+                                <option value="Sikh">Sikh</option>
+                                <option value="Buddhist">Buddhist</option>
+                                <option value="Jain">Jain</option>
+                                <option value="Parsi">Parsi</option>
+                                <option value="Jewish">Jewish</option>
+                                <option value="Other">Other</option>
+                            </select>
+
+                            <select
+                                className="admin-filter-select"
+                                value={filterHoroscope}
+                                onChange={(e) => setFilterHoroscope(e.target.value)}
+                            >
+                                <option value="">Filter by Horoscope (All)</option>
+                                {horoscopes.map(h => <option key={h} value={h}>{h}</option>)}
+                            </select>
                         </div>
                     )}
 
                     {showUsers ? (
                         usersList.filter(user => {
                             if (filterGender && user.gender !== filterGender) return false;
-                            if (filterGender && filterReligion && (user.religion || 'Not Specified') !== filterReligion) return false;
+                            if (filterReligion && (user.religion || 'Not Specified') !== filterReligion) return false;
+                            if (filterHoroscope && (user.horoscope || 'Not Specified') !== filterHoroscope) return false;
                             return true;
                         }).length > 0 ? (
                             <div className="admin-users-table-container">
@@ -678,23 +757,58 @@ const AdminPanel = () => {
                                             <th>Phone</th>
                                             <th>Gender</th>
                                             <th>Registration Date</th>
+                                            <th>Active Days</th>
+                                            <th>Last Seen</th>
+                                            <th>Status</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {usersList.filter(user => {
                                             if (filterGender && user.gender !== filterGender) return false;
-                                            if (filterGender && filterReligion && (user.religion || 'Not Specified') !== filterReligion) return false;
+                                            if (filterReligion && (user.religion || 'Not Specified') !== filterReligion) return false;
+                                            if (filterHoroscope && (user.horoscope || 'Not Specified') !== filterHoroscope) return false;
                                             return true;
-                                        }).map((user, index) => (
-                                            <tr key={user.user_id || index}>
-                                                <td>{index + 1}</td>
-                                                <td>{user.first_name} {user.last_name}</td>
-                                                <td>{user.email}</td>
-                                                <td>{user.phone}</td>
-                                                <td>{user.gender}</td>
-                                                <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                                                <td>
+                                        }).map((user, index) => {
+                                            const activeDays = Math.max(0, Math.floor((new Date() - new Date(user.created_at)) / (1000 * 60 * 60 * 24)));
+                                            
+                                            let lastSeenStr = 'Never';
+                                            let isInactive = true;
+                                            
+                                            if (user.last_seen) {
+                                                const lastSeenDate = new Date(user.last_seen);
+                                                const diffMs = new Date() - lastSeenDate;
+                                                const diffMins = Math.floor(diffMs / 60000);
+                                                const diffHours = Math.floor(diffMins / 60);
+                                                const diffDays = Math.floor(diffHours / 24);
+
+                                                if (diffMins < 1) lastSeenStr = 'Just now';
+                                                else if (diffMins < 60) lastSeenStr = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+                                                else if (diffHours < 24) lastSeenStr = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+                                                else if (diffDays === 1) lastSeenStr = 'Yesterday';
+                                                else lastSeenStr = `${diffDays} days ago`;
+
+                                                isInactive = diffDays > 90;
+                                            }
+
+                                            return (
+                                                <tr key={user.user_id || index}>
+                                                    <td>{index + 1}</td>
+                                                    <td>{user.first_name} {user.last_name}</td>
+                                                    <td>{user.email}</td>
+                                                    <td>{user.phone}</td>
+                                                    <td>{user.gender}</td>
+                                                    <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                                                    <td>{activeDays}</td>
+                                                    <td>{lastSeenStr}</td>
+                                                    <td>
+                                                        {isInactive ? (
+                                                            <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '0.85rem' }}>Inactive (&gt;3 Months)</span>
+                                                        ) : (
+                                                            <span style={{ color: '#10b981', fontWeight: 'bold', fontSize: '0.85rem' }}>Active</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
                                                     <div className="admin-action-btns">
                                                         <button
                                                             className="admin-btn-profile"
@@ -711,7 +825,8 @@ const AdminPanel = () => {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ))}
+                                        );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

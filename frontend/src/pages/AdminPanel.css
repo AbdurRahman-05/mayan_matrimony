@@ -66,7 +66,7 @@
 .admin-stat-number {
     font-size: 4rem;
     font-weight: 800;
-    color: #eab308;
+    color: #10b981;
 }
 
 .image-card p {
@@ -102,7 +102,7 @@
 
 .admin-upload-btn {
     display: inline-block;
-    background-color: #eab308;
+    background-color: #10b981;
     color: #fff;
     padding: 10px 20px;
     border-radius: 5px;
@@ -112,7 +112,7 @@
 }
 
 .admin-upload-btn:hover {
-    background-color: #ca8a04;
+    background-color: #10b981;
 }
 
 /* Login */
@@ -173,7 +173,7 @@
 .admin-login-btn {
     width: 100%;
     padding: 12px;
-    background-color: #eab308;
+    background-color: #10b981;
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -184,13 +184,13 @@
 }
 
 .admin-login-btn:hover {
-    background-color: #ca8a04;
+    background-color: #10b981;
 }
 
 .admin-forgot-password {
     text-align: center;
     margin-top: 15px;
-    color: #eab308;
+    color: #10b981;
     cursor: pointer;
     font-size: 0.95rem;
 }
@@ -494,7 +494,7 @@
 
 .admin-story-edit-card:hover {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    border-color: #eab308;
+    border-color: #10b981;
 }
 
 .admin-story-edit-header {
@@ -503,7 +503,7 @@
 
 .admin-story-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #eab308, #d4a306);
+    background: linear-gradient(135deg, #10b981, #10b981);
     color: #fff;
     font-size: 0.85rem;
     font-weight: 700;
@@ -546,8 +546,8 @@
 
 .admin-story-input:focus {
     outline: none;
-    border-color: #eab308;
-    box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.15);
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
 .admin-story-textarea {
@@ -567,8 +567,8 @@
 
 .admin-story-textarea:focus {
     outline: none;
-    border-color: #eab308;
-    box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.15);
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
 .admin-story-save-container {
@@ -577,7 +577,7 @@
 }
 
 .admin-story-save-btn {
-    background: linear-gradient(135deg, #eab308, #d4a306);
+    background: linear-gradient(135deg, #10b981, #10b981);
     color: #fff;
     border: none;
     padding: 12px 36px;
@@ -586,12 +586,12 @@
     font-weight: 700;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .admin-story-save-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(234, 179, 8, 0.4);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
 }
 
 .admin-story-save-btn:active:not(:disabled) {

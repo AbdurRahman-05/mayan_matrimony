@@ -523,7 +523,7 @@ const Search = () => {
                                                             </button>
                                                         )}
                                                         {isShortlisted ? (
-                                                            <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                            <button className="card-action-btn" disabled style={{ color: '#34d399', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
                                                                 <Star size={18} fill="currentColor" />
                                                                 Shortlisted
                                                             </button>
@@ -613,7 +613,7 @@ const Search = () => {
                                                     </button>
                                                 )}
                                                 {shortlistedProfiles.some(s => s.uniqueId === foundProfile.uniqueId) ? (
-                                                    <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                    <button className="card-action-btn" disabled style={{ color: '#34d399', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
                                                         <Star size={18} fill="currentColor" />
                                                         Shortlisted
                                                     </button>

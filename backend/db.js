@@ -9,6 +9,7 @@ const sql = postgres(process.env.DATABASE_URL, {
     max: 10,           // max simultaneous DB connections
     idle_timeout: 30,  // close idle connections after 30s
     connect_timeout: 10, // fail fast if DB unreachable
+    ssl: 'require',    // Required for Neon DB
 });
 
 export default sql;

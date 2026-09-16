@@ -238,11 +238,11 @@
 
 /* ─── Bronze Theme ─── */
 .plan-card.bronze {
-    border-color: #d4a574;
+    border-color: #10b981;
 }
 
 .plan-card.bronze .plan-card-header {
-    background: linear-gradient(135deg, #8B6914, #CD853F);
+    background: linear-gradient(135deg, #064e3b, #10b981);
     color: white;
 }
 
@@ -259,20 +259,20 @@
 }
 
 .plan-card.bronze .feature-icon {
-    background: #fef3c7;
+    background: #d1fae5;
 }
 
 .plan-card.bronze .feature-icon svg {
-    color: #92400e;
+    color: #064e3b;
 }
 
 .plan-card.bronze .plan-pay-btn {
-    background: linear-gradient(135deg, #8B6914, #CD853F);
+    background: linear-gradient(135deg, #064e3b, #10b981);
     color: white;
 }
 
 .plan-card.bronze:hover {
-    border-color: #b8860b;
+    border-color: #059669;
 }
 
 /* ─── Silver Theme ─── */
@@ -316,12 +316,12 @@
 
 /* ─── Gold Theme ─── */
 .plan-card.gold {
-    border-color: #f59e0b;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+    border-color: #10b981;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
 }
 
 .plan-card.gold .plan-card-header {
-    background: linear-gradient(135deg, #d4af37, #f59e0b, #eab308);
+    background: linear-gradient(135deg, #10b981, #10b981, #10b981);
     color: white;
 }
 
@@ -338,21 +338,21 @@
 }
 
 .plan-card.gold .feature-icon {
-    background: #fef9c3;
+    background: #ecfdf5;
 }
 
 .plan-card.gold .feature-icon svg {
-    color: #a16207;
+    color: #059669;
 }
 
 .plan-card.gold .plan-pay-btn {
-    background: linear-gradient(135deg, #d4af37, #f59e0b);
+    background: linear-gradient(135deg, #10b981, #10b981);
     color: white;
 }
 
 .plan-card.gold:hover {
-    border-color: #d4af37;
-    box-shadow: 0 20px 40px rgba(245, 158, 11, 0.2);
+    border-color: #10b981;
+    box-shadow: 0 20px 40px rgba(5, 150, 105, 0.2);
 }
 
 /* ─── Diamond Theme ─── */
@@ -445,7 +445,7 @@
 }
 
 .compare-table th:nth-child(2) {
-    background: linear-gradient(135deg, #8B6914, #CD853F);
+    background: linear-gradient(135deg, #064e3b, #10b981);
 }
 
 .compare-table th:nth-child(3) {
@@ -453,7 +453,7 @@
 }
 
 .compare-table th:nth-child(4) {
-    background: linear-gradient(135deg, #d4af37, #f59e0b);
+    background: linear-gradient(135deg, #10b981, #10b981);
 }
 
 .compare-table th:last-child {

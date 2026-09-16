@@ -206,7 +206,7 @@
 
 .change-pref-btn {
     display: inline-block;
-    background: #D4AF37;
+    background: #10b981;
     color: #ffffff;
     border: none;
     border-radius: 8px;
@@ -219,8 +219,8 @@
 }
 
 .change-pref-btn:hover {
-    background: #c29d31;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+    background: #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 /* Match Results List */
@@ -355,7 +355,7 @@
 
 .match-card-footer {
     display: flex;
-    border-top: 1px solid #fde68a;
+    border-top: 1px solid #a7f3d0;
     background: #fffbef;
 }
 
@@ -368,8 +368,8 @@
     padding: 10px;
     background: transparent;
     border: none;
-    border-right: 1px solid #fde68a;
-    color: #b48d21;
+    border-right: 1px solid #a7f3d0;
+    color: #059669;
     /* Slightly darker gold for contrast */
     font-weight: 500;
     font-size: 0.85rem;
@@ -382,7 +382,7 @@
 }
 
 .card-action-btn:hover {
-    background: #fef3c7;
+    background: #d1fae5;
 }
 
 .card-action-btn svg {
@@ -643,7 +643,7 @@
     gap: 8px;
     background: none;
     border: none;
-    color: #ca9d42;
+    color: #10b981;
     font-weight: 600;
     font-size: 0.95rem;
     padding: 0 0 1rem 0;
@@ -653,5 +653,5 @@
 }
 
 .matches-mobile-back-btn:hover {
-    color: #8c6a26;
+    color: #064e3b;
 }

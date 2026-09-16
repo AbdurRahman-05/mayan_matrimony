@@ -319,7 +319,7 @@ const Interests = () => {
                                                             ) : (
                                                                 <div className="request-photo-overlay">
                                                                     {isPhotoPending ? (
-                                                                        <button className="request-photo-btn pending" disabled style={{ background: '#f59e0b', color: '#fff', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                                        <button className="request-photo-btn pending" disabled style={{ background: '#10b981', color: '#fff', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
                                                                             Requested
                                                                         </button>
                                                                     ) : (
@@ -373,7 +373,7 @@ const Interests = () => {
                                                     <div className="match-card-footer">
                                                         {activeSection === 'received' && item.status === 'pending' ? (
                                                             <>
-                                                                <button className="card-action-btn" style={{ color: '#00a650', borderRight: '1px solid #fde68a' }} onClick={(e) => handleRespond(e, item.id, 'accepted')}>
+                                                                <button className="card-action-btn" style={{ color: '#00a650', borderRight: '1px solid #a7f3d0' }} onClick={(e) => handleRespond(e, item.id, 'accepted')}>
                                                                     <Check size={18} />
                                                                     Accept Interest
                                                                 </button>

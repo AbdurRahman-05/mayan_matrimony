@@ -5,7 +5,7 @@
     width: 100%;
     z-index: 1000;
     transition: all 0.3s ease;
-    padding: 1.2rem 0;
+    padding: calc(1.2rem + env(safe-area-inset-top, 0px)) 0 1.2rem 0;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -162,7 +162,7 @@
     }
 
     .navbar {
-        padding: 0.6rem 0;
+        padding: calc(0.6rem + env(safe-area-inset-top, 0px)) 0 0.6rem 0;
     }
 }
 
@@ -189,7 +189,7 @@
 }
 
 .nav-login-link {
-    color: #eab308;
+    color: #10b981;
     /* Yellow */
     font-weight: 700;
     font-size: 1.1rem;
@@ -198,12 +198,12 @@
 }
 
 .nav-login-link:hover {
-    color: #ca8a04;
+    color: #10b981;
     /* Darker Yellow */
 }
 
 .nav-register-btn {
-    background-color: #eab308;
+    background-color: #10b981;
     /* Yellow */
     color: #ffffff;
     padding: 0.6rem 1.5rem;
@@ -216,11 +216,11 @@
 }
 
 .nav-register-btn:hover {
-    background-color: #ca8a04;
+    background-color: #10b981;
     /* Darker yellow */
     color: #ffffff;
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(234, 179, 8, 0.4);
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
 }
 
 .nav-back-btn {
@@ -237,6 +237,6 @@
 }
 
 .nav-back-btn:hover {
-    background-color: rgba(225, 193, 116, 0.1);
+    background-color: rgba(52, 211, 153, 0.1);
     transform: scale(1.05);
 }

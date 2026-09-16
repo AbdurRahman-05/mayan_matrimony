@@ -63,8 +63,8 @@ const Home = () => {
     {
       id: 'family',
       label: 'Family Details',
-      icon: <Users size={24} color="#fb8c00" />,
-      iconBg: '#fff3e0',
+      icon: <Users size={24} color="#10b981" />,
+      iconBg: '#f0fdf4',
       fields: ['familyType', 'familyStatus', 'fatherOccupation', 'motherOccupation'],
       navState: { openSection: 'family' }
     },
@@ -267,6 +267,7 @@ const Home = () => {
           </section>
 
           {/* Become a Paid Member Section */}
+          {/* 
           <section className="dashboard-card membership-promo-card">
             <div className="promo-content">
               <h2>Become a paid member</h2>
@@ -274,7 +275,7 @@ const Home = () => {
 
               <ul className="promo-features">
                 <li>
-                  <MessageSquare size={16} color="#D4AF37" />
+                  <MessageSquare size={16} color="#10b981" />
                   <span>Chat with matches</span>
                 </li>
                 <li>
@@ -286,7 +287,7 @@ const Home = () => {
                   <span>Higher chances of response</span>
                 </li>
                 <li>
-                  <Eye size={16} color="#D4AF37" />
+                  <Eye size={16} color="#10b981" />
                   <span>View and match horoscopes</span>
                 </li>
               </ul>
@@ -300,6 +301,7 @@ const Home = () => {
               />
             </div>
           </section>
+          */}
         </main>
       </div>
 

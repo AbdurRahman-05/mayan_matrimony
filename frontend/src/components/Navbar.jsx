@@ -76,7 +76,7 @@ const Navbar = () => {
               </Link>
             </li>
             <li><Link to="/matches">Matches</Link></li>
-            <li><Link to="/membership">Membership</Link></li>
+            {/* <li><Link to="/membership">Membership</Link></li> */}
             <li><Link to="/settings">Settings</Link></li>
           </ul>
         )}
@@ -120,7 +120,7 @@ const Navbar = () => {
             )}
           </Link>
           <Link to="/matches" onClick={() => setIsOpen(false)}>Matches</Link>
-          <Link to="/membership" onClick={() => setIsOpen(false)}>Membership</Link>
+          {/* <Link to="/membership" onClick={() => setIsOpen(false)}>Membership</Link> */}
           <Link to="/settings" onClick={() => setIsOpen(false)}>Settings</Link>
         </div>
       )}

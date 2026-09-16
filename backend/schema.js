@@ -37,11 +37,18 @@ async function setupDatabase() {
         profile_for VARCHAR(50),
         gender VARCHAR(20),
         is_verified BOOLEAN DEFAULT false,
+        last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
     console.log('✅ users table created');
+
+    try {
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP`;
+    } catch (e) {
+      try { await sql`ALTER TABLE users ADD COLUMN last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP`; } catch(err) {}
+    }
 
     // Profiles table - full profile data
     await sql`

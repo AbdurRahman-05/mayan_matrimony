@@ -335,7 +335,7 @@ const Matches = () => {
                                         ) : null}
                                         <div className="edu-no-photo" style={{ display: photoSrc ? 'none' : 'flex' }}>
                                             {isPhotoPending ? (
-                                                <button className="request-photo-btn pending" disabled style={{ background: '#f59e0b', color: '#fff', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                                <button className="request-photo-btn pending" disabled style={{ background: '#10b981', color: '#fff', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
                                                     Requested
                                                 </button>
                                             ) : (
@@ -384,7 +384,7 @@ const Matches = () => {
                                     ) : null}
                                     <div className="request-photo-overlay" style={{ display: photoSrc ? 'none' : 'flex' }}>
                                         {isPhotoPending ? (
-                                            <button className="request-photo-btn pending" disabled style={{ background: '#f59e0b', color: '#fff', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                            <button className="request-photo-btn pending" disabled style={{ background: '#10b981', color: '#fff', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
                                                 Photo Requested
                                             </button>
                                         ) : (
@@ -430,7 +430,7 @@ const Matches = () => {
                                     </button>
                                 )}
                                 {isShortlisted ? (
-                                    <button className="card-action-btn" disabled style={{ color: '#fbbf24', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                    <button className="card-action-btn" disabled style={{ color: '#34d399', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
                                         <Star size={18} fill="currentColor" />
                                         Shortlisted
                                     </button>

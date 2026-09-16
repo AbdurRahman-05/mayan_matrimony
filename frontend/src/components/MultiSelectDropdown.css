@@ -27,7 +27,7 @@
 }
 
 .msd-trigger.open {
-    border-color: #e65100;
+    border-color: #10b981;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
@@ -88,7 +88,7 @@
 }
 
 .msd-search-input:focus {
-    border-color: #e65100;
+    border-color: #10b981;
 }
 
 .msd-search-input::placeholder {
@@ -156,8 +156,8 @@
 }
 
 .msd-checkbox.checked {
-    background: #e65100;
-    border-color: #e65100;
+    background: #10b981;
+    border-color: #10b981;
 }
 
 .msd-option-label {

@@ -8,7 +8,7 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(212, 175, 55, 0.25);
+  border-top: 1px solid rgba(16, 185, 129, 0.25);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
   z-index: 9999;
   display: flex;
@@ -59,7 +59,7 @@
 }
 
 .bottom-nav-item.active {
-  color: #d4af37;
+  color: #10b981;
   font-weight: 700;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .bottom-nav-item.active .nav-icon {
-  stroke: #d4af37;
+  stroke: #10b981;
 }
 
 .bottom-nav-badge {

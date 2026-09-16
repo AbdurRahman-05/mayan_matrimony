@@ -23,7 +23,8 @@ export const religions = [
 
 export const horoscopes = [
     "Mesham (Aries)", "Rishabam (Taurus)", "Mithunam (Gemini)", "Kadagam (Cancer)", "Simmam (Leo)", "Kanni (Virgo)",
-    "Thulam (Libra)", "Viruchigam (Scorpio)", "Dhanusu (Sagittarius)", "Magaram (Capricorn)", "Kumbam (Aquarius)", "Meenam (Pisces)"
+    "Thulam (Libra)", "Viruchigam (Scorpio)", "Dhanusu (Sagittarius)", "Magaram (Capricorn)", "Kumbam (Aquarius)", "Meenam (Pisces)",
+    "Don't have", "Other"
 ];
 
 export const educationOptions = [
@@ -67,7 +68,7 @@ export const incomes = [
     "No Income", "Rs. 0 - 1 Lakh", "Rs. 1 - 2 Lakh", "Rs. 2 - 3 Lakh",
     "Rs. 3 - 4 Lakh", "Rs. 4 - 5 Lakh", "Rs. 5 - 7.5 Lakh", "Rs. 7.5 - 10 Lakh",
     "Rs. 10 - 15 Lakh", "Rs. 15 - 20 Lakh", "Rs. 20 - 30 Lakh", "Rs. 30 - 50 Lakh",
-    "Rs. 50 - 75 Lakh", "Rs. 75 - 1 Crore", "Rs. 1 Crore & Above"
+    "Rs. 50 - 75 Lakh", "Rs. 75 - 1 Crore", "Rs. 1 Crore & Above", "Prefer while discussing"
 ];
 
 export const residentialStatusOptions = ['Citizen', 'Permanent Resident', 'Work Permit', 'Student Visa', 'Temporary Visa', 'Other'];

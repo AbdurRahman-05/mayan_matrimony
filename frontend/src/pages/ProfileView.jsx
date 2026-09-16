@@ -211,6 +211,9 @@ const ProfileView = () => {
                                         </span>
                                     </div>
                                     <div className="pv-quick-item"><Calendar size={18} /><span>{previewDobText}</span></div>
+                                    {profileData.nationality && (
+                                        <div className="pv-quick-item"><Globe2 size={18} /><span>Nationality: {profileData.nationality}</span></div>
+                                    )}
                                     {profileData.timeOfBirth && (
                                         <div className="pv-quick-item"><Clock size={18} /><span>{profileData.timeOfBirth}</span></div>
                                     )}
@@ -224,9 +227,6 @@ const ProfileView = () => {
                                     <p>{profileData.about || 'No description added yet.'}</p>
                                     {profileData.disability && profileData.disability !== 'None' && (
                                         <p style={{ marginTop: '8px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Disability:</strong> {profileData.disability}</p>
-                                    )}
-                                    {profileData.nationality && (
-                                        <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Nationality:</strong> {profileData.nationality}</p>
                                     )}
                                 </div>
 
@@ -249,6 +249,26 @@ const ProfileView = () => {
                                     {profileData.financialStatus && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Financial Status:</strong> {profileData.financialStatus}</p>}
                                     {profileData.jobDetails && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Job Details:</strong> {profileData.jobDetails}</p>}
                                     {profileData.settlingAbroad && <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#4b5563' }}><strong>Interested in settling abroad?:</strong> {profileData.settlingAbroad}</p>}
+                                </div>
+
+                                <div className="pv-card">
+                                    <h3>Contact Details</h3>
+                                    <div className="pv-row" style={{ alignItems: 'center' }}>
+                                        <span style={{ minWidth: '150px' }}>Mobile Number</span>
+                                        <strong>
+                                            {profileData.isPhoneHidden ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280', fontSize: '0.95rem' }}>
+                                                    <Lock size={16} />
+                                                    Visible after invitation is accepted
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1f2937' }}>
+                                                    <Phone size={16} />
+                                                    {profileData.mobile || 'Not specified'}
+                                                </div>
+                                            )}
+                                        </strong>
+                                    </div>
                                 </div>
                             </>
                         )

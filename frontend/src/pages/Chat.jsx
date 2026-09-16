@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { getChatList, getChatMessages, sendChatMessage, startChat, editChatMessage, unsendChatMessage, globalCache, getMediaUrl } from '../services/api';
-import { Loader2, Send, ArrowLeft, MessageSquare, Edit2, Trash2, X } from 'lucide-react';
+import { getChatList, getChatMessages, sendChatMessage, startChat, editChatMessage, unsendChatMessage, globalCache, getMediaUrl, getFullProfile } from '../services/api';
+import { Loader2, Send, ArrowLeft, MessageSquare, Edit2, Trash2, X, Phone } from 'lucide-react';
 import './Chat.css';
 
 const Chat = () => {
@@ -305,6 +305,20 @@ const Chat = () => {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
+    const handleSharePhone = async () => {
+        try {
+            const data = await getFullProfile();
+            const mobile = data.profile.mobile || data.profile.contactMobile;
+            if (mobile) {
+                setInputValue(`I'm comfortable sharing my number: ${mobile}`);
+            } else {
+                alert("You don't have a mobile number in your profile.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     return (
         <div className="chat-page">
             <Navbar />
@@ -418,6 +432,17 @@ const Chat = () => {
                                 </div>
 
                                 <form className="chat-input-area" onSubmit={handleSendMessage}>
+                                    <div className="chat-actions-bar" style={{ display: 'flex', width: '100%', marginBottom: '8px' }}>
+                                        <button 
+                                            type="button" 
+                                            onClick={handleSharePhone} 
+                                            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '6px 12px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '20px', color: '#4b5563', cursor: 'pointer', transition: 'all 0.2s' }}
+                                            onMouseOver={(e) => e.currentTarget.style.background = '#e5e7eb'}
+                                            onMouseOut={(e) => e.currentTarget.style.background = '#f3f4f6'}
+                                        >
+                                            <Phone size={14} /> Share Phone Number
+                                        </button>
+                                    </div>
                                     {editingMessage && (
                                         <div className="edit-badge">
                                             <span>Editing message...</span>

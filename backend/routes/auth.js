@@ -485,7 +485,7 @@ router.post('/register', async (req, res) => {
             residentialStatus, partnerPreference, about, photo,
             aadharNumber, communityCertificate, birthCertificate,
             temporaryAddress, permanentAddress, nationality, workingCountry, visaStatus, willingToMarryOtherCaste,
-            uniqueId: requestedUniqueId
+            uniqueId: requestedUniqueId, isVerified
         } = req.body;
 
         // Validate required fields
@@ -525,9 +525,9 @@ router.post('/register', async (req, res) => {
 
         // Create user
         const userResult = await sql`
-      INSERT INTO users (unique_id, email, mobile, password_hash, profile_for, gender)
-      VALUES (${uniqueId}, ${email || null}, ${mobile || null}, ${passwordHash}, ${profileFor || 'Self'}, ${finalGender || null})
-      RETURNING id, unique_id, email, mobile, gender, profile_for, created_at
+      INSERT INTO users (unique_id, email, mobile, password_hash, profile_for, gender, is_verified)
+      VALUES (${uniqueId}, ${email || null}, ${mobile || null}, ${passwordHash}, ${profileFor || 'Self'}, ${finalGender || null}, ${isVerified === true})
+      RETURNING id, unique_id, email, mobile, gender, profile_for, created_at, is_verified
     `;
 
         const user = userResult[0];
@@ -600,7 +600,8 @@ router.post('/register', async (req, res) => {
                 mobile: user.mobile,
                 gender: user.gender,
                 profileFor: user.profile_for,
-                fullName: fullName || ''
+                fullName: fullName || '',
+                isVerified: user.is_verified
             }
         });
     } catch (error) {
@@ -662,6 +663,13 @@ router.post('/login', async (req, res) => {
             // deactivations table might not exist yet, ignore
         }
 
+        // Update last_seen
+        try {
+            await sql`UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ${user.id}`;
+        } catch (e) {
+            console.error('Error updating last_seen:', e);
+        }
+
         const dobFormatted = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
 
         res.json({
@@ -677,6 +685,7 @@ router.post('/login', async (req, res) => {
                 gender: user.gender,
                 profileFor: user.profile_for,
                 fullName: user.full_name || '',
+                isVerified: user.is_verified,
                 dob: dobFormatted,
                 dobDay: user.dob_day || '',
                 dobMonth: user.dob_month || '',
@@ -713,7 +722,7 @@ router.post('/login', async (req, res) => {
 router.get('/me', auth, async (req, res) => {
     try {
         const users = await sql`
-      SELECT u.id, u.unique_id, u.email, u.mobile, u.gender, u.profile_for, u.created_at,
+      SELECT u.id, u.unique_id, u.email, u.mobile, u.gender, u.profile_for, u.created_at, u.is_verified,
              p.full_name, p.photo
       FROM users u
       LEFT JOIN profiles p ON p.user_id = u.id
@@ -722,6 +731,13 @@ router.get('/me', auth, async (req, res) => {
 
         if (users.length === 0) {
             return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Update last_seen
+        try {
+            await sql`UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ${req.user.id}`;
+        } catch (e) {
+            console.error('Error updating last_seen:', e);
         }
 
         const user = users[0];
@@ -734,6 +750,7 @@ router.get('/me', auth, async (req, res) => {
             profileFor: user.profile_for,
             fullName: user.full_name || '',
             photo: user.photo || '',
+            isVerified: user.is_verified,
             createdAt: user.created_at
         });
     } catch (error) {
@@ -900,7 +917,7 @@ router.post('/verify-otp', async (req, res) => {
 
         // Check if user exists to provide token
         const users = await sql`
-            SELECT u.id, u.email, u.mobile, p.full_name as "fullName", u.unique_id as "uniqueId", u.gender, u.profile_for as "profileFor" 
+            SELECT u.id, u.email, u.mobile, u.is_verified, p.full_name as "fullName", u.unique_id as "uniqueId", u.gender, u.profile_for as "profileFor" 
             FROM users u
             LEFT JOIN profiles p ON p.user_id = u.id
             WHERE u.email = ${value} OR u.mobile = ${value}
@@ -908,6 +925,9 @@ router.post('/verify-otp', async (req, res) => {
 
         if (users.length > 0) {
             const user = users[0];
+            await sql`UPDATE users SET is_verified = true WHERE id = ${user.id}`;
+            user.is_verified = true;
+            user.isVerified = true;
             const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
             return res.json({
                 verified: true,

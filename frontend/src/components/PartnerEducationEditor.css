@@ -136,19 +136,19 @@
 }
 
 .peoe-chip.selected {
-    border-color: #f5e6a3;
+    border-color: #6ee7b7;
     color: #1a2a3a;
     background: #fff;
 }
 
 .peoe-chip.selected.default-sel {
-    border-color: #D4AF37;
+    border-color: #10b981;
     color: #1a2a3a;
     background: #fdf8e8;
 }
 
 .peoe-chip .lucide {
-    color: #D4AF37;
+    color: #10b981;
 }
 
 .peoe-chip:not(.selected) .lucide {
@@ -186,7 +186,7 @@
 
 .peoe-save-btn {
     width: 100%;
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
     border: none;
     padding: 14px;
@@ -198,7 +198,7 @@
 }
 
 .peoe-save-btn:hover {
-    background: #b8962e;
+    background: #059669;
 }
 
 /* Sub-modals */
@@ -307,7 +307,7 @@
 
 .peoe-small-chip {
     background: #fdf8e8;
-    border: 1px solid #f5e6a3;
+    border: 1px solid #6ee7b7;
     color: #1a2a3a;
     padding: 4px 10px;
     border-radius: 16px;
@@ -320,7 +320,7 @@
 .peoe-small-chip button {
     background: none;
     border: none;
-    color: #D4AF37;
+    color: #10b981;
     padding: 0;
     cursor: pointer;
     display: flex;
@@ -328,7 +328,7 @@
 }
 
 .peoe-more-count {
-    color: #D4AF37;
+    color: #10b981;
     font-size: 0.85rem;
     font-weight: 600;
     display: inline-flex;
@@ -397,8 +397,8 @@
 }
 
 .peoe-checkbox.selected {
-    background: #D4AF37;
-    border-color: #D4AF37;
+    background: #10b981;
+    border-color: #10b981;
 }
 
 .peoe-circle-checkbox {
@@ -416,14 +416,14 @@
 }
 
 .peoe-circle-checkbox.selected {
-    border-color: #D4AF37;
+    border-color: #10b981;
 }
 
 .peoe-circle-inner {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #D4AF37;
+    background: #10b981;
 }
 
 .peoe-search-bar-outlined {
@@ -458,7 +458,7 @@
 }
 
 .peoe-done-btn {
-    background: #D4AF37;
+    background: #10b981;
     color: #fff;
     border: none;
     padding: 10px 24px;
@@ -497,7 +497,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: #D4AF37;
+    background: #10b981;
 }
 
 .peoe-label-small {

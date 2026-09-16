@@ -2,24 +2,24 @@
 
 :root {
   /* Color Palette - Premium & Romantic */
-  --primary: #d4af37;
-  /* Gold for elegance */
-  --primary-dark: #b8962e;
-  --secondary: #2c3e50;
-  /* Deep Midnight Blue */
-  --accent: #D4AF37;
-  /* Logo Gold */
+  --primary: #10b981;
+  /* Emerald Green */
+  --primary-dark: #059669;
+  --secondary: #064e3b;
+  /* Deep Forest Green */
+  --accent: #34d399;
+  /* Light Mint/Emerald */
   --text-main: #0f172a;
   --text-light: #374151;
   --bg-light: #f8fafc;
-  --bg-gradient: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%);
-  /* Soft sunrise */
-  --dark-bg-gradient: linear-gradient(135deg, #1a1c2c 0%, #1e1e1e 100%);
+  --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%);
+  /* Soft Emerald */
+  --dark-bg-gradient: linear-gradient(135deg, #022c22 0%, #064e3b 100%);
 
   /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.25);
   --glass-border: 1px solid rgba(255, 255, 255, 0.18);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --glass-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.15);
   --blur: blur(12px);
 
   /* Typography */
@@ -149,23 +149,23 @@ h6 {
 .btn-primary {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
 }
 
 .btn-primary:hover {
   background: var(--primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
 }
 
 .btn-secondary {
   background: var(--secondary);
   color: #fff;
-  box-shadow: 0 4px 15px rgba(44, 62, 80, 0.4);
+  box-shadow: 0 4px 15px rgba(6, 78, 59, 0.4);
 }
 
 .btn-secondary:hover {
-  background: #34495e;
+  background: #022c22;
   transform: translateY(-2px);
 }
 
