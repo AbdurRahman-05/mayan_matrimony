@@ -431,8 +431,8 @@ const Chat = () => {
                                     })}
                                 </div>
 
-                                <form className="chat-input-area" onSubmit={handleSendMessage}>
-                                    <div className="chat-actions-bar" style={{ display: 'flex', width: '100%', marginBottom: '8px' }}>
+                                <form className="chat-input-area" style={{ flexWrap: 'wrap', gap: '8px' }} onSubmit={handleSendMessage}>
+                                    <div className="chat-actions-bar" style={{ display: 'flex', width: '100%' }}>
                                         <button 
                                             type="button" 
                                             onClick={handleSharePhone} 
@@ -449,17 +449,19 @@ const Chat = () => {
                                             <button type="button" onClick={cancelEdit}><X size={14} /></button>
                                         </div>
                                     )}
-                                    <input
-                                        type="text"
-                                        placeholder="Type a message..."
-                                        value={inputValue}
-                                        onChange={(e) => setInputValue(e.target.value)}
-                                        className="chat-input"
-                                        style={{ marginTop: editingMessage ? '10px' : '0' }}
-                                    />
-                                    <button type="submit" className="chat-send-btn" disabled={!inputValue.trim()}>
-                                        <Send size={20} />
-                                    </button>
+                                    <div style={{ display: 'flex', width: '100%', gap: '10px', alignItems: 'center' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Type a message..."
+                                            value={inputValue}
+                                            onChange={(e) => setInputValue(e.target.value)}
+                                            className="chat-input"
+                                            style={{ margin: 0 }}
+                                        />
+                                        <button type="submit" className="chat-send-btn" disabled={!inputValue.trim()}>
+                                            <Send size={20} />
+                                        </button>
+                                    </div>
                                 </form>
                             </>
                         ) : (

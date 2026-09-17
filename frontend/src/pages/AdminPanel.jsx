@@ -4,7 +4,7 @@ import { showAlert } from '../components/GlobalModal';
 import { apiFetch } from '../services/api';
 import { horoscopes } from '../data/sharedOptions';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -90,7 +90,7 @@ const AdminPanel = () => {
             tableRows.push(userData);
         });
 
-        doc.autoTable({
+        autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
             startY: 30,

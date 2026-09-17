@@ -908,7 +908,7 @@ const Register = () => {
                 </nav>
 
                 {/* Hero Section */}
-                <div className="ts-hero-section" style={{ backgroundImage: Capacitor.isNativePlatform() ? "url('/couple_hero.jpg')" : "url('/hero-bg.jpg')" }}>
+                <div className="ts-hero-section">
                     <div className="ts-hero-overlay"></div>
                     <div className="ts-hero-content">
                         <h1 className="ts-hero-title">

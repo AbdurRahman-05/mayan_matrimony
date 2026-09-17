@@ -536,6 +536,13 @@
     padding-top: 80px;
 }
 
+@media (max-width: 768px) {
+    .ts-hero-section {
+        background-image: url('/couple_hero.jpg');
+        background-position: center top;
+    }
+}
+
 .ts-hero-overlay {
     position: absolute;
     top: 0;

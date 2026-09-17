@@ -3,35 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import './Hero.css';
 
-const heroImages = [
-  "https://images.unsplash.com/photo-1583939003579-730e3918a45a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80",
-  "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80",
-  "https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80"
-];
-
 const Hero = () => {
   const navigate = useNavigate();
-
-  const [currentImage, setCurrentImage] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % heroImages.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <section className="hero-section">
       <div className="hero-bg-carousel">
-        {heroImages.map((img, index) => (
-          <img
-            key={index}
-            src={img}
-            alt={`Hero Slide ${index + 1}`}
-            className={`hero-bg-image ${index === currentImage ? 'active' : ''}`}
-          />
-        ))}
+        <div className="hero-bg-image active"></div>
       </div>
       <div className="hero-overlay"></div>
       <div className="container hero-content">
