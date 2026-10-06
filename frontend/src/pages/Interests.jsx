@@ -384,19 +384,16 @@ const Interests = () => {
                                                             </>
                                                         ) : (
                                                             <>
-                                                                {item.status === 'accepted' && (
-                                                                    <button className="card-action-btn" style={{ color: '#7c3aed' }} onClick={(e) => handleViewProfile(e, profile.uniqueId)}>
-                                                                        <Eye size={18} />
-                                                                        View Profile
-                                                                    </button>
-                                                                )}
-                                                                {item.status === 'accepted' && (photoSrc || isPhotoAccepted) && (
+                                                                <button className="card-action-btn" style={{ color: '#7c3aed' }} onClick={(e) => handleViewProfile(e, profile.uniqueId)}>
+                                                                    <Eye size={18} />
+                                                                    View Profile
+                                                                </button>
+                                                                {item.status === 'accepted' && (photoSrc || isPhotoAccepted) ? (
                                                                     <button className="card-action-btn" onClick={(e) => handleChatAction(e, profile.uniqueId)}>
                                                                         <MessageCircle size={18} />
                                                                         Chat
                                                                     </button>
-                                                                )}
-                                                                {item.status !== 'accepted' && (
+                                                                ) : (
                                                                     <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, profile.uniqueId)}>
                                                                         <X size={18} />
                                                                         Ignore

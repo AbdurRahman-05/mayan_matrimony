@@ -7,7 +7,7 @@
 }
 
 .admin-container {
-    padding-top: 120px;
+    padding-top: 20px;
     padding-bottom: 50px;
     max-width: 1000px;
     margin: 0 auto;
@@ -121,7 +121,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 140px 20px 50px;
+    padding: 40px 20px 50px;
 }
 
 .admin-login-card {

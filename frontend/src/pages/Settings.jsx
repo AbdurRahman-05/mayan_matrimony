@@ -361,6 +361,10 @@ const Settings = () => {
                 {/* Settings Sidebar */}
                 <aside className="settings-sidebar">
                     <div className="settings-sidebar-card">
+                        <div className="settings-back-btn" onClick={() => navigate('/home')} style={{ borderTop: 'none', borderBottom: '1px solid #f3f4f6' }}>
+                            <ArrowLeft size={16} />
+                            Back to Home
+                        </div>
                         <div className="settings-sidebar-header">
                             <SettingsIcon size={22} />
                             <h2>Settings</h2>
@@ -400,14 +404,9 @@ const Settings = () => {
                         {/* Support */}
                         <div className="settings-support">
                             <h4>Support &amp; feedback</h4>
-                            <div className="settings-support-item">
+                            <div className="settings-support-item" onClick={() => window.location.href = 'mailto:support@srimayan.com'}>
                                 <HelpCircle size={15} /> Help &amp; FAQ
                             </div>
-                        </div>
-
-                        <div className="settings-back-btn" onClick={() => navigate('/home')}>
-                            <ArrowLeft size={16} />
-                            Back to Home
                         </div>
                     </div>
                 </aside>

@@ -275,4 +275,25 @@ router.delete('/unsend/:messageId', auth, async (req, res) => {
     }
 });
 
+// Delete entire chat history with a user
+router.delete('/history/:uniqueId', auth, async (req, res) => {
+    try {
+        const receiver = await sql`SELECT id FROM users WHERE unique_id = ${req.params.uniqueId}`;
+        if (receiver.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const receiverId = receiver[0].id;
+
+        await sql`
+            DELETE FROM messages
+            WHERE (sender_id = ${req.user.id} AND receiver_id = ${receiverId})
+               OR (sender_id = ${receiverId} AND receiver_id = ${req.user.id})
+        `;
+
+        res.json({ message: 'Chat removed successfully' });
+    } catch (error) {
+        return dbErrorResponse(res, 'Remove chat error', error, 'Failed to remove chat.');
+    }
+});
+
 export default router;

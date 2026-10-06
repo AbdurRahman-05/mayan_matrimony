@@ -6,7 +6,7 @@
 }
 
 .matches-container {
-    padding: 7rem 2rem 4rem;
+    padding: 1rem 2rem 4rem;
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
@@ -458,7 +458,7 @@
 
 @media (max-width: 480px) {
     .matches-container {
-        padding: 4.5rem 0.5rem 2rem;
+        padding: 1rem 0.5rem 2rem;
     }
 
     .matches-content {

@@ -558,6 +558,55 @@ const AdminPanel = () => {
                                 )}
                             </div>
 
+                            {(fullProfile.profile?.aadhar_number || fullProfile.profile?.community_certificate || fullProfile.profile?.birth_certificate) && (
+                                <div className="admin-profile-section">
+                                    <h3>Verification Documents</h3>
+                                    <div className="admin-profile-grid">
+                                        {fullProfile.profile?.aadhar_number && (
+                                            <p><strong>Aadhar Number:</strong> {fullProfile.profile.aadhar_number}</p>
+                                        )}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '15px' }}>
+                                        {fullProfile.profile?.community_certificate && (
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>Community Certificate</p>
+                                                {fullProfile.profile.community_certificate.startsWith('data:image') ? (
+                                                    <img
+                                                        src={fullProfile.profile.community_certificate}
+                                                        alt="Community Certificate"
+                                                        style={{ width: '150px', height: '150px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ccc', cursor: 'pointer' }}
+                                                        onClick={() => {
+                                                            const win = window.open();
+                                                            win.document.write(`<iframe src="${fullProfile.profile.community_certificate}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <a href={fullProfile.profile.community_certificate} download="Community_Certificate" style={{ color: '#3b82f6', textDecoration: 'underline' }}>Download Certificate</a>
+                                                )}
+                                            </div>
+                                        )}
+                                        {fullProfile.profile?.birth_certificate && (
+                                            <div style={{ textAlign: 'center' }}>
+                                                <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>Birth Certificate</p>
+                                                {fullProfile.profile.birth_certificate.startsWith('data:image') ? (
+                                                    <img
+                                                        src={fullProfile.profile.birth_certificate}
+                                                        alt="Birth Certificate"
+                                                        style={{ width: '150px', height: '150px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ccc', cursor: 'pointer' }}
+                                                        onClick={() => {
+                                                            const win = window.open();
+                                                            win.document.write(`<iframe src="${fullProfile.profile.birth_certificate}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <a href={fullProfile.profile.birth_certificate} download="Birth_Certificate" style={{ color: '#3b82f6', textDecoration: 'underline' }}>Download Certificate</a>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             {fullProfile.profile ? (
                                 <>
                                     <div className="admin-profile-section">

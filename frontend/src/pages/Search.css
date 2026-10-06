@@ -8,7 +8,7 @@
 }
 
 .search-container {
-    padding: 110px 20px 40px;
+    padding: 20px 20px 40px;
     max-width: 820px;
     margin: 0 auto;
     width: 100%;
@@ -404,7 +404,7 @@
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .search-container {
-        padding: 70px 10px 20px;
+        padding: 20px 10px 20px;
     }
 
     .search-tabs {
@@ -482,7 +482,7 @@
 
 @media (max-width: 480px) {
     .search-container {
-        padding: 90px 6px 16px;
+        padding: 16px 6px 16px;
     }
 
     .search-tabs {

@@ -423,7 +423,12 @@ const Matches = () => {
                                 </div>
                             </div>
                             <div className="match-card-footer">
-                                {!isInterested && (
+                                {isInterested ? (
+                                    <button className="card-action-btn" disabled style={{ color: '#10b981', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                        <Sparkles size={18} fill="currentColor" />
+                                        Sent
+                                    </button>
+                                ) : (
                                     <button className="card-action-btn" onClick={(e) => handleSendInterestAction(e, p.uniqueId)}>
                                         <Sparkles size={18} />
                                         Interest

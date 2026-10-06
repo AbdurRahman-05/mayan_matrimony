@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Heart, Eye, Star, MapPin, UserCheck, Image, X, AlertCircle, Sparkles, Bookmark } from 'lucide-react';
+import { Bell, Heart, Eye, Star, MapPin, UserCheck, Image, X, AlertCircle, Sparkles, Bookmark, MessageCircle } from 'lucide-react';
 import { getNotifications, respondPhotoRequest } from '../services/api';
 import './NotificationDropdown.css';
 
@@ -30,7 +30,7 @@ function timeAgo(dateStr) {
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
-const NotificationDropdown = () => {
+const NotificationDropdown = ({ unreadChatCount = 0 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [readIds, setReadIds] = useState(() => {
@@ -54,6 +54,15 @@ const NotificationDropdown = () => {
             if (data && data.notifications) {
                 setNotifications(data.notifications);
             }
+            // Sync read/removed IDs from localStorage to prevent mismatches
+            try {
+                const storedRead = JSON.parse(localStorage.getItem('readNotificationIds') || '[]');
+                setReadIds(storedRead);
+                const storedRemoved = JSON.parse(localStorage.getItem('removedNotificationIds') || '[]');
+                setRemovedIds(storedRemoved);
+            } catch (e) {
+                // ignore JSON parse errors
+            }
         } catch (err) {
             console.error('Failed to fetch notifications:', err);
         } finally {
@@ -70,6 +79,7 @@ const NotificationDropdown = () => {
 
     const activeNotifications = notifications.filter(n => !removedIds.includes(n.id));
     const unreadCount = activeNotifications.filter(n => !readIds.includes(n.id)).length;
+    const totalUnreadCount = unreadCount + unreadChatCount;
 
     const handleMarkAllRead = useCallback((e) => {
         if (e) e.stopPropagation();
@@ -117,15 +127,15 @@ const NotificationDropdown = () => {
     return (
         <div className="notification-wrapper" ref={dropdownRef}>
             <button
-                className={`notification-bell ${unreadCount > 0 ? 'has-notifications' : ''}`}
+                className={`notification-bell ${totalUnreadCount > 0 ? 'has-notifications' : ''}`}
                 onClick={handleToggle}
                 aria-label="Notifications"
                 id="notification-bell-btn"
             >
                 <Bell size={22} />
-                {unreadCount > 0 && (
+                {totalUnreadCount > 0 && (
                     <span className="notification-badge">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                        {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
                     </span>
                 )}
             </button>
@@ -160,12 +170,24 @@ const NotificationDropdown = () => {
 
                         {/* Notification List */}
                         <div className="notification-list">
+                            {unreadChatCount > 0 && (
+                                <div className="notification-item unread" onClick={() => { setIsOpen(false); navigate('/chat'); }}>
+                                    <div className="notification-icon" style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+                                        <MessageCircle size={20} />
+                                    </div>
+                                    <div className="notification-content">
+                                        <p className="notification-text">You have <strong>{unreadChatCount}</strong> unread message{unreadChatCount > 1 ? 's' : ''}</p>
+                                        <span className="notification-time">Just now</span>
+                                    </div>
+                                </div>
+                            )}
+
                             {loading && activeNotifications.length === 0 ? (
                                 <div className="notification-empty">
                                     <div className="notification-empty-icon">⏳</div>
                                     <p>Loading notifications...</p>
                                 </div>
-                            ) : activeNotifications.length === 0 ? (
+                            ) : activeNotifications.length === 0 && unreadChatCount === 0 ? (
                                 <div className="notification-empty">
                                     <div className="notification-empty-icon">🔔</div>
                                     <p>No notifications yet</p>

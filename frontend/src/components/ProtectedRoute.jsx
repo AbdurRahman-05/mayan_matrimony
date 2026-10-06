@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../services/api';
 
-const ProtectedRoute = ({ children, requireVerification = true }) => {
+const ProtectedRoute = ({ children, requireVerification = false }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const loggedIn = isAuthenticated();

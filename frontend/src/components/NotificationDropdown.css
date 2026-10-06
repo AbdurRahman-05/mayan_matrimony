@@ -423,18 +423,18 @@
 @media (max-width: 768px) {
     .notification-dropdown {
         position: fixed;
-        top: 60px;
+        top: 75px;
         right: 8px;
         left: 8px;
         width: auto;
-        max-height: calc(100vh - 80px);
+        max-height: calc(100vh - 90px);
         border-radius: 14px;
     }
 }
 
 @media (max-width: 480px) {
     .notification-dropdown {
-        top: 55px;
+        top: 75px;
         right: 4px;
         left: 4px;
         border-radius: 12px;

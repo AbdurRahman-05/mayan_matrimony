@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { ArrowLeft, User, Heart, Lock, Bookmark, Image as ImageIcon, MapPin, Briefcase, GraduationCap, Clock, MessageCircle, MoreVertical, ShieldCheck, Phone, Mail, X, Check, Eye, Loader2, Ruler, Globe2, Images, Languages, Calendar } from 'lucide-react';
 import { showAlert } from '../components/GlobalModal';
-import { getProfileById, getFullProfile, sendInterest, shortlistProfile, getViewedYou, getMediaUrl } from '../services/api';
+import { getProfileById, getFullProfile, sendInterest, shortlistProfile, getViewedYou, getMediaUrl, deleteChatHistory } from '../services/api';
 import './ProfileView.css';
 
 const ProfileView = () => {
@@ -373,6 +373,28 @@ const ProfileView = () => {
                                 <div className="pv-row"><span>Special Cases</span><strong>{preferenceData.prefPhysicalStatus || "Doesn't Matter"}</strong></div>
                             </div>
                         </>
+                    )}
+
+                    {paramId && paramId !== myUniqueId && (
+                        <div className="pv-card" style={{ marginTop: '20px', border: '1px solid #fee2e2', background: '#fef2f2' }}>
+                            <button 
+                                type="button" 
+                                onClick={async () => {
+                                    if(window.confirm('Are you sure you want to remove this user from your chat? This will delete all your messages with them.')) {
+                                        try {
+                                            await deleteChatHistory(paramId);
+                                            showAlert('Removed from chat successfully', 'Success');
+                                            navigate('/chat');
+                                        } catch (e) {
+                                            showAlert(e.message, 'Error');
+                                        }
+                                    }
+                                }}
+                                style={{ width: '100%', padding: '12px', background: '#ef4444', color: 'white', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                            >
+                                Remove from Chat
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

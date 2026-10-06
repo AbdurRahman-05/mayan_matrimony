@@ -619,6 +619,12 @@ export async function unsendChatMessage(messageId) {
     });
 }
 
+export async function deleteChatHistory(uniqueId) {
+    return apiFetch(`/chat/history/${uniqueId}`, {
+        method: 'DELETE',
+    });
+}
+
 // ============ LOGOUT ============
 
 export function logout() {

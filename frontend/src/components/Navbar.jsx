@@ -83,7 +83,7 @@ const Navbar = () => {
 
         <div className="nav-actions">
           {!isLandingPage && (
-            <NotificationDropdown />
+            <NotificationDropdown unreadChatCount={unreadChatCount} />
           )}
           {isLandingPage && (
             <div className="landing-nav-actions">

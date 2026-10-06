@@ -1975,6 +1975,16 @@ const Profile = () => {
                     {/* Profile Hero Header */}
                     <div className="ep-hero">
                         <div className="ep-hero-inner">
+                            {location.state?.openPreferences && (
+                                <button
+                                    type="button"
+                                    className="ep-eye-btn"
+                                    onClick={() => navigate(-1)}
+                                    style={{ position: 'absolute', top: '1.25rem', left: '1.25rem', zIndex: 10 }}
+                                >
+                                    <ArrowLeft size={20} />
+                                </button>
+                            )}
                             <div className="ep-hero-photo">
                                 <img
                                     src={getMediaUrl(profileData.photo) || ''}

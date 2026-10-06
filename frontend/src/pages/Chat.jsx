@@ -320,7 +320,7 @@ const Chat = () => {
     };
 
     return (
-        <div className="chat-page">
+        <div className={`chat-page ${uniqueId ? 'in-chat' : ''}`}>
             <Navbar />
 
             <div className="chat-container">
@@ -394,6 +394,19 @@ const Chat = () => {
                                         </div>
                                         <h3>{activeChatUser.fullName}</h3>
                                     </div>
+                                    <button className="chat-delete-btn" onClick={() => {
+                                        if(window.confirm('Are you sure you want to delete this chat and unmatch?')) {
+                                            // Call delete chat endpoint
+                                            import('../services/api').then(({ deleteChatHistory }) => {
+                                                deleteChatHistory(activeChatUser.uniqueId).then(() => {
+                                                    navigate('/chat');
+                                                });
+                                            });
+                                        }
+                                    }} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <Trash2 size={18} />
+                                        <span className="desktop-only">Delete Chat</span>
+                                    </button>
                                 </div>
 
                                 <div className="chat-messages" onClick={() => setSelectedMessage(null)} ref={chatMessagesRef}>
@@ -432,17 +445,7 @@ const Chat = () => {
                                 </div>
 
                                 <form className="chat-input-area" style={{ flexWrap: 'wrap', gap: '8px' }} onSubmit={handleSendMessage}>
-                                    <div className="chat-actions-bar" style={{ display: 'flex', width: '100%' }}>
-                                        <button 
-                                            type="button" 
-                                            onClick={handleSharePhone} 
-                                            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '6px 12px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '20px', color: '#4b5563', cursor: 'pointer', transition: 'all 0.2s' }}
-                                            onMouseOver={(e) => e.currentTarget.style.background = '#e5e7eb'}
-                                            onMouseOut={(e) => e.currentTarget.style.background = '#f3f4f6'}
-                                        >
-                                            <Phone size={14} /> Share Phone Number
-                                        </button>
-                                    </div>
+
                                     {editingMessage && (
                                         <div className="edit-badge">
                                             <span>Editing message...</span>

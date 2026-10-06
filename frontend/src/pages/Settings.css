@@ -13,7 +13,6 @@
     margin: 0 auto;
     padding: 25px 20px;
     min-height: calc(100vh - 100px);
-    margin-top: 100px;
 }
 
 /* ============================================
@@ -1176,7 +1175,6 @@
     .settings-container {
         flex-direction: column;
         padding: 15px;
-        margin-top: 80px;
     }
 
     .settings-sidebar {
