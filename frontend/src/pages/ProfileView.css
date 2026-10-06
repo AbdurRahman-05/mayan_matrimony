@@ -216,7 +216,7 @@
 /* Responsive */
 @media (max-width: 768px) {
     .pv-container {
-        padding: 6rem 0.5rem 2rem;
+        padding: 1rem 0.5rem 2rem;
     }
 
     .pv-photo-block {
@@ -248,7 +248,7 @@
 
 @media (max-width: 480px) {
     .pv-container {
-        padding: 5.5rem 0.25rem 2rem;
+        padding: 1rem 0.25rem 2rem;
     }
 
     .pv-photo-block {
