@@ -198,12 +198,13 @@ const Home = () => {
         <aside className="dashboard-sidebar">
           <div className="sidebar-profile-card">
             <div className="sidebar-avatar-wrapper">
-              <div className="sidebar-avatar">
+              <div className="sidebar-avatar" key={profileData.photo || 'default'}>
                 <img 
                   src={getMediaUrl(profileData.photo) || ''} 
                   alt={profileData.fullName}
                   style={{ display: profileData.photo ? 'block' : 'none' }}
                   onError={(e) => {
+                    e.target.onerror = null;
                     e.target.style.display = 'none';
                     if (e.target.nextElementSibling) {
                       e.target.nextElementSibling.style.display = 'flex';

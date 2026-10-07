@@ -357,6 +357,7 @@
     display: flex;
     border-top: 1px solid #a7f3d0;
     background: #fffbef;
+    flex-wrap: wrap;
 }
 
 .card-action-btn {
@@ -442,16 +443,17 @@
     }
 
     .match-card-footer {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
 
     .card-action-btn {
-        flex: none;
-        width: 50%;
-        border-bottom: 1px solid #fee2e2;
+        flex: 1;
+        width: auto;
+        border-bottom: none;
+        border-right: 1px solid #fee2e2;
     }
 
-    .card-action-btn:nth-child(2) {
+    .card-action-btn:last-child {
         border-right: none;
     }
 }
@@ -654,4 +656,61 @@
 
 .matches-mobile-back-btn:hover {
     color: #064e3b;
+}
+
+@media (max-width: 900px) {
+    .matches-container {
+        padding: 1rem;
+    }
+    .matches-layout {
+        flex-direction: column;
+    }
+    .matches-sidebar {
+        width: 100%;
+        position: static;
+        max-height: none;
+    }
+    .match-results-list {
+        max-height: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .match-card-top {
+        flex-direction: column;
+    }
+    .match-card-sidebar {
+        width: 100%;
+        height: 200px;
+    }
+    .match-card-details-grid {
+        grid-template-columns: 1fr;
+    }
+    .card-action-btn {
+        flex: 1 1 45%;
+        border-bottom: 1px solid #a7f3d0;
+    }
+    .card-action-btn:nth-child(even) {
+        border-right: none;
+    }
+    .card-action-btn:last-child {
+        border-bottom: none;
+        border-right: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .matches-container {
+        padding: 1rem 0.5rem;
+    }
+    .match-card-main {
+        padding: 0.8rem;
+    }
+    .match-card-name {
+        font-size: 1.1rem;
+    }
+    .card-action-btn {
+        padding: 8px 4px;
+        font-size: 0.8rem;
+    }
 }

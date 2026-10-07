@@ -1,6 +1,4 @@
 node_modules/
-.env
-*.log
-
-vps_database_dump.json
+.vscode/
 firebase-service-account.json
+google-services.json

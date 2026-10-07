@@ -335,4 +335,22 @@ router.delete('/blocked/:uniqueId', auth, async (req, res) => {
     }
 });
 
+// ============ FCM TOKEN ============
+
+router.post('/fcm-token', auth, async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            return res.status(400).json({ error: 'Token is required' });
+        }
+        
+        // Update user's fcm_token
+        await sql`UPDATE users SET fcm_token = ${token} WHERE id = ${req.user.id}`;
+        
+        res.json({ message: 'FCM token updated successfully' });
+    } catch (error) {
+        return dbErrorResponse(res, 'FCM token update error', error, 'Failed to update FCM token');
+    }
+});
+
 export default router;

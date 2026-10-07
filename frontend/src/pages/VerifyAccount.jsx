@@ -105,7 +105,7 @@ const VerifyAccount = () => {
                                 disabled={loading}
                                 style={{ width: '100%', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', padding: '14px', fontSize: '1rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.3s' }}
                             >
-                                {loading ? <Loader2 size={20} className="jv-spin-anim" /> : 'Send Verification OTP'}
+                                {loading ? <Loader2 size={20} className="animate-spin" /> : 'Send Verification OTP'}
                             </button>
                         </div>
                     ) : (
@@ -133,7 +133,7 @@ const VerifyAccount = () => {
                                 disabled={loading}
                                 style={{ width: '100%', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', padding: '14px', fontSize: '1rem', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.3s', marginBottom: '15px' }}
                             >
-                                {loading ? <Loader2 size={20} className="jv-spin-anim" /> : 'Verify & Continue'}
+                                {loading ? <Loader2 size={20} className="animate-spin" /> : 'Verify & Continue'}
                             </button>
                             
                             <button 

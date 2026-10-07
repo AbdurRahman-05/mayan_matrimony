@@ -19,10 +19,14 @@ import ProtectedRoute from './components/ProtectedRoute';
 import GlobalModal from './components/GlobalModal';
 import BottomNav from './components/BottomNav';
 import ScrollToTop from './components/ScrollToTop';
+import { initPushNotifications } from './services/pushNotifications';
 import './index.css';
 
 function App() {
   useEffect(() => {
+    if (localStorage.getItem('token')) {
+        initPushNotifications();
+    }
     if (!Capacitor.isNativePlatform()) return;
 
     let listenerPromise;

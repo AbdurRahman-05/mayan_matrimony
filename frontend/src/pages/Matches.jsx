@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import {
     getMatches, getShortlistedProfiles, getViewedYou, getViewedByYou, getShortlistedYou,
-    sendInterest, shortlistProfile, ignoreProfile, getNearbyMatches, getHoroscopeMatches, getMatchesWithPhotos,
+    sendInterest, shortlistProfile, removeFromShortlist, ignoreProfile, getNearbyMatches, getHoroscopeMatches, getMatchesWithPhotos,
     getEducationPreferenceMatches, getProfile, getSentInterests, requestPhoto, getPhotoRequests, getMediaUrl, globalCache
 } from '../services/api';
 import './Matches.css';
@@ -183,6 +183,24 @@ const Matches = () => {
             }
         } catch (err) {
             showAlert(err.message || 'Failed to shortlist', 'Error');
+        }
+    };
+
+    const handleRemoveShortlistAction = async (e, uniqueId) => {
+        e.stopPropagation();
+        try {
+            await removeFromShortlist(uniqueId);
+            showAlert('Profile removed from your shortlist.', 'Success');
+            // Optimistic update
+            setShortlistedProfiles(prev => prev.filter(p => p.uniqueId !== uniqueId));
+            
+            // If we are on the shortlisted tab, remove the profile from the view
+            if (activeCategory === 'shortlisted-by-you') {
+                setProfiles(prev => prev.filter(p => p.uniqueId !== uniqueId));
+                refreshCategoryData();
+            }
+        } catch (err) {
+            showAlert(err.message || 'Failed to remove from shortlist', 'Error');
         }
     };
 
@@ -424,7 +442,7 @@ const Matches = () => {
                             </div>
                             <div className="match-card-footer">
                                 {isInterested ? (
-                                    <button className="card-action-btn" disabled style={{ color: '#10b981', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                    <button className="card-action-btn" style={{ color: '#10b981' }} onClick={(e) => { e.stopPropagation(); showAlert('You have already sent an interest to this profile.', 'Info'); }}>
                                         <Sparkles size={18} fill="currentColor" />
                                         Sent
                                     </button>
@@ -435,7 +453,7 @@ const Matches = () => {
                                     </button>
                                 )}
                                 {isShortlisted ? (
-                                    <button className="card-action-btn" disabled style={{ color: '#34d399', cursor: 'default' }} onClick={(e) => e.stopPropagation()}>
+                                    <button className="card-action-btn" style={{ color: '#34d399' }} onClick={(e) => handleRemoveShortlistAction(e, p.uniqueId)}>
                                         <Star size={18} fill="currentColor" />
                                         Shortlisted
                                     </button>

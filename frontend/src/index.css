@@ -228,3 +228,16 @@ option, .dropdown-option, .ss-option { font-weight: 500 !important; } /* Dropdow
 .number, .stat-value, .stat-number, .pv-row strong { font-weight: 600 !important; } /* Numbers / Key Statistics */
 .error-text, .validation-error, .jv-form-row p { font-weight: 500 !important; } /* Error / Validation Text */
 .success-text, .status-active { font-weight: 500 !important; } /* Success / Status Text */
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

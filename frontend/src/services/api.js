@@ -13,8 +13,8 @@ export const getApiBaseUrl = () => {
         );
 
     if (isCapacitorNative) {
-        // Mobile phones & native APKs default to http://localhost:5000/api for USB debugging, fallback to production
-        return 'http://localhost:5000/api';
+        // Mobile phones & native APKs default to production, fallback to local
+        return 'https://srimayanmatrimony.com/api';
     }
 
     if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;

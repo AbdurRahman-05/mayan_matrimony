@@ -50,6 +50,12 @@ async function setupDatabase() {
       try { await sql`ALTER TABLE users ADD COLUMN last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP`; } catch(err) {}
     }
 
+    try {
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS fcm_token TEXT`;
+    } catch (e) {
+      try { await sql`ALTER TABLE users ADD COLUMN fcm_token TEXT`; } catch(err) {}
+    }
+
     // Profiles table - full profile data
     await sql`
       CREATE TABLE IF NOT EXISTS profiles (

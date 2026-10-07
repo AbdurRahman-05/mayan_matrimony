@@ -2,6 +2,7 @@ import { Router } from 'express';
 import sql from '../db.js';
 import auth from '../middleware/auth.js';
 import { dbErrorResponse } from '../utils/dbError.js';
+import { sendPushNotification } from '../pushNotification.js';
 
 const router = Router();
 
@@ -162,6 +163,30 @@ router.post('/send/:uniqueId', auth, async (req, res) => {
             VALUES (${req.user.id}, ${receiverId}, ${content.trim()})
             RETURNING id, content, created_at, is_read
         `;
+
+        // FCM Trigger
+        try {
+            const receiverData = await sql`SELECT fcm_token FROM users WHERE id = ${receiverId}`;
+            if (receiverData.length > 0 && receiverData[0].fcm_token) {
+                const senderData = await sql`
+                    SELECT p.full_name, u.unique_id 
+                    FROM profiles p 
+                    JOIN users u ON u.id = p.user_id 
+                    WHERE p.user_id = ${req.user.id}
+                `;
+                const senderName = senderData.length > 0 ? (senderData[0].full_name || 'A member') : 'A member';
+                const senderUniqueId = senderData.length > 0 ? senderData[0].unique_id : '';
+
+                sendPushNotification(
+                    receiverData[0].fcm_token,
+                    `New Message from ${senderName}`,
+                    content.trim().length > 50 ? content.trim().substring(0, 50) + '...' : content.trim(),
+                    { type: 'CHAT', senderUniqueId: String(senderUniqueId) }
+                ).catch(err => console.error('FCM Error:', err));
+            }
+        } catch (e) {
+            console.error('Error sending push notification for chat:', e);
+        }
 
         res.json({
             message: 'Message sent',

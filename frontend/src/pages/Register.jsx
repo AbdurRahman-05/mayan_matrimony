@@ -1392,7 +1392,7 @@ const Register = () => {
                                         <button className="jv-register-me-btn gold-theme" onClick={() => handleJvNext(1)} disabled={loading}>
                                             {loading ? (
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                                    <Loader2 size={18} className="jv-spin-anim" />
+                                                    <Loader2 size={18} className="animate-spin" />
                                                     Registering...
                                                 </div>
                                             ) : 'Register me'}

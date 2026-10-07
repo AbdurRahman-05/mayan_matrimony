@@ -195,7 +195,7 @@
 
 @media (max-width: 768px) {
     .interests-container {
-        padding: 6rem 1rem 2rem;
+        padding: 1rem 1rem 2rem;
     }
 
     .interests-layout {
@@ -428,13 +428,18 @@
     }
 
     .match-card-footer {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
 
     .card-action-btn {
-        flex: none;
-        width: 50%;
-        border-bottom: 1px solid #fee2e2;
+        flex: 1;
+        width: auto;
+        border-bottom: none;
+        border-right: 1px solid #fee2e2;
+    }
+
+    .card-action-btn:last-child {
+        border-right: none;
     }
 }
 
