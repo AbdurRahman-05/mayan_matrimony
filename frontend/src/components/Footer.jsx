@@ -11,8 +11,8 @@ const Footer = () => {
   const handleNavClick = (e, path) => {
     e.preventDefault();
     
-    // Membership is accessible without login
-    if (path === '/membership') {
+    // Membership and Legal pages are accessible without login
+    if (path === '/membership' || path === '/terms' || path === '/privacy' || path === '/refund' || path === '/security') {
       navigate(path);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -71,10 +71,10 @@ const Footer = () => {
           <div className="footer-links">
             <h3>Legal</h3>
             <ul>
-              <li><a href="/terms">Terms of Service</a></li>
-              <li><a href="/privacy">Privacy Policy</a></li>
-              <li><a href="/refund">Refund Policy</a></li>
-              <li><a href="/security">Security Tips</a></li>
+              <li><a href="/terms" onClick={(e) => handleNavClick(e, '/terms')}>Terms of Service</a></li>
+              <li><a href="/privacy" onClick={(e) => handleNavClick(e, '/privacy')}>Privacy Policy</a></li>
+              <li><a href="/refund" onClick={(e) => handleNavClick(e, '/refund')}>Refund Policy</a></li>
+              <li><a href="/security" onClick={(e) => handleNavClick(e, '/security')}>Security Tips</a></li>
             </ul>
           </div>
 

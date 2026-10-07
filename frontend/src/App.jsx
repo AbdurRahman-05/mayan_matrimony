@@ -19,6 +19,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 import GlobalModal from './components/GlobalModal';
 import BottomNav from './components/BottomNav';
 import ScrollToTop from './components/ScrollToTop';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import RefundPolicy from './pages/RefundPolicy';
+import SecurityTips from './pages/SecurityTips';
 import { initPushNotifications } from './services/pushNotifications';
 import './index.css';
 
@@ -65,6 +69,10 @@ function App() {
           <Route path="/login" element={<Register />} />
           <Route path="/register" element={<Navigate to="/" replace />} />
           <Route path="/membership" element={<Membership />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/refund" element={<RefundPolicy />} />
+          <Route path="/security" element={<SecurityTips />} />
 
           {/* Protected Routes */}
           <Route path="/verify" element={<ProtectedRoute requireVerification={false}><VerifyAccount /></ProtectedRoute>} />
