@@ -27,6 +27,9 @@ const SecurityTips = () => {
 
                     <h2>5. Beware of Scams</h2>
                     <p>Be cautious of individuals who claim to be in an emergency and ask for financial help. Genuine individuals seeking marriage will not ask for money under any circumstances.</p>
+
+                    <h2>6. Zero Tolerance Policy on Child Exploitation (CSAE/CSAM)</h2>
+                    <p>Sri Mayan Matrimony strictly prohibits any content, activity, or behavior that exploits or endangers minors. We have a zero-tolerance policy against Child Sexual Abuse Material (CSAM) and Child Sexual Abuse and Exploitation (CSAE). We actively monitor, block, and report any offending users to the relevant legal authorities immediately. This platform is strictly for adults aged 18 and over.</p>
                 </div>
             </div>
             <Footer />

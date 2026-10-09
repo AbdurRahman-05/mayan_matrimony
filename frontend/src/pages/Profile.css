@@ -1,7 +1,7 @@
 /* Profile Page */
 .profile-page {
     min-height: 100vh;
-    background: #f0f2f5;
+    background: #ffffff;
     display: flex;
     flex-direction: column;
 }
@@ -12,7 +12,7 @@
     align-items: center;
     justify-content: center;
     min-height: calc(100vh - 70px);
-    background: #f0f2f5;
+    background: #ffffff;
     flex: 1;
 }
 
@@ -48,14 +48,14 @@
 
 /* Hero Section */
 .ep-hero {
-    background: #f0f2f5;
+    background: #ffffff;
 }
 
 .ep-hero-inner {
     max-width: 500px;
     margin: 0 auto;
     background: linear-gradient(135deg, #1a2a3a 0%, #243447 40%, #1e2d3d 100%);
-    border-radius: 12px 12px 0 0;
+    border-radius: 0;
     padding: 1.25rem;
     padding-bottom: 1rem;
     display: flex;
@@ -1914,9 +1914,6 @@ button.bd-field, .bd-field-btn {
 }
 
 @media (max-width: 480px) {
-    .ep-hero {
-        padding-top: 68px;
-    }
 
     .ep-hero-inner {
         padding: 1rem;

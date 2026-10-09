@@ -11,6 +11,10 @@ router.get('/', auth, async (req, res) => {
         const userId = req.user.id;
         const notifications = [];
 
+        // Get perfectly deleted notifications
+        const deletedRows = await sql`SELECT notification_id FROM deleted_notifications WHERE user_id = ${userId}`;
+        const deletedIds = new Set(deletedRows.map(row => row.notification_id));
+
         // 1. Users who viewed this user's profile
         const views = await sql`
             SELECT pv.id, pv.viewed_at, p.full_name, u.unique_id
@@ -23,8 +27,10 @@ router.get('/', auth, async (req, res) => {
         `;
 
         for (const view of views) {
+            const id = `view_${view.id}`;
+            if (deletedIds.has(id)) continue;
             notifications.push({
-                id: `view_${view.id}`,
+                id,
                 type: 'profile_view',
                 title: 'Profile Viewed',
                 message: `${view.full_name || view.unique_id} (${view.unique_id}) viewed your profile.`,
@@ -48,8 +54,10 @@ router.get('/', auth, async (req, res) => {
         `;
 
         for (const interest of interests) {
+            const id = `interest_${interest.id}`;
+            if (deletedIds.has(id)) continue;
             notifications.push({
-                id: `interest_${interest.id}`,
+                id,
                 type: 'interest',
                 title: 'New Interest Received',
                 message: `${interest.full_name || interest.unique_id} (${interest.unique_id}) sent you an interest.`,
@@ -73,8 +81,10 @@ router.get('/', auth, async (req, res) => {
         `;
 
         for (const item of shortlistedBy) {
+            const id = `shortlisted_by_${item.id}`;
+            if (deletedIds.has(id)) continue;
             notifications.push({
-                id: `shortlisted_by_${item.id}`,
+                id,
                 type: 'shortlisted_by',
                 title: 'You Were Shortlisted',
                 message: `${item.full_name || item.unique_id} (${item.unique_id}) shortlisted your profile.`,
@@ -97,8 +107,10 @@ router.get('/', auth, async (req, res) => {
         `;
 
         for (const reqItem of photoReqs) {
+            const id = `photo_req_${reqItem.id}`;
+            if (deletedIds.has(id)) continue;
             notifications.push({
-                id: `photo_req_${reqItem.id}`,
+                id,
                 type: 'photo_request',
                 requestId: reqItem.id,
                 title: 'Photo Request Received',
@@ -123,8 +135,10 @@ router.get('/', auth, async (req, res) => {
         `;
 
         for (const accItem of acceptedReqs) {
+            const id = `photo_acc_${accItem.id}`;
+            if (deletedIds.has(id)) continue;
             notifications.push({
-                id: `photo_acc_${accItem.id}`,
+                id,
                 type: 'photo_request_accepted',
                 requestId: accItem.id,
                 title: 'Photo Request Approved! 🎉',
@@ -143,6 +157,24 @@ router.get('/', auth, async (req, res) => {
         res.json({ notifications, total: notifications.length });
     } catch (error) {
         return dbErrorResponse(res, 'Get notifications error', error, 'Failed to get notifications');
+    }
+});
+
+// Remove a notification permanently
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const notificationId = req.params.id;
+
+        await sql`
+            INSERT INTO deleted_notifications (user_id, notification_id)
+            VALUES (${userId}, ${notificationId})
+            ON CONFLICT (user_id, notification_id) DO NOTHING
+        `;
+
+        res.json({ message: 'Notification removed perfectly' });
+    } catch (error) {
+        return dbErrorResponse(res, 'Remove notification error', error, 'Failed to remove notification');
     }
 });
 

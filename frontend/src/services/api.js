@@ -513,6 +513,12 @@ export async function getNotifications() {
     return apiFetch('/notifications');
 }
 
+export async function removeNotification(id) {
+    return apiFetch(`/notifications/${id}`, {
+        method: 'DELETE',
+    });
+}
+
 // ============ SETTINGS ============
 
 export async function verifyPassword(currentPassword) {

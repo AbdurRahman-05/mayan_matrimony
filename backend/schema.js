@@ -367,6 +367,18 @@ async function setupDatabase() {
     `;
     console.log('✅ messages table created');
 
+    // Deleted notifications
+    await sql`
+      CREATE TABLE IF NOT EXISTS deleted_notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        notification_id VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, notification_id)
+      )
+    `;
+    console.log('✅ deleted_notifications table created');
+
     // Add indexes for performance
     await sql`CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_profiles_religion ON profiles(religion)`;

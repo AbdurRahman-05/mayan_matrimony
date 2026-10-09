@@ -22,8 +22,16 @@ const PrivacyPolicy = () => {
                     <h2>3. Data Security</h2>
                     <p>We implement robust security measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction. We do not sell or rent your personal information to third-party marketers.</p>
 
-                    <h2>4. Visibility and Control</h2>
-                    <p>Your profile information is visible to other registered users of Sri Mayan Matrimony to facilitate matchmaking. You have full control over your account settings and can modify your privacy preferences, hide your profile, or delete your account at any time.</p>
+                    <h2>4. Account Deletion and Data Retention</h2>
+                    <p>You have full control over your account. If you wish to delete your account and associated data from Sri Mayan Matrimony, you can do so by following these steps:</p>
+                    <ul>
+                        <li>Log in to your account.</li>
+                        <li>Navigate to <strong>Settings</strong> from the bottom menu.</li>
+                        <li>Select <strong>Account</strong>.</li>
+                        <li>Tap on <strong>Delete Account</strong> and confirm your choice.</li>
+                    </ul>
+                    <p><strong>What gets deleted:</strong> Upon account deletion, your profile information, photos, preferences, and chat history are permanently erased from our active databases.</p>
+                    <p><strong>What gets kept:</strong> We may retain certain log data (such as IP addresses and device information) for up to 90 days strictly for security, fraud prevention, and legal compliance purposes before it is securely purged.</p>
 
                     <h2>5. Contact Us</h2>
                     <p>If you have any questions or concerns regarding this privacy policy or how your data is handled, please contact our support team at support@srimayan.com.</p>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Heart, Eye, Star, MapPin, UserCheck, Image, X, AlertCircle, Sparkles, Bookmark, MessageCircle } from 'lucide-react';
-import { getNotifications, respondPhotoRequest } from '../services/api';
+import { getNotifications, respondPhotoRequest, removeNotification } from '../services/api';
 import './NotificationDropdown.css';
 
 const ICON_MAP = {
@@ -83,11 +83,13 @@ const NotificationDropdown = ({ unreadChatCount = 0 }) => {
 
     const handleMarkAllRead = useCallback((e) => {
         if (e) e.stopPropagation();
-        const allIds = activeNotifications.map(n => n.id);
-        const updatedReadIds = [...new Set([...readIds, ...allIds])];
-        setReadIds(updatedReadIds);
-        localStorage.setItem('readNotificationIds', JSON.stringify(updatedReadIds));
-    }, [activeNotifications, readIds]);
+        setReadIds(prev => {
+            const allIds = activeNotifications.map(n => n.id);
+            const updatedReadIds = [...new Set([...prev, ...allIds])];
+            localStorage.setItem('readNotificationIds', JSON.stringify(updatedReadIds));
+            return updatedReadIds;
+        });
+    }, [activeNotifications]);
 
     const handleToggle = () => {
         const nextState = !isOpen;
@@ -105,9 +107,11 @@ const NotificationDropdown = ({ unreadChatCount = 0 }) => {
 
     const handleNotificationClick = (notification) => {
         // Mark as read
-        const updatedReadIds = [...new Set([...readIds, notification.id])];
-        setReadIds(updatedReadIds);
-        localStorage.setItem('readNotificationIds', JSON.stringify(updatedReadIds));
+        setReadIds(prev => {
+            const updatedReadIds = [...new Set([...prev, notification.id])];
+            localStorage.setItem('readNotificationIds', JSON.stringify(updatedReadIds));
+            return updatedReadIds;
+        });
 
         setIsOpen(false);
 
@@ -117,11 +121,20 @@ const NotificationDropdown = ({ unreadChatCount = 0 }) => {
         }
     };
 
-    const handleRemove = (e, notificationId) => {
+    const handleRemove = async (e, notificationId) => {
         e.stopPropagation();
-        const updatedRemovedIds = [...new Set([...removedIds, notificationId])];
-        setRemovedIds(updatedRemovedIds);
-        localStorage.setItem('removedNotificationIds', JSON.stringify(updatedRemovedIds));
+        setRemovedIds(prev => {
+            const updatedRemovedIds = [...new Set([...prev, notificationId])];
+            localStorage.setItem('removedNotificationIds', JSON.stringify(updatedRemovedIds));
+            return updatedRemovedIds;
+        });
+
+        // Persist the deletion to the backend perfectly
+        try {
+            await removeNotification(notificationId);
+        } catch (err) {
+            console.error('Failed to remove notification persistently:', err);
+        }
     };
 
     return (

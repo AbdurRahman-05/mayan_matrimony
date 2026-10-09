@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import {
     Loader2, User, Clock, Check, X, MapPin, Briefcase, GraduationCap,
-    Heart, Languages, Sparkles, Star, MessageCircle, ArrowLeft, Camera, Eye
+    Heart, Languages, Sparkles, Star, MessageCircle, ArrowLeft, Camera, Eye, Trash2
 } from 'lucide-react';
 import { getReceivedInterests, getSentInterests, respondToInterest, shortlistProfile, ignoreProfile, getChatList, globalCache, requestPhoto, getPhotoRequests, getMediaUrl } from '../services/api';
 import { showAlert, showConfirm } from '../components/GlobalModal';
@@ -388,17 +388,16 @@ const Interests = () => {
                                                                     <Eye size={18} />
                                                                     View Profile
                                                                 </button>
-                                                                {item.status === 'accepted' && (photoSrc || isPhotoAccepted) ? (
+                                                                {item.status === 'accepted' && (photoSrc || isPhotoAccepted) && (
                                                                     <button className="card-action-btn" onClick={(e) => handleChatAction(e, profile.uniqueId)}>
                                                                         <MessageCircle size={18} />
                                                                         Chat
                                                                     </button>
-                                                                ) : (
-                                                                    <button className="card-action-btn" onClick={(e) => handleIgnoreAction(e, profile.uniqueId)}>
-                                                                        <X size={18} />
-                                                                        Ignore
-                                                                    </button>
                                                                 )}
+                                                                <button className="card-action-btn" style={{ color: '#ef4444' }} onClick={(e) => handleIgnoreAction(e, profile.uniqueId)}>
+                                                                    <Trash2 size={18} />
+                                                                    Remove
+                                                                </button>
                                                             </>
                                                         )}
                                                     </div>
