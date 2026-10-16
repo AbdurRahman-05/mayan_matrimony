@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { User, LogOut, Edit2, X, Save, Camera, Eye, MapPin, Briefcase, GraduationCap, Heart, Calendar, Ruler, Globe2, BadgeCheck, Users, Cigarette, Wine, ChevronRight, MoreVertical, ArrowLeft, Plus, Maximize2, Trash2, Image, Search, Settings, Utensils, Puzzle, Zap, Languages, Music, MessagesSquare, ChefHat, Shirt, Clock, Loader2 } from 'lucide-react';
+import { User, LogOut, Edit2, X, Save, Camera, Eye, MapPin, Briefcase, GraduationCap, Heart, Calendar, Ruler, Globe2, BadgeCheck, ShieldCheck, FileText, Users, Cigarette, Wine, ChevronRight, MoreVertical, ArrowLeft, Plus, Maximize2, Trash2, Image, Search, Settings, Utensils, Puzzle, Zap, Languages, Music, MessagesSquare, ChefHat, Shirt, Clock, Loader2 } from 'lucide-react';
 import FavouritesModal from '../components/FavouritesModal';
 import PartnerBasicDetailsEditor from '../components/PartnerBasicDetailsEditor';
 import PartnerEducationEditor from '../components/PartnerEducationEditor';
@@ -194,6 +194,12 @@ const Profile = () => {
         havingChildren: '',
         numberOfChildren: '',
         residentialStatus: '',
+        casteOther: '',
+        aadharNumber: '',
+        communityCertificate: '',
+        birthCertificate: '',
+        temporaryAddress: '',
+        permanentAddress: '',
     };
 
     // Use cached data as initial state so UI shows data instantly
@@ -366,6 +372,16 @@ const Profile = () => {
     };
 
     const handleEditSection = (section) => {
+        if (section === 'basic' && profileData.caste) {
+            const standardCastes = getCastes(profileData.religion, profileData.sect);
+            if (!standardCastes.includes(profileData.caste) && profileData.caste !== 'Other') {
+                setEditForm(prev => ({
+                    ...prev,
+                    caste: 'Other',
+                    casteOther: profileData.caste
+                }));
+            }
+        }
         let birthDateVal = '';
         let dayVal = profileData.dobDay || '';
         let monthVal = profileData.dobMonth || '';
@@ -598,6 +614,9 @@ const Profile = () => {
         try {
             // Merge editForm into profileData so we send the complete profile, not partial data
             const mergedData = { ...profileData, ...editForm };
+            if (mergedData.caste === 'Other' && mergedData.casteOther) {
+                mergedData.caste = mergedData.casteOther.trim();
+            }
             if (mergedData.horoscope === 'Other' && mergedData.horoscopeOther) {
                 mergedData.horoscope = mergedData.horoscopeOther;
             }
@@ -1007,6 +1026,22 @@ const Profile = () => {
                                             <ChevronRight size={18} color="#4b5563" />
                                         </div>
                                     </div>
+                                    {editForm.caste === 'Other' && (
+                                        <div className="bd-field" style={{ borderBottom: 'none', paddingTop: 0 }}>
+                                            <span className="bd-label">Specify your Caste</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}>
+                                                <input
+                                                    type="text"
+                                                    className="bd-value-input"
+                                                    name="casteOther"
+                                                    value={editForm.casteOther || ''}
+                                                    onChange={handleFormChange}
+                                                    placeholder="Specify your Caste"
+                                                    style={{ flex: 1 }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 15px 15px 15px', borderBottom: '1px solid #f1f5f9' }}>
                                         <input
                                             type="checkbox"
@@ -1754,15 +1789,27 @@ const Profile = () => {
 
                             <div className="bd-field" style={{ borderBottom: 'none' }}>
                                 <span className="bd-label" style={{ fontSize: '0.95rem', color: '#334155' }}>Birth Certificate (Optional)</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '8px 0' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '8px 0', flexWrap: 'wrap' }}>
                                     <input type="file" className="bd-value-input" name="birthCertificate" onChange={e => {
                                         const file = e.target.files[0];
                                         if (file) {
                                             convertFileToBase64(file).then(b64 => setEditForm(prev => ({ ...prev, birthCertificate: b64 })));
                                         }
                                     }} accept="image/*,.pdf" style={{ flex: 1 }} />
-                                    {editForm.birthCertificate && <span style={{ color: 'green', fontSize: '0.8rem' }}>Uploaded ✓</span>}
+                                    {editForm.birthCertificate && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 600 }}>Uploaded ✓</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditForm(prev => ({ ...prev, birthCertificate: '' }))}
+                                                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
+                                <small style={{ color: '#888', display: 'block', marginTop: '4px' }}>Upload birth certificate (image or PDF) for user profile verification.</small>
                             </div>
 
                         </div>
@@ -2286,6 +2333,61 @@ const Profile = () => {
                                         <button className="ep-empty-add-action" onClick={() => handleEditSection('contact')} style={{ margin: 0 }}>
                                             <Plus size={16} /> Add Additional Contact
                                         </button>
+                                    </div>
+                                </div>
+
+                                {/* Verification Documents */}
+                                <div className="ep-section-card">
+                                    <div className="ep-section-header">
+                                        <div>
+                                            <h3 className="ep-section-title">Verification Documents</h3>
+                                            <p className="ep-section-subtitle">Identity and birth proof documents for trusted matching (Confidential & Secure)</p>
+                                        </div>
+                                        <button className="ep-edit-btn" onClick={() => handleEditSection('contact')} aria-label="Edit Verification Documents"><Edit2 size={18} /></button>
+                                    </div>
+                                    <div className="ep-detail-list">
+                                        <div className="ep-detail-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                <FileText size={20} color={profileData.birthCertificate ? "#10b981" : "#64748b"} />
+                                                <div>
+                                                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1f2937', display: 'block' }}>Birth Certificate</span>
+                                                    <span style={{ fontSize: '0.82rem', color: profileData.birthCertificate ? '#10b981' : '#6b7280' }}>
+                                                        {profileData.birthCertificate ? 'Uploaded ✓' : 'Not uploaded yet'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button className="ep-empty-add-action" onClick={() => handleEditSection('contact')} style={{ margin: 0, padding: '6px 14px', fontSize: '0.85rem' }}>
+                                                {profileData.birthCertificate ? 'Change' : '+ Upload'}
+                                            </button>
+                                        </div>
+                                        <div className="ep-detail-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                <FileText size={20} color={profileData.communityCertificate ? "#10b981" : "#64748b"} />
+                                                <div>
+                                                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1f2937', display: 'block' }}>Community Certificate</span>
+                                                    <span style={{ fontSize: '0.82rem', color: profileData.communityCertificate ? '#10b981' : '#6b7280' }}>
+                                                        {profileData.communityCertificate ? 'Uploaded ✓' : 'Not uploaded yet'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button className="ep-empty-add-action" onClick={() => handleEditSection('contact')} style={{ margin: 0, padding: '6px 14px', fontSize: '0.85rem' }}>
+                                                {profileData.communityCertificate ? 'Change' : '+ Upload'}
+                                            </button>
+                                        </div>
+                                        <div className="ep-detail-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                <ShieldCheck size={20} color={profileData.aadharNumber ? "#10b981" : "#64748b"} />
+                                                <div>
+                                                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1f2937', display: 'block' }}>Aadhar Card Number</span>
+                                                    <span style={{ fontSize: '0.82rem', color: '#6b7280' }}>
+                                                        {profileData.aadharNumber ? `•••• •••• ${String(profileData.aadharNumber).slice(-4)}` : 'Not provided'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button className="ep-empty-add-action" onClick={() => handleEditSection('contact')} style={{ margin: 0, padding: '6px 14px', fontSize: '0.85rem' }}>
+                                                {profileData.aadharNumber ? 'Edit' : '+ Add'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 

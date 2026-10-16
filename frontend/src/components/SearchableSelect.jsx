@@ -35,7 +35,11 @@ const SearchableSelect = ({ name, value, onChange, options = [], placeholder, di
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
     }, []);
 
     // Scroll highlighted item into view
@@ -54,6 +58,19 @@ const SearchableSelect = ({ name, value, onChange, options = [], placeholder, di
         setIsOpen(false);
         setSearchTerm('');
         setHighlightedIndex(-1);
+    };
+
+    
+    const handleInputBlur = () => {
+        if (searchTerm && filteredOptions.length > 0) {
+            const exact = filteredOptions.find(opt => {
+                const label = typeof opt === 'object' ? opt.label : opt;
+                return label.toString().toLowerCase() === searchTerm.trim().toLowerCase();
+            });
+            if (exact && !exact.isHeader) {
+                handleSelect(typeof exact === 'object' ? exact.value : exact);
+            }
+        }
     };
 
     const handleInputClick = () => {
@@ -101,6 +118,7 @@ const SearchableSelect = ({ name, value, onChange, options = [], placeholder, di
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setHighlightedIndex(0); }}
                         onKeyDown={handleKeyDown}
+                        onBlur={handleInputBlur}
                         placeholder={displayLabel || placeholder || 'Select or type'}
                         autoFocus
                     />
@@ -112,7 +130,7 @@ const SearchableSelect = ({ name, value, onChange, options = [], placeholder, di
                 <ChevronDown size={16} className={`ss-chevron ${isOpen ? 'ss-chevron-up' : ''}`} />
             </div>
             {isOpen && (
-                <ul className="ss-dropdown" ref={listRef}>
+                <ul className="ss-dropdown" ref={listRef} onMouseDown={(e) => e.preventDefault()} onTouchStart={(e) => e.stopPropagation()}>
                     {filteredOptions.length === 0 ? (
                         <li className="ss-no-results">No results found</li>
                     ) : (
@@ -130,7 +148,18 @@ const SearchableSelect = ({ name, value, onChange, options = [], placeholder, di
                                 <li
                                     key={optValue}
                                     className={`ss-option ${optValue === value ? 'ss-selected' : ''} ${idx === highlightedIndex ? 'ss-highlighted' : ''}`}
-                                    onClick={() => handleSelect(optValue)}
+                                    onPointerDown={(e) => {
+                                        e.preventDefault();
+                                        handleSelect(optValue);
+                                    }}
+                                    onTouchEnd={(e) => {
+                                        e.preventDefault();
+                                        handleSelect(optValue);
+                                    }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleSelect(optValue);
+                                    }}
                                     onMouseEnter={() => setHighlightedIndex(idx)}
                                 >
                                     {optLabel}

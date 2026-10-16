@@ -699,19 +699,25 @@ export const getStates = (country) => country ? Object.keys(countryStateCityMap[
 export const getCities = (country, state) => (country && state) ? (countryStateCityMap[country]?.[state] || []) : [];
 export const getCastes = (religion, sect) => {
     if (!religion) return [];
+    let list = [];
     if (religion === "Hindu") {
         if (sect && hinduCategoryCasteMap[sect]) {
-            return hinduCategoryCasteMap[sect];
+            list = [...hinduCategoryCasteMap[sect]];
         } else {
             // Return all castes across all categories if no sect specified
             let allCastes = [];
             Object.values(hinduCategoryCasteMap).forEach(castes => {
                 allCastes = allCastes.concat(castes);
             });
-            return [...new Set(allCastes)].sort();
+            list = [...new Set(allCastes)].sort();
         }
+    } else {
+        list = [...(religionCasteMap[religion] || [])];
     }
-    return religionCasteMap[religion] || [];
+    if (!list.includes("Other")) {
+        list.push("Other");
+    }
+    return list;
 };
 
 export const religionSectMap = {

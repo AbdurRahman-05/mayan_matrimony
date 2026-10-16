@@ -267,8 +267,10 @@ const Register = () => {
         religion: '',
         sect: '',
         caste: '',
+        casteOther: '',
         willingToMarryOtherCaste: 'No',
         country: '',
+        workingCountry: '',
         state: '',
         city: '',
         education: '',
@@ -345,12 +347,13 @@ const Register = () => {
     // Validation for Step 0 (Registration)
     const validateJvStep0 = async () => {
         const errs = {};
-        if (!formData.email) {
-            errs.email = 'Email is required';
-        } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(formData.email)) {
-            errs.email = 'Please enter a valid email.';
-        } else if (['test@example.com', 'admin@example.com'].includes(formData.email.toLowerCase())) {
-            errs.email = 'This email is already registered';
+        // Email is optional during registration
+        if (formData.email && formData.email.trim()) {
+            if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(formData.email.trim())) {
+                errs.email = 'Please enter a valid email.';
+            } else if (['test@example.com', 'admin@example.com'].includes(formData.email.trim().toLowerCase())) {
+                errs.email = 'This email is already registered';
+            }
         }
 
         if (!formData.mobile) {
@@ -367,15 +370,19 @@ const Register = () => {
 
         if (Object.keys(errs).length === 0) {
             try {
-                const [emailCheck, mobileCheck] = await Promise.all([
-                    checkEmailAvailability(formData.email),
-                    checkMobileAvailability(formData.mobile)
-                ]);
+                const hasEmail = Boolean(formData.email && formData.email.trim());
+                const checks = [checkMobileAvailability(formData.mobile)];
+                if (hasEmail) {
+                    checks.push(checkEmailAvailability(formData.email.trim()));
+                }
+                const results = await Promise.all(checks);
+                const mobileCheck = results[0];
+                const emailCheck = hasEmail ? results[1] : null;
 
-                if (!emailCheck.available) {
+                if (emailCheck && !emailCheck.available) {
                     errs.email = 'This email ID already exists. Please go to login.';
                 }
-                if (!mobileCheck.available) {
+                if (mobileCheck && !mobileCheck.available) {
                     errs.mobile = 'This phone number already exists. Please go to login.';
                 }
             } catch (err) {
@@ -410,7 +417,11 @@ const Register = () => {
         }
         if (!formData.motherTongue) errs.motherTongue = 'Mother tongue is required';
         if (!formData.religion) errs.religion = 'Religion is required';
-        if (!formData.caste) errs.caste = 'Caste is required';
+        if (!formData.caste) {
+            errs.caste = 'Caste is required';
+        } else if (formData.caste === 'Other' && (!formData.casteOther || !formData.casteOther.trim())) {
+            errs.caste = 'Please specify your caste';
+        }
         if (!formData.height) errs.height = 'Height is required';
         if (formData.religion === 'Hindu') {
             if (!formData.horoscope) errs.horoscope = 'Horoscope is required';
@@ -424,11 +435,18 @@ const Register = () => {
     // Validation for Step 2 (Career Details)
     const validateJvStep2 = () => {
         const errs = {};
-        if (!formData.workingCountry) errs.workingCountry = 'Country is required';
-        if (formData.workingCountry === 'India') {
+        const activeCountry = formData.workingCountry || formData.country;
+        if (!activeCountry) {
+            errs.workingCountry = 'Country is required';
+        } else {
+            if (!formData.workingCountry) formData.workingCountry = activeCountry;
+            if (!formData.country) formData.country = activeCountry;
+        }
+
+        if (activeCountry === 'India') {
             if (!formData.state) errs.state = 'State is required';
             if (!formData.city) errs.city = 'City is required';
-        } else if (formData.workingCountry) {
+        } else if (activeCountry) {
             if (!formData.residentialStatus) errs.residentialStatus = 'Residential Status is required';
         }
         if (!formData.education) errs.education = 'Highest Degree is required';
@@ -537,9 +555,27 @@ const Register = () => {
         }
 
         if (name === 'religion') {
-            setFormData(prev => ({ ...prev, religion: value, caste: '', sect: '' }));
-        } else if (name === 'country') {
-            setFormData(prev => ({ ...prev, country: value, state: '', city: '', residentialStatus: value === 'India' ? '' : prev.residentialStatus }));
+            setFormData(prev => ({ ...prev, religion: value, caste: '', casteOther: '', sect: '' }));
+        } else if (name === 'caste') {
+            setFormData(prev => ({ ...prev, caste: value, casteOther: value === 'Other' ? prev.casteOther : '' }));
+        } else if (name === 'nationality') {
+            setFormData(prev => {
+                const updated = { ...prev, nationality: value };
+                if (!prev.workingCountry && !prev.country && value === 'Indian') {
+                    updated.workingCountry = 'India';
+                    updated.country = 'India';
+                }
+                return updated;
+            });
+        } else if (name === 'country' || name === 'workingCountry') {
+            setFormData(prev => ({
+                ...prev,
+                country: value,
+                workingCountry: value,
+                state: '',
+                city: '',
+                residentialStatus: value === 'India' ? '' : prev.residentialStatus
+            }));
         } else if (name === 'state') {
             setFormData(prev => ({ ...prev, state: value, city: '' }));
         } else if (name === 'profileFor') {
@@ -571,10 +607,34 @@ const Register = () => {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
 
-        // Clear error when user types
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
-        }
+        // Instantly clear field error in both jvErrors and errors upon user input/selection
+        setJvErrors(prev => {
+            if (!prev[name] && !prev.workingCountry && !prev.country && !prev.caste) return prev;
+            const updated = { ...prev };
+            delete updated[name];
+            if (name === 'workingCountry' || name === 'country') {
+                delete updated.workingCountry;
+                delete updated.country;
+            }
+            if (name === 'caste' || name === 'casteOther') {
+                delete updated.caste;
+            }
+            return updated;
+        });
+
+        setErrors(prev => {
+            if (!prev[name] && !prev.workingCountry && !prev.country && !prev.caste) return prev;
+            const updated = { ...prev };
+            delete updated[name];
+            if (name === 'workingCountry' || name === 'country') {
+                delete updated.workingCountry;
+                delete updated.country;
+            }
+            if (name === 'caste' || name === 'casteOther') {
+                delete updated.caste;
+            }
+            return updated;
+        });
     };
 
     const handleFileChange = (e) => {
@@ -694,7 +754,11 @@ const Register = () => {
         const newErrors = {};
         if (!formData.height) newErrors.height = "Height is required";
         if (!formData.religion) newErrors.religion = "Religion is required";
-        if (!formData.caste) newErrors.caste = "Caste is required";
+        if (!formData.caste) {
+            newErrors.caste = "Caste is required";
+        } else if (formData.caste === 'Other' && (!formData.casteOther || !formData.casteOther.trim())) {
+            newErrors.caste = "Please specify your caste";
+        }
         if (formData.religion === 'Hindu' && !formData.horoscope) {
             newErrors.horoscope = "Horoscope is required";
         }
@@ -707,7 +771,13 @@ const Register = () => {
 
     const validateStep3 = () => {
         const newErrors = {};
-        if (!formData.country) newErrors.country = "Country is required";
+        const activeCountryStep3 = formData.country || formData.workingCountry;
+        if (!activeCountryStep3) {
+            newErrors.country = "Country is required";
+        } else {
+            if (!formData.country) formData.country = activeCountryStep3;
+            if (!formData.workingCountry) formData.workingCountry = activeCountryStep3;
+        }
         if (!formData.education) newErrors.education = "Education is required";
         if (!formData.employmentType) newErrors.employmentType = "Employment Type is required";
         if (!formData.occupation) newErrors.occupation = "Occupation is required";
@@ -1346,7 +1416,7 @@ const Register = () => {
                                     </div>
 
                                     <div className="jv-step0-input-row">
-                                        <input type="email" name="email" className="jv-step0-input" placeholder="Your Email *" value={formData.email} onChange={handleInputChange} />
+                                        <input type="email" name="email" className="jv-step0-input" placeholder="Your Email (Optional)" value={formData.email} onChange={handleInputChange} />
                                     </div>
                                     <div className="jv-step0-input-row" style={{ display: 'flex' }}>
                                         <div style={{ width: '80px', padding: '10px', border: '1px solid #d1d5db', borderRight: 'none', borderRadius: '4px 0 0 4px', background: '#f3f4f6', fontSize: '1rem', color: '#1f2937', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}>
@@ -1504,7 +1574,7 @@ const Register = () => {
 
                                             <div className="jv-form-row">
                                                 <label className="jv-label">Caste <span className="jv-asterisk">*</span></label>
-                                                <div className="jv-input-group">
+                                                <div className="jv-input-group column">
                                                     <SearchableSelect
                                                         name="caste"
                                                         value={formData.caste}
@@ -1514,6 +1584,17 @@ const Register = () => {
                                                         disabled={!formData.religion}
                                                         className="full"
                                                     />
+                                                    {formData.caste === 'Other' && (
+                                                        <input
+                                                            type="text"
+                                                            name="casteOther"
+                                                            value={formData.casteOther || ''}
+                                                            onChange={handleInputChange}
+                                                            placeholder="Specify your Caste *"
+                                                            className="jv-input full"
+                                                            style={{ marginTop: '10px' }}
+                                                        />
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -2141,21 +2222,31 @@ const Register = () => {
 
                                             <div className="jv-form-row">
                                                 <label className="jv-label">Community Certificate <span className="jv-optional-note">(Optional)</span></label>
-                                                <div className="jv-input-group">
+                                                <div className="jv-input-group column">
                                                     <input type="file" className="jv-input" name="communityCertificate" onChange={e => {
                                                         const file = e.target.files[0];
                                                         if (file) setFormData(prev => ({ ...prev, communityCertificate: file }));
                                                     }} accept="image/*,.pdf" />
+                                                    {formData.communityCertificate && (
+                                                        <span style={{ color: '#10b981', fontSize: '0.85rem', marginTop: '4px', fontWeight: 500 }}>
+                                                            Uploaded ✓ {formData.communityCertificate.name ? `(${formData.communityCertificate.name})` : ''}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
 
                                             <div className="jv-form-row">
                                                 <label className="jv-label">Birth Certificate <span className="jv-optional-note">(Optional)</span></label>
-                                                <div className="jv-input-group">
+                                                <div className="jv-input-group column">
                                                     <input type="file" className="jv-input" name="birthCertificate" onChange={e => {
                                                         const file = e.target.files[0];
                                                         if (file) setFormData(prev => ({ ...prev, birthCertificate: file }));
                                                     }} accept="image/*,.pdf" />
+                                                    {formData.birthCertificate && (
+                                                        <span style={{ color: '#10b981', fontSize: '0.85rem', marginTop: '4px', fontWeight: 500 }}>
+                                                            Uploaded ✓ {formData.birthCertificate.name ? `(${formData.birthCertificate.name})` : ''}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -2315,6 +2406,9 @@ const Register = () => {
 
                                                                 const registrationData = {
                                                                     ...formData,
+                                                                    caste: formData.caste === 'Other' && formData.casteOther?.trim() ? formData.casteOther.trim() : formData.caste,
+                                                                    country: formData.workingCountry || formData.country,
+                                                                    workingCountry: formData.workingCountry || formData.country,
                                                                     horoscope: formData.horoscope === 'Other' && formData.horoscopeOther ? formData.horoscopeOther : formData.horoscope,
                                                                     photo: photoBase64,
                                                                     communityCertificate: communityCertBase64,

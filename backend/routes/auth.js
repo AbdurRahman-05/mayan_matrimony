@@ -488,17 +488,20 @@ router.post('/register', async (req, res) => {
             uniqueId: requestedUniqueId, isVerified
         } = req.body;
 
-        // Validate required fields
-        if (!email && !mobile) {
-            return res.status(400).json({ error: 'Email or mobile is required' });
+        // Clean email - null if not provided or empty
+        const cleanEmail = email && typeof email === 'string' && email.trim() ? email.trim() : null;
+
+        // Validate required fields (Email is optional during registration)
+        if (!cleanEmail && !mobile) {
+            return res.status(400).json({ error: 'Mobile number or email is required' });
         }
         if (!password || password.length < 8) {
             return res.status(400).json({ error: 'Password must be at least 8 characters' });
         }
 
-        // Check if email already exists
-        if (email) {
-            const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
+        // Check if email already exists (only if email was provided)
+        if (cleanEmail) {
+            const existing = await sql`SELECT id FROM users WHERE email = ${cleanEmail}`;
             if (existing.length > 0) {
                 return res.status(400).json({ error: 'Email already registered' });
             }
@@ -526,7 +529,7 @@ router.post('/register', async (req, res) => {
         // Create user
         const userResult = await sql`
       INSERT INTO users (unique_id, email, mobile, password_hash, profile_for, gender, is_verified)
-      VALUES (${uniqueId}, ${email || null}, ${mobile || null}, ${passwordHash}, ${profileFor || 'Self'}, ${finalGender || null}, ${isVerified === true})
+      VALUES (${uniqueId}, ${cleanEmail}, ${mobile || null}, ${passwordHash}, ${profileFor || 'Self'}, ${finalGender || null}, ${isVerified === true})
       RETURNING id, unique_id, email, mobile, gender, profile_for, created_at, is_verified
     `;
 
@@ -762,7 +765,10 @@ router.get('/me', auth, async (req, res) => {
 router.post('/check-email', async (req, res) => {
     try {
         const { email } = req.body;
-        const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
+        if (!email || !email.trim()) {
+            return res.json({ available: true });
+        }
+        const existing = await sql`SELECT id FROM users WHERE email = ${email.trim()}`;
         res.json({ available: existing.length === 0 });
     } catch (error) {
         res.status(500).json({ error: 'Check failed' });
