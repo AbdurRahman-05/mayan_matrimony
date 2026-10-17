@@ -51,7 +51,7 @@ export const getMediaUrl = (photoPath) => {
     const relativePath = cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
 
     if (isCapacitorNative) {
-        let origin = 'http://10.0.2.2:5000';
+        let origin = 'http://10.0.2.2:5001';
         if (apiBase.startsWith('http')) {
             origin = apiBase.replace(/\/api\/?$/, '');
         }
@@ -117,7 +117,7 @@ async function apiFetch(url, options = {}) {
         );
 
         if (isCapacitorNative) {
-            const fallbackBases = ['https://srimayanmatrimony.com/api', 'http://localhost:5000/api', 'http://10.0.2.2:5000/api'];
+            const fallbackBases = ['https://srimayanmatrimony.com/api', 'http://localhost:5001/api', 'http://10.0.2.2:5001/api'];
             for (const fallbackBase of fallbackBases) {
                 if (fallbackBase === targetBase) continue;
                 try {

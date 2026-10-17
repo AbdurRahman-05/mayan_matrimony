@@ -162,13 +162,22 @@ router.post('/register', async (req, res) => {
     try {
         const {
             fullName, profileFor, gender, dob, dobDay, dobMonth, dobYear,
-            motherTongue, mobile, email, password,
-            religion, sect, caste, casteOther,
-            maritalStatus, height,
-            country, workingCountry, state, city, residentialStatus,
-            education, employmentType, occupation, income,
-            familyType, fatherName, fatherOccupation, motherName, motherOccupation,
-            diet, horoscope, photo
+            nationality, motherTongue, mobile, email, password, isVerified,
+            religion, sect, caste, casteOther, willingToMarryOtherCaste,
+            maritalStatus, havingChildren, numberOfChildren,
+            height, physicalStatus, disability, bodyType, weight,
+            horoscope, timeOfBirth, placeOfBirth, dosham,
+            country, workingCountry, visaStatus, state, city, residentialStatus,
+            education, employmentType, occupation, organizationName, currency, income, extraIncome,
+            jobDetails, propertyType, financialStatus,
+            diet, smoking, drinking,
+            familyType, familyStatus, familyIncome,
+            fatherName, fatherStatus, fatherOccupation,
+            motherName, motherStatus, motherOccupation,
+            elderBrother, marriedElderBrother, youngerBrother, marriedYoungerBrother,
+            elderSister, marriedElderSister, youngerSister, marriedYoungerSister,
+            familyLivingIn, aadharNumber, temporaryAddress, permanentAddress,
+            about, partnerPreference, photo
         } = req.body;
 
         const cleanEmail = email && typeof email === 'string' && email.trim() ? email.trim().toLowerCase() : null;
@@ -210,11 +219,12 @@ router.post('/register', async (req, res) => {
         else if (profileFor === 'Daughter') finalGender = 'Female';
 
         const finalCaste = caste === 'Other' && casteOther && casteOther.trim() ? casteOther.trim() : (caste || null);
-        const finalCountry = workingCountry || country || 'India';
+        const finalCountry = country || 'India';
+        const finalWorkingCountry = workingCountry || finalCountry;
 
         const userResult = await sql`
             INSERT INTO users (unique_id, email, mobile, password_hash, profile_for, gender, is_verified)
-            VALUES (${uniqueId}, ${cleanEmail}, ${cleanMobile}, ${passwordHash}, ${profileFor || 'Self'}, ${finalGender}, true)
+            VALUES (${uniqueId}, ${cleanEmail}, ${cleanMobile}, ${passwordHash}, ${profileFor || 'Self'}, ${finalGender}, ${isVerified !== false})
             RETURNING id, unique_id, email, mobile, gender, profile_for, created_at, is_verified
         `;
         const newUser = userResult[0];
@@ -222,26 +232,60 @@ router.post('/register', async (req, res) => {
         await sql`
             INSERT INTO profiles (
                 user_id, full_name, gender, dob, dob_day, dob_month, dob_year,
-                mother_tongue, height, physical_status, marital_status,
-                religion, sect, caste, horoscope,
-                country, working_country, state, city, residential_status,
-                education, employment_type, occupation, income,
-                family_type, father_name, father_occupation, mother_name, mother_occupation,
-                diet, photo
+                nationality, mother_tongue, height, physical_status, disability, body_type, weight,
+                marital_status, having_children, number_of_children,
+                religion, sect, caste, willing_to_marry_other_caste,
+                horoscope, time_of_birth, place_of_birth, dosham,
+                country, working_country, visa_status, state, city, residential_status,
+                education, employment_type, occupation, organization_name, currency, income, extra_income,
+                job_details, property_type, financial_status,
+                diet, smoking, drinking,
+                family_type, family_status, family_income,
+                father_name, father_status, father_occupation,
+                mother_name, mother_status, mother_occupation,
+                elder_brother, married_elder_brother, younger_brother, married_younger_brother,
+                elder_sister, married_elder_sister, younger_sister, married_younger_sister,
+                family_living_in, aadhar_number, temporary_address, permanent_address,
+                about, partner_preference, photo
             ) VALUES (
                 ${newUser.id}, ${fullName.trim()}, ${finalGender}, ${dob || null}, ${dobDay || null}, ${dobMonth || null}, ${dobYear || null},
-                ${motherTongue || null}, ${height || null}, 'Normal', ${maritalStatus || 'Never Married'},
-                ${religion || null}, ${sect || null}, ${finalCaste}, ${horoscope || null},
-                ${finalCountry}, ${finalCountry}, ${state || null}, ${city || null}, ${residentialStatus || null},
-                ${education || null}, ${employmentType || null}, ${occupation || null}, ${income || null},
-                ${familyType || null}, ${fatherName || null}, ${fatherOccupation || null}, ${motherName || null}, ${motherOccupation || null},
-                ${diet || null}, ${photo || null}
+                ${nationality || 'Indian'}, ${motherTongue || null}, ${height || null}, ${physicalStatus || 'Normal'}, ${disability || null}, ${bodyType || null}, ${weight || null},
+                ${maritalStatus || 'Never Married'}, ${havingChildren || null}, ${numberOfChildren || null},
+                ${religion || null}, ${sect || null}, ${finalCaste}, ${willingToMarryOtherCaste || 'No'},
+                ${horoscope || null}, ${timeOfBirth || null}, ${placeOfBirth || null}, ${dosham || null},
+                ${finalCountry}, ${finalWorkingCountry}, ${visaStatus || null}, ${state || null}, ${city || null}, ${residentialStatus || null},
+                ${education || null}, ${employmentType || null}, ${occupation || null}, ${organizationName || null}, ${currency || 'INR'}, ${income || null}, ${extraIncome || null},
+                ${jobDetails || null}, ${propertyType || null}, ${financialStatus || null},
+                ${diet || null}, ${smoking || null}, ${drinking || null},
+                ${familyType || null}, ${familyStatus || null}, ${familyIncome || null},
+                ${fatherName || null}, ${fatherStatus || null}, ${fatherOccupation || null},
+                ${motherName || null}, ${motherStatus || null}, ${motherOccupation || null},
+                ${elderBrother || '0'}, ${marriedElderBrother || '0'}, ${youngerBrother || '0'}, ${marriedYoungerBrother || '0'},
+                ${elderSister || '0'}, ${marriedElderSister || '0'}, ${youngerSister || '0'}, ${marriedYoungerSister || '0'},
+                ${familyLivingIn || null}, ${aadharNumber || null}, ${temporaryAddress || null}, ${permanentAddress || null},
+                ${about || null}, ${partnerPreference || null}, ${photo || null}
             )
         `;
+
+        if (photo) {
+            try {
+                await sql`
+                    INSERT INTO profile_photos (user_id, photo_data, is_main)
+                    VALUES (${newUser.id}, ${photo}, true)
+                `;
+            } catch (pErr) {
+                console.warn('Could not insert into profile_photos:', pErr.message);
+            }
+        }
 
         await sql`
             INSERT INTO preferences (user_id, pref_age_from, pref_age_to)
             VALUES (${newUser.id}, '18', '35')
+        `;
+
+        await sql`
+            INSERT INTO user_favourites (user_id)
+            VALUES (${newUser.id})
         `;
 
         res.json({
@@ -269,7 +313,8 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ success: false, error: 'ID and Password are required' });
         }
 
-        const admins = await sql`SELECT * FROM admin_settings WHERE email = ${id}`;
+        const trimmedId = id.trim().toLowerCase();
+        const admins = await sql`SELECT * FROM admin_settings WHERE LOWER(TRIM(email)) = ${trimmedId}`;
         if (admins.length === 0) {
             return res.status(401).json({ success: false, error: 'Invalid ID or Password' });
         }
@@ -425,7 +470,7 @@ router.get('/users/:id', async (req, res) => {
         const profiles = await sql`SELECT * FROM profiles WHERE user_id = ${userId}`;
         const preferences = await sql`SELECT * FROM preferences WHERE user_id = ${userId}`;
         const favourites = await sql`SELECT * FROM user_favourites WHERE user_id = ${userId}`;
-        const photos = await sql`SELECT photo_data, is_main FROM profile_photos WHERE user_id = ${userId}`;
+        const photos = await sql`SELECT id, photo_data, is_main, created_at FROM profile_photos WHERE user_id = ${userId} ORDER BY is_main DESC, created_at ASC`;
 
         // Combine them
         const userData = { ...users[0] };
@@ -496,8 +541,8 @@ router.put('/users/:id', async (req, res) => {
 
         if (existingProfiles.length === 0) {
             await sql`
-                INSERT INTO profiles (user_id, full_name, gender, religion, sect, caste, created_at)
-                VALUES (${userId}, ${data.fullName || ''}, ${data.gender || 'Male'}, ${data.religion || ''}, ${data.sect || ''}, ${finalCaste || ''}, CURRENT_TIMESTAMP)
+                INSERT INTO profiles (user_id, full_name, gender, religion, sect, caste, photo, created_at)
+                VALUES (${userId}, ${data.fullName || ''}, ${data.gender || 'Male'}, ${data.religion || ''}, ${data.sect || ''}, ${finalCaste || ''}, ${data.photo || null}, CURRENT_TIMESTAMP)
             `;
         } else {
             const curr = existingProfiles[0];
@@ -509,40 +554,154 @@ router.put('/users/:id', async (req, res) => {
                     dob_day = ${data.dobDay !== undefined ? data.dobDay : curr.dob_day},
                     dob_month = ${data.dobMonth !== undefined ? data.dobMonth : curr.dob_month},
                     dob_year = ${data.dobYear !== undefined ? data.dobYear : curr.dob_year},
+                    nationality = ${data.nationality !== undefined ? data.nationality : curr.nationality},
                     mother_tongue = ${data.motherTongue !== undefined ? data.motherTongue : curr.mother_tongue},
                     height = ${data.height !== undefined ? data.height : curr.height},
                     physical_status = ${data.physicalStatus !== undefined ? data.physicalStatus : curr.physical_status},
+                    disability = ${data.disability !== undefined ? data.disability : curr.disability},
+                    body_type = ${data.bodyType !== undefined ? data.bodyType : curr.body_type},
+                    weight = ${data.weight !== undefined ? data.weight : curr.weight},
                     marital_status = ${data.maritalStatus !== undefined ? data.maritalStatus : curr.marital_status},
+                    having_children = ${data.havingChildren !== undefined ? data.havingChildren : curr.having_children},
+                    number_of_children = ${data.numberOfChildren !== undefined ? data.numberOfChildren : curr.number_of_children},
                     religion = ${data.religion !== undefined ? data.religion : curr.religion},
                     sect = ${data.sect !== undefined ? data.sect : curr.sect},
                     caste = ${finalCaste !== undefined ? finalCaste : curr.caste},
+                    willing_to_marry_other_caste = ${data.willingToMarryOtherCaste !== undefined ? data.willingToMarryOtherCaste : curr.willing_to_marry_other_caste},
                     horoscope = ${data.horoscope !== undefined ? data.horoscope : curr.horoscope},
+                    star = ${data.star !== undefined ? data.star : curr.star},
+                    time_of_birth = ${data.timeOfBirth !== undefined ? data.timeOfBirth : curr.time_of_birth},
+                    place_of_birth = ${data.placeOfBirth !== undefined ? data.placeOfBirth : curr.place_of_birth},
+                    dosham = ${data.dosham !== undefined ? data.dosham : curr.dosham},
                     country = ${data.country !== undefined ? data.country : curr.country},
                     working_country = ${data.workingCountry !== undefined ? data.workingCountry : curr.working_country},
+                    visa_status = ${data.visaStatus !== undefined ? data.visaStatus : curr.visa_status},
                     state = ${data.state !== undefined ? data.state : curr.state},
                     city = ${data.city !== undefined ? data.city : curr.city},
                     residential_status = ${data.residentialStatus !== undefined ? data.residentialStatus : curr.residential_status},
                     education = ${data.education !== undefined ? data.education : curr.education},
                     employment_type = ${data.employmentType !== undefined ? data.employmentType : curr.employment_type},
                     occupation = ${data.occupation !== undefined ? data.occupation : curr.occupation},
+                    organization_name = ${data.organizationName !== undefined ? data.organizationName : curr.organization_name},
+                    currency = ${data.currency !== undefined ? data.currency : curr.currency},
                     income = ${data.income !== undefined ? data.income : curr.income},
-                    family_type = ${data.familyType !== undefined ? data.familyType : curr.family_type},
-                    father_name = ${data.fatherName !== undefined ? data.fatherName : curr.father_name},
-                    father_occupation = ${data.fatherOccupation !== undefined ? data.fatherOccupation : curr.father_occupation},
-                    mother_name = ${data.motherName !== undefined ? data.motherName : curr.mother_name},
-                    mother_occupation = ${data.motherOccupation !== undefined ? data.motherOccupation : curr.mother_occupation},
+                    extra_income = ${data.extraIncome !== undefined ? data.extraIncome : curr.extra_income},
+                    job_details = ${data.jobDetails !== undefined ? data.jobDetails : curr.job_details},
+                    property_type = ${data.propertyType !== undefined ? data.propertyType : curr.property_type},
+                    financial_status = ${data.financialStatus !== undefined ? data.financialStatus : curr.financial_status},
                     diet = ${data.diet !== undefined ? data.diet : curr.diet},
                     smoking = ${data.smoking !== undefined ? data.smoking : curr.smoking},
                     drinking = ${data.drinking !== undefined ? data.drinking : curr.drinking},
+                    family_type = ${data.familyType !== undefined ? data.familyType : curr.family_type},
+                    family_status = ${data.familyStatus !== undefined ? data.familyStatus : curr.family_status},
+                    family_income = ${data.familyIncome !== undefined ? data.familyIncome : curr.family_income},
+                    father_name = ${data.fatherName !== undefined ? data.fatherName : curr.father_name},
+                    father_status = ${data.fatherStatus !== undefined ? data.fatherStatus : curr.father_status},
+                    father_occupation = ${data.fatherOccupation !== undefined ? data.fatherOccupation : curr.father_occupation},
+                    mother_name = ${data.motherName !== undefined ? data.motherName : curr.mother_name},
+                    mother_status = ${data.motherStatus !== undefined ? data.motherStatus : curr.mother_status},
+                    mother_occupation = ${data.motherOccupation !== undefined ? data.motherOccupation : curr.mother_occupation},
+                    elder_brother = ${data.elderBrother !== undefined ? data.elderBrother : curr.elder_brother},
+                    married_elder_brother = ${data.marriedElderBrother !== undefined ? data.marriedElderBrother : curr.married_elder_brother},
+                    younger_brother = ${data.youngerBrother !== undefined ? data.youngerBrother : curr.younger_brother},
+                    married_younger_brother = ${data.marriedYoungerBrother !== undefined ? data.marriedYoungerBrother : curr.married_younger_brother},
+                    elder_sister = ${data.elderSister !== undefined ? data.elderSister : curr.elder_sister},
+                    married_elder_sister = ${data.marriedElderSister !== undefined ? data.marriedElderSister : curr.married_elder_sister},
+                    younger_sister = ${data.youngerSister !== undefined ? data.youngerSister : curr.younger_sister},
+                    married_younger_sister = ${data.marriedYoungerSister !== undefined ? data.marriedYoungerSister : curr.married_younger_sister},
+                    family_living_in = ${data.familyLivingIn !== undefined ? data.familyLivingIn : curr.family_living_in},
                     aadhar_number = ${data.aadharNumber !== undefined ? data.aadharNumber : curr.aadhar_number},
+                    temporary_address = ${data.temporaryAddress !== undefined ? data.temporaryAddress : curr.temporary_address},
+                    permanent_address = ${data.permanentAddress !== undefined ? data.permanentAddress : curr.permanent_address},
+                    about = ${data.about !== undefined ? data.about : curr.about},
+                    partner_preference = ${data.partnerPreference !== undefined ? data.partnerPreference : curr.partner_preference},
+                    photo = ${data.photo !== undefined ? data.photo : curr.photo},
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ${userId}
             `;
         }
 
+        // Handle photo addition if provided as new base64
+        if (data.photo && typeof data.photo === 'string' && data.photo.startsWith('data:image')) {
+            try {
+                await sql`UPDATE profile_photos SET is_main = false WHERE user_id = ${userId}`;
+                await sql`
+                    INSERT INTO profile_photos (user_id, photo_data, is_main)
+                    VALUES (${userId}, ${data.photo}, true)
+                `;
+            } catch (pErr) {
+                console.warn('Could not sync photo to profile_photos:', pErr.message);
+            }
+        }
+
         res.json({ success: true, message: 'User details updated successfully' });
     } catch (error) {
         return dbErrorResponse(res, 'Error updating user profile', error, 'Failed to update user');
+    }
+});
+
+// 4.6.1 Upload photo for user
+router.post('/users/:id/photos', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { photoData } = req.body;
+        if (!photoData) {
+            return res.status(400).json({ error: 'photoData is required' });
+        }
+        const existing = await sql`SELECT COUNT(*) as count FROM profile_photos WHERE user_id = ${userId}`;
+        const isMain = parseInt(existing[0]?.count || 0) === 0;
+        const inserted = await sql`
+            INSERT INTO profile_photos (user_id, photo_data, is_main)
+            VALUES (${userId}, ${photoData}, ${isMain})
+            RETURNING id, photo_data, is_main
+        `;
+        if (isMain) {
+            await sql`UPDATE profiles SET photo = ${photoData} WHERE user_id = ${userId}`;
+        }
+        res.json({ success: true, photo: inserted[0] });
+    } catch (err) {
+        return dbErrorResponse(res, 'Error uploading photo', err, 'Failed to upload photo');
+    }
+});
+
+// 4.6.2 Set main photo
+router.put('/users/:id/photos/:photoId/main', async (req, res) => {
+    try {
+        const { id: userId, photoId } = req.params;
+        const photo = await sql`SELECT photo_data FROM profile_photos WHERE id = ${photoId} AND user_id = ${userId}`;
+        if (photo.length === 0) {
+            return res.status(404).json({ error: 'Photo not found' });
+        }
+        await sql`UPDATE profile_photos SET is_main = false WHERE user_id = ${userId}`;
+        await sql`UPDATE profile_photos SET is_main = true WHERE id = ${photoId} AND user_id = ${userId}`;
+        await sql`UPDATE profiles SET photo = ${photo[0].photo_data} WHERE user_id = ${userId}`;
+        res.json({ success: true, message: 'Main photo updated' });
+    } catch (err) {
+        return dbErrorResponse(res, 'Error setting main photo', err, 'Failed to set main photo');
+    }
+});
+
+// 4.6.3 Delete photo
+router.delete('/users/:id/photos/:photoId', async (req, res) => {
+    try {
+        const { id: userId, photoId } = req.params;
+        const target = await sql`SELECT is_main FROM profile_photos WHERE id = ${photoId} AND user_id = ${userId}`;
+        if (target.length === 0) {
+            return res.status(404).json({ error: 'Photo not found' });
+        }
+        await sql`DELETE FROM profile_photos WHERE id = ${photoId} AND user_id = ${userId}`;
+        if (target[0].is_main) {
+            const nextPhoto = await sql`SELECT id, photo_data FROM profile_photos WHERE user_id = ${userId} ORDER BY created_at ASC LIMIT 1`;
+            if (nextPhoto.length > 0) {
+                await sql`UPDATE profile_photos SET is_main = true WHERE id = ${nextPhoto[0].id}`;
+                await sql`UPDATE profiles SET photo = ${nextPhoto[0].photo_data} WHERE user_id = ${userId}`;
+            } else {
+                await sql`UPDATE profiles SET photo = NULL WHERE user_id = ${userId}`;
+            }
+        }
+        res.json({ success: true, message: 'Photo deleted' });
+    } catch (err) {
+        return dbErrorResponse(res, 'Error deleting photo', err, 'Failed to delete photo');
     }
 });
 
