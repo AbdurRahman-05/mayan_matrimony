@@ -81,17 +81,26 @@ const Footer = () => {
           {/* Contact */}
           <div className="footer-contact">
             <h3>Contact Us</h3>
-            <div className="contact-item">
-              <MapPin size={18} />
-              <span>123 Love Avenue, Relationship City, India 500081</span>
+            <div className="contact-center-info">
+              <h4 className="center-name">Sri Mayan Jothida Nilayam</h4>
+              <p className="consultant-name">
+                A.S.Sivadasan - Ragothaman <span className="qualification">BE(EEE), D.Astro</span>
+              </p>
             </div>
             <div className="contact-item">
-              <Phone size={18} />
-              <span>+91 98765 43210</span>
+              <MapPin size={18} className="contact-icon" />
+              <span>Govindappa Naicken 1st Cross St, Alappakam, Porur, Chennai, Tamil Nadu 600116</span>
             </div>
             <div className="contact-item">
-              <Mail size={18} />
-              <span>support@srimayan.com</span>
+              <Phone size={18} className="contact-icon" />
+              <div className="contact-phone-block">
+                <span className="consultation-note">For online or direct consultations please contact us:</span>
+                <a href="tel:+919884014363" className="contact-link contact-phone">+91 98840 14363</a>
+              </div>
+            </div>
+            <div className="contact-item">
+              <Mail size={18} className="contact-icon" />
+              <a href="mailto:support@srimayan.com" className="contact-link">support@srimayan.com</a>
             </div>
           </div>
         </div>
