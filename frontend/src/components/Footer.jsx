@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Heart, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../services/api';
 import './Footer.css';
@@ -97,10 +97,6 @@ const Footer = () => {
                 <span className="consultation-note">For online or direct consultations please contact us:</span>
                 <a href="tel:+919884014363" className="contact-link contact-phone">+91 98840 14363</a>
               </div>
-            </div>
-            <div className="contact-item">
-              <Mail size={18} className="contact-icon" />
-              <a href="mailto:support@srimayan.com" className="contact-link">support@srimayan.com</a>
             </div>
           </div>
         </div>
